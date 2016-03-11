@@ -1,0 +1,51 @@
+###
+### This file is generated automatically.  DO NOT MODIFY BY HAND!
+###
+
+base/ErrorHandling.o: $(SRC)/base/ErrorHandling.cc $(SRC)/base/ErrorHandling.h 
+base/FileParser.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.cc $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/util/mutil.h 
+base/StreamParser.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StreamParser.cc $(SRC)/base/StreamParser.h $(SRC)/util/mutil.h 
+base/StringUtil.o: $(SRC)/base/StringUtil.cc $(SRC)/base/StringUtil.h 
+base/ThreadHandler.o: $(SRC)/base/ThreadHandler.cc $(SRC)/base/ThreadHandler.h 
+base/WebServer.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/WebServer.cc $(SRC)/base/WebServer.h $(SRC)/extern/mongoose/mongoose.h $(SRC)/util/mutil.h 
+util/FindProcess.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/util/FindProcess.cc $(SRC)/util/FindProcess.h $(SRC)/util/mutil.h 
+util/KillProcesses.o: $(SRC)/util/KillProcesses.cc $(SRC)/util/mutil.h 
+util/SComm.o: $(SRC)/util/SComm.cc $(SRC)/util/SComm.h 
+util/SyncConn.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/util/SComm.h $(SRC)/util/SyncConn.cc $(SRC)/util/SyncConn.h $(SRC)/util/mutil.h 
+util/SysTime.o: $(SRC)/util/SysTime.cc $(SRC)/util/SysTime.h 
+util/mutil.o: $(SRC)/util/mutil.cc $(SRC)/util/mutil.h 
+KillProcesses:  checkLock
+KillProcesses:  util/KillProcesses.o util/mutil.o
+	/bin/rm -f lib_KillProcesses_temp.a
+	ar -qc lib_KillProcesses_temp.a $(OBJ)/util/KillProcesses.o $(OBJ)/util/mutil.o
+	$(BIN)/checkLock $(BIN)/$@
+	$(CPLUSPLUS) $(LINK_OPTIONS) -o $(BIN)/$@  $(OBJ)/util/KillProcesses.o -L. $(LINK_LIBS) -l_KillProcesses_temp
+	/bin/rm lib_KillProcesses_temp.a
+
+# Target lists
+
+OBJECTS = \
+  base/ErrorHandling.o\
+  base/FileParser.o\
+  base/StreamParser.o\
+  base/StringUtil.o\
+  base/ThreadHandler.o\
+  base/WebServer.o\
+  util/FindProcess.o\
+  util/KillProcesses.o\
+  util/SComm.o\
+  util/SyncConn.o\
+  util/SysTime.o\
+  util/mutil.o\
+
+nolink: $(OBJECTS)
+
+EXECUTABLES = \
+  KillProcesses\
+
+everything: $(EXECUTABLES)
+
+.PHONY: util
+util: \
+  KillProcesses\
+

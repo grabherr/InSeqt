@@ -27,6 +27,8 @@ int main( int argc, char** argv )
   svec<double> seq;
   svec<double> size;
 
+  double avg = 0.;
+  svec<int> lengths;
   for (i=0; i<dna.isize(); i++) {
     int n = 0;
     int gc = 0;
@@ -34,6 +36,8 @@ int main( int argc, char** argv )
     int gc_w = 0;
     const DNAVector & d = dna[i];
     size.push_back(d.isize());
+    avg += d.isize();
+    lengths.push_back(d.isize());
 
     for (j=0; j<d.isize(); j++) {
       if (d[j] == 'A' || d[j] == 'C' || d[j] == 'G' || d[j] == 'T') {
@@ -55,7 +59,14 @@ int main( int argc, char** argv )
   
 
   }
+  avg /= (double)dna.isize();
+  Sort(lengths);
+  int median = lengths[lengths.isize()/2];
 
+  cout << "Basic stats" << endl;
+  cout << "Reads: " << dna.isize() << endl;
+  cout << "Average: " << avg << endl;
+  cout << "Median: " << median << endl;
 
   Histogram hh;
   hh.Plot("seq.ps", seq, 100, 0., 1.);

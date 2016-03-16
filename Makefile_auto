@@ -8,6 +8,7 @@ base/StreamParser.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)
 base/StringUtil.o: $(SRC)/base/StringUtil.cc $(SRC)/base/StringUtil.h 
 base/ThreadHandler.o: $(SRC)/base/ThreadHandler.cc $(SRC)/base/ThreadHandler.h 
 base/WebServer.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/WebServer.cc $(SRC)/base/WebServer.h $(SRC)/extern/mongoose/mongoose.h $(SRC)/util/mutil.h 
+src/BasicStats3HTML.o: $(SRC)/base/CommandLineParser.h $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StringUtil.h $(SRC)/src/BasicStats3HTML.cc $(SRC)/util/mutil.h 
 src/Coordinate.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/SVector.h $(SRC)/src/Coordinate.cc $(SRC)/src/Coordinate.h 
 src/DNAVector.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/src/Coordinate.h $(SRC)/src/DNAVector.cc $(SRC)/src/DNAVector.h $(SRC)/util/mutil.h 
 src/PlotGCContent.o: $(SRC)/base/CommandLineParser.h $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StringUtil.h $(SRC)/src/DNAVector.h $(SRC)/src/PlotGCContent.cc $(SRC)/util/mutil.h $(SRC)/visual/Color.h $(SRC)/visual/Eps.h $(SRC)/visual/Histogram.h $(SRC)/visual/Whiteboard.h 
@@ -22,6 +23,13 @@ visual/Color.o: $(SRC)/visual/Color.cc $(SRC)/visual/Color.h
 visual/Eps.o: $(SRC)/visual/Eps.cc $(SRC)/visual/Eps.h 
 visual/Histogram.o: $(SRC)/base/CommandLineParser.h $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StringUtil.h $(SRC)/util/mutil.h $(SRC)/visual/Color.h $(SRC)/visual/Eps.h $(SRC)/visual/Histogram.cc $(SRC)/visual/Histogram.h $(SRC)/visual/Whiteboard.h 
 visual/ScatterPlot.o: $(SRC)/base/CommandLineParser.h $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StringUtil.h $(SRC)/util/mutil.h $(SRC)/visual/Color.h $(SRC)/visual/Compounds.h $(SRC)/visual/Eps.h $(SRC)/visual/ScatterPlot.cc $(SRC)/visual/Whiteboard.h 
+BasicStats3HTML:  checkLock
+BasicStats3HTML:  base/ErrorHandling.o base/FileParser.o base/StringUtil.o src/BasicStats3HTML.o util/mutil.o
+	/bin/rm -f lib_BasicStats3HTML_temp.a
+	ar -qc lib_BasicStats3HTML_temp.a $(OBJ)/base/ErrorHandling.o $(OBJ)/base/FileParser.o $(OBJ)/base/StringUtil.o $(OBJ)/src/BasicStats3HTML.o $(OBJ)/util/mutil.o
+	$(BIN)/checkLock $(BIN)/$@
+	$(CPLUSPLUS) $(LINK_OPTIONS) -o $(BIN)/$@  $(OBJ)/src/BasicStats3HTML.o -L. $(LINK_LIBS) -l_BasicStats3HTML_temp
+	/bin/rm lib_BasicStats3HTML_temp.a
 KillProcesses:  checkLock
 KillProcesses:  util/KillProcesses.o util/mutil.o
 	/bin/rm -f lib_KillProcesses_temp.a
@@ -53,6 +61,7 @@ OBJECTS = \
   base/StringUtil.o\
   base/ThreadHandler.o\
   base/WebServer.o\
+  src/BasicStats3HTML.o\
   src/Coordinate.o\
   src/DNAVector.o\
   src/PlotGCContent.o\
@@ -71,6 +80,7 @@ OBJECTS = \
 nolink: $(OBJECTS)
 
 EXECUTABLES = \
+  BasicStats3HTML\
   KillProcesses\
   PlotGCContent\
   ScatterPlot\
@@ -79,6 +89,7 @@ everything: $(EXECUTABLES)
 
 .PHONY: src
 src: \
+  BasicStats3HTML\
   PlotGCContent\
 
 .PHONY: util

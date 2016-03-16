@@ -8,12 +8,20 @@ base/StreamParser.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)
 base/StringUtil.o: $(SRC)/base/StringUtil.cc $(SRC)/base/StringUtil.h 
 base/ThreadHandler.o: $(SRC)/base/ThreadHandler.cc $(SRC)/base/ThreadHandler.h 
 base/WebServer.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/WebServer.cc $(SRC)/base/WebServer.h $(SRC)/extern/mongoose/mongoose.h $(SRC)/util/mutil.h 
+src/Coordinate.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/SVector.h $(SRC)/src/Coordinate.cc $(SRC)/src/Coordinate.h 
+src/DNAVector.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/src/Coordinate.h $(SRC)/src/DNAVector.cc $(SRC)/src/DNAVector.h $(SRC)/util/mutil.h 
+src/PlotGCContent.o: $(SRC)/base/CommandLineParser.h $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StringUtil.h $(SRC)/src/DNAVector.h $(SRC)/src/PlotGCContent.cc $(SRC)/util/mutil.h $(SRC)/visual/Color.h $(SRC)/visual/Eps.h $(SRC)/visual/Histogram.h $(SRC)/visual/Whiteboard.h 
 util/FindProcess.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/util/FindProcess.cc $(SRC)/util/FindProcess.h $(SRC)/util/mutil.h 
 util/KillProcesses.o: $(SRC)/util/KillProcesses.cc $(SRC)/util/mutil.h 
 util/SComm.o: $(SRC)/util/SComm.cc $(SRC)/util/SComm.h 
 util/SyncConn.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/util/SComm.h $(SRC)/util/SyncConn.cc $(SRC)/util/SyncConn.h $(SRC)/util/mutil.h 
 util/SysTime.o: $(SRC)/util/SysTime.cc $(SRC)/util/SysTime.h 
 util/mutil.o: $(SRC)/util/mutil.cc $(SRC)/util/mutil.h 
+visual/Bitmap.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/SVector.h $(SRC)/visual/Bitmap.cc $(SRC)/visual/Bitmap.h 
+visual/Color.o: $(SRC)/visual/Color.cc $(SRC)/visual/Color.h 
+visual/Eps.o: $(SRC)/visual/Eps.cc $(SRC)/visual/Eps.h 
+visual/Histogram.o: $(SRC)/base/CommandLineParser.h $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StringUtil.h $(SRC)/util/mutil.h $(SRC)/visual/Color.h $(SRC)/visual/Eps.h $(SRC)/visual/Histogram.cc $(SRC)/visual/Histogram.h $(SRC)/visual/Whiteboard.h 
+visual/ScatterPlot.o: $(SRC)/base/CommandLineParser.h $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StringUtil.h $(SRC)/util/mutil.h $(SRC)/visual/Color.h $(SRC)/visual/Compounds.h $(SRC)/visual/Eps.h $(SRC)/visual/ScatterPlot.cc $(SRC)/visual/Whiteboard.h 
 KillProcesses:  checkLock
 KillProcesses:  util/KillProcesses.o util/mutil.o
 	/bin/rm -f lib_KillProcesses_temp.a
@@ -21,6 +29,20 @@ KillProcesses:  util/KillProcesses.o util/mutil.o
 	$(BIN)/checkLock $(BIN)/$@
 	$(CPLUSPLUS) $(LINK_OPTIONS) -o $(BIN)/$@  $(OBJ)/util/KillProcesses.o -L. $(LINK_LIBS) -l_KillProcesses_temp
 	/bin/rm lib_KillProcesses_temp.a
+PlotGCContent:  checkLock
+PlotGCContent:  base/ErrorHandling.o base/FileParser.o base/StringUtil.o src/Coordinate.o src/DNAVector.o src/PlotGCContent.o util/mutil.o visual/Color.o visual/Eps.o visual/Histogram.o
+	/bin/rm -f lib_PlotGCContent_temp.a
+	ar -qc lib_PlotGCContent_temp.a $(OBJ)/base/ErrorHandling.o $(OBJ)/base/FileParser.o $(OBJ)/base/StringUtil.o $(OBJ)/src/Coordinate.o $(OBJ)/src/DNAVector.o $(OBJ)/src/PlotGCContent.o $(OBJ)/util/mutil.o $(OBJ)/visual/Color.o $(OBJ)/visual/Eps.o $(OBJ)/visual/Histogram.o
+	$(BIN)/checkLock $(BIN)/$@
+	$(CPLUSPLUS) $(LINK_OPTIONS) -o $(BIN)/$@  $(OBJ)/src/PlotGCContent.o -L. $(LINK_LIBS) -l_PlotGCContent_temp
+	/bin/rm lib_PlotGCContent_temp.a
+ScatterPlot:  checkLock
+ScatterPlot:  base/ErrorHandling.o base/FileParser.o base/StringUtil.o util/mutil.o visual/Color.o visual/Eps.o visual/ScatterPlot.o
+	/bin/rm -f lib_ScatterPlot_temp.a
+	ar -qc lib_ScatterPlot_temp.a $(OBJ)/base/ErrorHandling.o $(OBJ)/base/FileParser.o $(OBJ)/base/StringUtil.o $(OBJ)/util/mutil.o $(OBJ)/visual/Color.o $(OBJ)/visual/Eps.o $(OBJ)/visual/ScatterPlot.o
+	$(BIN)/checkLock $(BIN)/$@
+	$(CPLUSPLUS) $(LINK_OPTIONS) -o $(BIN)/$@  $(OBJ)/visual/ScatterPlot.o -L. $(LINK_LIBS) -l_ScatterPlot_temp
+	/bin/rm lib_ScatterPlot_temp.a
 
 # Target lists
 
@@ -31,21 +53,39 @@ OBJECTS = \
   base/StringUtil.o\
   base/ThreadHandler.o\
   base/WebServer.o\
+  src/Coordinate.o\
+  src/DNAVector.o\
+  src/PlotGCContent.o\
   util/FindProcess.o\
   util/KillProcesses.o\
   util/SComm.o\
   util/SyncConn.o\
   util/SysTime.o\
   util/mutil.o\
+  visual/Bitmap.o\
+  visual/Color.o\
+  visual/Eps.o\
+  visual/Histogram.o\
+  visual/ScatterPlot.o\
 
 nolink: $(OBJECTS)
 
 EXECUTABLES = \
   KillProcesses\
+  PlotGCContent\
+  ScatterPlot\
 
 everything: $(EXECUTABLES)
+
+.PHONY: src
+src: \
+  PlotGCContent\
 
 .PHONY: util
 util: \
   KillProcesses\
+
+.PHONY: visual
+visual: \
+  ScatterPlot\
 

@@ -1,0 +1,174 @@
+#include <string>
+#include "visual/Histogram.h"
+#include "visual/Whiteboard.h"
+#include "base/CommandLineParser.h"
+#include "base/FileParser.h"
+
+#include "base/SVector.h"
+#include "visual/Color.h"
+
+
+#include <iostream>
+#include <math.h>
+
+
+void Histogram::Plot(const string & fileName,
+		     const svec<double>&data, 
+		     int bins, 
+		     color c)
+{
+  double lo = data[0];
+  double hi = data[0];
+
+  int i;
+  for (i=0; i<data.isize(); i++) {
+    if (data[i] < lo)
+      lo = data[i];
+    if (data[i] > hi)
+      hi = data[i];
+  }
+
+  //cout << "lo=" << lo << " hi=" << hi << endl;
+  Plot(fileName, data, bins, lo, hi, c);
+}
+void Histogram::Scatter(const string & fileName,
+			const svec<double>&data1, 
+			const svec<double>&data2, 	  
+			color c)
+{
+  double hi1 = data1[0];
+  double hi2 = data1[0];
+
+  int i;
+  for (i=0; i<data1.isize(); i++) {
+    //if (data1[i] < lo)
+    //lo = data1[i];
+    if (data1[i] > hi1)
+      hi1 = data1[i];
+  
+    //if (data2[i] < lo)
+    //lo = data2[i];
+    if (data2[i] > hi2)
+      hi2 = data2[i];
+  }
+  double scale1 = 300/hi1;
+  double scale2 = 300/hi2;
+
+  string o = fileName;
+  
+  double x_offset = 20;
+  double y_offset = 20;
+
+
+  ns_whiteboard::whiteboard board;
+
+ 
+  double x_max = 300.;
+  double y_max = 300.;
+  double rad = 1.;
+
+  //double scale = 12.;
+  
+  for (i=0; i<data1.isize(); i++) {
+    double x = scale1*data1[i] + x_offset;
+    double y = scale2*data2[i] + y_offset;
+ 
+    board.Add( new ns_whiteboard::arc( ns_whiteboard::xy_coords(x, y), 
+                                       rad, 0., 360., 0.5,
+                                       c));
+  }
+  board.Add( new ns_whiteboard::line( ns_whiteboard::xy_coords(x_offset, y_offset), 
+				      ns_whiteboard::xy_coords(x_offset, y_max+y_offset), 
+				      1.,
+				      color(0., 0., 0.)) );
+  board.Add( new ns_whiteboard::line( ns_whiteboard::xy_coords(x_offset, y_offset), 
+				      ns_whiteboard::xy_coords(x_max+x_offset, y_offset), 
+				      1.,
+				      color(0., 0., 0.)) );
+
+
+  ofstream out(o.c_str());
+  
+  ns_whiteboard::ps_display display(out, x_max + 2 * x_offset, y_max + 2 * y_offset);
+  board.DisplayOn(&display);
+ 
+
+}
+
+void Histogram::Plot(const string & fileName,
+		     const svec<double>&data, 
+		     int bins, 	    
+		     double lo,
+		     double hi,
+		     color c)
+
+
+{
+  int i, j;
+
+  svec<double> counts;
+  counts.resize(bins, 0);
+
+  //cout << "lo=" << lo << " hi=" << hi << endl;
+  
+  double scale = 0.999*(double)bins/(hi - lo);
+  
+  double max = 0.;
+  for (i=0; i<data.isize(); i++) {
+    //cout << lo << " " << data[i] << " " << scale << endl;
+    int index = (int)(scale*(lo + data[i]));
+    counts[index] += 1.;
+    //cout << "Add to " << index << " " << counts[index] << endl;
+    if (counts[index] > max)
+      max = counts[index];
+  }
+  
+  double yscale = 300/max;
+
+  string o = fileName;
+  
+  double x_offset = 20;
+  double y_offset = 20;
+
+
+  ns_whiteboard::whiteboard board;
+
+ 
+  double x_max = 300.;
+  double y_max = 300.;
+
+  for (i=0; i<counts.isize(); i++) {
+    double x1 = x_max*(double)i/(double)counts.isize();
+    double x2 = x_max*(double)(i+1)/(double)counts.isize();
+    double y1 = 0;
+    double y2 = counts[i]*yscale;
+    
+    //cout << x1 << " " << x2 << " - " << y1 << " " << y2 <<  " : " << counts[i] << endl;
+
+    double edge = 1.;
+    board.Add( new ns_whiteboard::rect( ns_whiteboard::xy_coords(x1 + x_offset, y1 + y_offset), 
+                                        ns_whiteboard::xy_coords(x2 + x_offset, y2 + y_offset),
+                                        color(0,0,0)) );
+    board.Add( new ns_whiteboard::rect( ns_whiteboard::xy_coords(x1 + x_offset+edge, y1 + y_offset+edge), 
+                                        ns_whiteboard::xy_coords(x2 + x_offset-edge, y2 + y_offset-edge),
+                                        c) );
+
+ 
+  }
+  board.Add( new ns_whiteboard::line( ns_whiteboard::xy_coords(x_offset, y_offset), 
+				      ns_whiteboard::xy_coords(x_offset, y_max+y_offset), 
+				      1.,
+				      color(0., 0., 0.)) );
+  board.Add( new ns_whiteboard::line( ns_whiteboard::xy_coords(x_offset, y_offset), 
+				      ns_whiteboard::xy_coords(x_max+x_offset, y_offset), 
+				      1.,
+				      color(0., 0., 0.)) );
+
+
+  ofstream out(fileName.c_str());
+  
+  ns_whiteboard::ps_display display(out, x_max + 2 * x_offset, y_max + 2 * y_offset);
+  board.DisplayOn(&display);
+ 
+
+}

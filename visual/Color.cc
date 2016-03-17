@@ -714,11 +714,11 @@ ostream& operator<<( ostream& o, const color& c )
 
 
 color HexToColor(int h) {
-  int r = h & 0xFF;
+  int b = h & 0xFF;
   h /= 256;
   int g = h & 0xFF;
   h /= 256;
-  int b = h & 0xFF;
+  int r = h & 0xFF;
   //cout << r << " " << g << " " << b << endl;
   return color(((double)r)/256., ((double)g)/256., ((double)b)/256.);
 }
@@ -734,62 +734,105 @@ color MakeUpColor(int num)
   switch(rest) {
   default:
     return color(0, 0, 0);
+
   case 0:
-    return HexToColor(0x006600);
+    return HexToColor(0xCC6666);
+  case 1:
+    return HexToColor(0xC364C5);
+  case 2:
+    return HexToColor(0x1CD3A2);
+  case 3:
+    return HexToColor(0xBAB86C);
+  case 4:
+    return HexToColor(0x5D76CB);
+  case 5:
+    return HexToColor(0xCDA4DE);
+  case 6:
+    return HexToColor(0x1CA9C9);
+  case 7:
+    return HexToColor(0xEFDBC5);
+  case 8:
+    return HexToColor(0x6DAE81);
   case 9:
-    return HexToColor(0x009900);
-  case 16:
-    return HexToColor(0x00FF00);
+    return HexToColor(0xFC2847);
+  case 10:
+    return HexToColor(0xFFCF48);
   case 11:
-    return HexToColor(0xCCFF00);
+    return HexToColor(0x7851A9);
+  case 12:
+    return HexToColor(0xFDBCB4);
+  case 13:
+    return HexToColor(0xB2EC5D);
+  case 14:
+    return HexToColor(0xFF8243);
+  case 15:
+    return HexToColor(0x1F75FE);
+  case 16:
+    return HexToColor(0x77DDE7);
+  case 17:
+    return HexToColor(0xFC6C85);
   case 18:
+    return HexToColor(0xFDFC74);
+  case 19:
+    return HexToColor(0xCD9575);
+   
+
+  case 20:
+    return HexToColor(0x006600);
+  case 29:
+    return HexToColor(0x009900);
+  case 36:
+    return HexToColor(0x00FF00);
+  case 31:
+    return HexToColor(0xCCFF00);
+  case 38:
     return HexToColor(0x999900);
 
-  case 5:
-    return HexToColor(0xCCFF99);
-  case 6:
-    return HexToColor(0x33CC99);
-  case 7:
-    return HexToColor(0x66FFFF);
-  case 8:
-    return HexToColor(0x99CCFF);
-  case 1:
-    return HexToColor(0x3300FF);
-  case 10:
-    return HexToColor(0x6699CC);
-  case 2:
-    return HexToColor(0xFF33CC);
-  case 12:
-    return HexToColor(0x9966CC);
-  case 13:
-    return HexToColor(0xCC00CC);
-  case 14:
-    return HexToColor(0x9999CC);
-  case 15:
-    return HexToColor(0xFF66FF);
-  case 3:
-    return HexToColor(0xCC9966);
-  case 17:
-    return HexToColor(0xFFCCFF);
-  case 4:
-    return HexToColor(0x990000);
-  case 19:
-    return HexToColor(0x996600);
-  case 20:
-    return HexToColor(0xFF9933);
-  case 21:
-    return HexToColor(0xFFCC66);
-  case 22:
-    return HexToColor(0xFFFF00);
-  case 23:
-    return HexToColor(0xFFFF99);
-  case 24:
-    return HexToColor(0xEE0000);
   case 25:
-    return HexToColor(0xBB0000);
+    return HexToColor(0xCCFF99);
   case 26:
-    return HexToColor(0xC0C0C0);
+    return HexToColor(0x33CC99);
   case 27:
+    return HexToColor(0x66FFFF);
+  case 28:
+    return HexToColor(0x99CCFF);
+  case 21:
+    return HexToColor(0x3300FF);
+  case 30:
+    return HexToColor(0x6699CC);
+  case 22:
+    return HexToColor(0xFF33CC);
+  case 32:
+    return HexToColor(0x9966CC);
+  case 33:
+    return HexToColor(0xCC00CC);
+  case 34:
+    return HexToColor(0x9999CC);
+  case 35:
+    return HexToColor(0xFF66FF);
+  case 23:
+    return HexToColor(0xCC9966);
+  case 37:
+    return HexToColor(0xFFCCFF);
+  case 24:
+    return HexToColor(0x990000);
+  case 39:
+    return HexToColor(0x996600);
+  case 40:
+    return HexToColor(0xFF9933);
+  case 41:
+    return HexToColor(0xFFCC66);
+  case 42:
+    return HexToColor(0xFFFF00);
+  case 43:
+    return HexToColor(0xFFFF99);
+  case 44:
+    return HexToColor(0xEE0000);
+  case 45:
+    return HexToColor(0xBB0000);
+  case 46:
+    return HexToColor(0xC0C0C0);
+  case 47:
     return HexToColor(0x808080);
   }
 }

@@ -8,10 +8,12 @@ base/StreamParser.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)
 base/StringUtil.o: $(SRC)/base/StringUtil.cc $(SRC)/base/StringUtil.h 
 base/ThreadHandler.o: $(SRC)/base/ThreadHandler.cc $(SRC)/base/ThreadHandler.h 
 base/WebServer.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/WebServer.cc $(SRC)/base/WebServer.h $(SRC)/extern/mongoose/mongoose.h $(SRC)/util/mutil.h 
-src/BasicStats3HTML.o: $(SRC)/base/CommandLineParser.h $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StringUtil.h $(SRC)/src/BasicStats3HTML.cc $(SRC)/util/mutil.h 
+src/BasicStats.o: $(SRC)/base/CommandLineParser.h $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StringUtil.h $(SRC)/src/BasicStats.cc $(SRC)/src/DNAVector.h $(SRC)/util/mutil.h $(SRC)/visual/Color.h $(SRC)/visual/Eps.h $(SRC)/visual/Histogram.h $(SRC)/visual/Whiteboard.h 
+src/BasicStats2HTML.o: $(SRC)/base/CommandLineParser.h $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StringUtil.h $(SRC)/src/BasicStats2HTML.cc $(SRC)/util/mutil.h 
 src/Coordinate.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/SVector.h $(SRC)/src/Coordinate.cc $(SRC)/src/Coordinate.h 
 src/DNAVector.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/src/Coordinate.h $(SRC)/src/DNAVector.cc $(SRC)/src/DNAVector.h $(SRC)/util/mutil.h 
 src/PlotGCContent.o: $(SRC)/base/CommandLineParser.h $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StringUtil.h $(SRC)/src/DNAVector.h $(SRC)/src/PlotGCContent.cc $(SRC)/util/mutil.h $(SRC)/visual/Color.h $(SRC)/visual/Eps.h $(SRC)/visual/Histogram.h $(SRC)/visual/Whiteboard.h 
+test/TestPieChart.o: $(SRC)/base/CommandLineParser.h $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StringUtil.h $(SRC)/test/TestPieChart.cc $(SRC)/util/mutil.h $(SRC)/visual/Color.h $(SRC)/visual/Eps.h $(SRC)/visual/PieChart.h $(SRC)/visual/Whiteboard.h 
 util/FindProcess.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/util/FindProcess.cc $(SRC)/util/FindProcess.h $(SRC)/util/mutil.h 
 util/KillProcesses.o: $(SRC)/util/KillProcesses.cc $(SRC)/util/mutil.h 
 util/SComm.o: $(SRC)/util/SComm.cc $(SRC)/util/SComm.h 
@@ -22,14 +24,22 @@ visual/Bitmap.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/SVector.h $(SRC)/visual
 visual/Color.o: $(SRC)/visual/Color.cc $(SRC)/visual/Color.h 
 visual/Eps.o: $(SRC)/visual/Eps.cc $(SRC)/visual/Eps.h 
 visual/Histogram.o: $(SRC)/base/CommandLineParser.h $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StringUtil.h $(SRC)/util/mutil.h $(SRC)/visual/Color.h $(SRC)/visual/Eps.h $(SRC)/visual/Histogram.cc $(SRC)/visual/Histogram.h $(SRC)/visual/Whiteboard.h 
+visual/PieChart.o: $(SRC)/base/CommandLineParser.h $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StringUtil.h $(SRC)/util/mutil.h $(SRC)/visual/Color.h $(SRC)/visual/Eps.h $(SRC)/visual/PieChart.cc $(SRC)/visual/PieChart.h $(SRC)/visual/Whiteboard.h 
 visual/ScatterPlot.o: $(SRC)/base/CommandLineParser.h $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StringUtil.h $(SRC)/util/mutil.h $(SRC)/visual/Color.h $(SRC)/visual/Compounds.h $(SRC)/visual/Eps.h $(SRC)/visual/ScatterPlot.cc $(SRC)/visual/Whiteboard.h 
-BasicStats3HTML:  checkLock
-BasicStats3HTML:  base/ErrorHandling.o base/FileParser.o base/StringUtil.o src/BasicStats3HTML.o util/mutil.o
-	/bin/rm -f lib_BasicStats3HTML_temp.a
-	ar -qc lib_BasicStats3HTML_temp.a $(OBJ)/base/ErrorHandling.o $(OBJ)/base/FileParser.o $(OBJ)/base/StringUtil.o $(OBJ)/src/BasicStats3HTML.o $(OBJ)/util/mutil.o
+BasicStats:  checkLock
+BasicStats:  base/ErrorHandling.o base/FileParser.o base/StringUtil.o src/BasicStats.o src/Coordinate.o src/DNAVector.o util/mutil.o visual/Color.o visual/Eps.o visual/Histogram.o
+	/bin/rm -f lib_BasicStats_temp.a
+	ar -qc lib_BasicStats_temp.a $(OBJ)/base/ErrorHandling.o $(OBJ)/base/FileParser.o $(OBJ)/base/StringUtil.o $(OBJ)/src/BasicStats.o $(OBJ)/src/Coordinate.o $(OBJ)/src/DNAVector.o $(OBJ)/util/mutil.o $(OBJ)/visual/Color.o $(OBJ)/visual/Eps.o $(OBJ)/visual/Histogram.o
 	$(BIN)/checkLock $(BIN)/$@
-	$(CPLUSPLUS) $(LINK_OPTIONS) -o $(BIN)/$@  $(OBJ)/src/BasicStats3HTML.o -L. $(LINK_LIBS) -l_BasicStats3HTML_temp
-	/bin/rm lib_BasicStats3HTML_temp.a
+	$(CPLUSPLUS) $(LINK_OPTIONS) -o $(BIN)/$@  $(OBJ)/src/BasicStats.o -L. $(LINK_LIBS) -l_BasicStats_temp
+	/bin/rm lib_BasicStats_temp.a
+BasicStats2HTML:  checkLock
+BasicStats2HTML:  base/ErrorHandling.o base/FileParser.o base/StringUtil.o src/BasicStats2HTML.o util/mutil.o
+	/bin/rm -f lib_BasicStats2HTML_temp.a
+	ar -qc lib_BasicStats2HTML_temp.a $(OBJ)/base/ErrorHandling.o $(OBJ)/base/FileParser.o $(OBJ)/base/StringUtil.o $(OBJ)/src/BasicStats2HTML.o $(OBJ)/util/mutil.o
+	$(BIN)/checkLock $(BIN)/$@
+	$(CPLUSPLUS) $(LINK_OPTIONS) -o $(BIN)/$@  $(OBJ)/src/BasicStats2HTML.o -L. $(LINK_LIBS) -l_BasicStats2HTML_temp
+	/bin/rm lib_BasicStats2HTML_temp.a
 KillProcesses:  checkLock
 KillProcesses:  util/KillProcesses.o util/mutil.o
 	/bin/rm -f lib_KillProcesses_temp.a
@@ -51,6 +61,13 @@ ScatterPlot:  base/ErrorHandling.o base/FileParser.o base/StringUtil.o util/muti
 	$(BIN)/checkLock $(BIN)/$@
 	$(CPLUSPLUS) $(LINK_OPTIONS) -o $(BIN)/$@  $(OBJ)/visual/ScatterPlot.o -L. $(LINK_LIBS) -l_ScatterPlot_temp
 	/bin/rm lib_ScatterPlot_temp.a
+TestPieChart:  checkLock
+TestPieChart:  base/ErrorHandling.o base/FileParser.o base/StringUtil.o test/TestPieChart.o util/mutil.o visual/Color.o visual/Eps.o visual/PieChart.o
+	/bin/rm -f lib_TestPieChart_temp.a
+	ar -qc lib_TestPieChart_temp.a $(OBJ)/base/ErrorHandling.o $(OBJ)/base/FileParser.o $(OBJ)/base/StringUtil.o $(OBJ)/test/TestPieChart.o $(OBJ)/util/mutil.o $(OBJ)/visual/Color.o $(OBJ)/visual/Eps.o $(OBJ)/visual/PieChart.o
+	$(BIN)/checkLock $(BIN)/$@
+	$(CPLUSPLUS) $(LINK_OPTIONS) -o $(BIN)/$@  $(OBJ)/test/TestPieChart.o -L. $(LINK_LIBS) -l_TestPieChart_temp
+	/bin/rm lib_TestPieChart_temp.a
 
 # Target lists
 
@@ -61,10 +78,12 @@ OBJECTS = \
   base/StringUtil.o\
   base/ThreadHandler.o\
   base/WebServer.o\
-  src/BasicStats3HTML.o\
+  src/BasicStats.o\
+  src/BasicStats2HTML.o\
   src/Coordinate.o\
   src/DNAVector.o\
   src/PlotGCContent.o\
+  test/TestPieChart.o\
   util/FindProcess.o\
   util/KillProcesses.o\
   util/SComm.o\
@@ -75,22 +94,30 @@ OBJECTS = \
   visual/Color.o\
   visual/Eps.o\
   visual/Histogram.o\
+  visual/PieChart.o\
   visual/ScatterPlot.o\
 
 nolink: $(OBJECTS)
 
 EXECUTABLES = \
-  BasicStats3HTML\
+  BasicStats\
+  BasicStats2HTML\
   KillProcesses\
   PlotGCContent\
   ScatterPlot\
+  TestPieChart\
 
 everything: $(EXECUTABLES)
 
 .PHONY: src
 src: \
-  BasicStats3HTML\
+  BasicStats\
+  BasicStats2HTML\
   PlotGCContent\
+
+.PHONY: test
+test: \
+  TestPieChart\
 
 .PHONY: util
 util: \

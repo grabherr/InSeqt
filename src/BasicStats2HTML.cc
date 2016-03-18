@@ -26,7 +26,8 @@ int main( int argc, char** argv )
   double avg = -1.;
   int med = -1;
   int n50 = -1;
-  int total = -1;
+  //int total = -1;
+  string total;
 
   int i;
   svec<int> cycle_num;
@@ -42,7 +43,7 @@ int main( int argc, char** argv )
     if (parser.AsString(0) == "Median:")
       med = parser.AsInt(1);
     if (parser.AsString(0) == "Total:")
-      total = parser.AsInt(1);
+      total = parser.AsString(1);
     if (parser.AsString(0) == "N50:")
       n50 = parser.AsInt(1);
     if (parser.AsString(0) == "#") {

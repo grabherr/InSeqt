@@ -91,7 +91,7 @@ int main( int argc, char** argv )
   int same = 0;
   
   svec<int> cycles;
-  int total = 0;
+  double  total = 0;
 
   for (i=0; i<dna.isize(); i++) {
 
@@ -144,8 +144,8 @@ int main( int argc, char** argv )
   Sort(lengths);
   int median = lengths[lengths.isize()/2];
 
-  int nn = 0;
-  int n50 = 0;
+  double nn = 0;
+  double n50 = 0;
   for (i=0; i<lengths.isize(); i++) {
     nn += lengths[i];
     if (nn >= total/2) {
@@ -167,8 +167,8 @@ int main( int argc, char** argv )
   fprintf(pRep, "Reads: %d\n", dna.isize());
   fprintf(pRep, "Average: %f\n", avg);
   fprintf(pRep, "Median: %d\n", median);
-  fprintf(pRep, "Total: %d\n", total);
-  fprintf(pRep, "N50: %d\n", n50);
+  fprintf(pRep, "Total: %f\n", total);
+  fprintf(pRep, "N50: %f\n", n50);
 
 
   for (i=0; i<cycles.isize(); i++) {
@@ -193,7 +193,7 @@ int main( int argc, char** argv )
   cout << "Plot Seq " << endl;
   hh.Plot(seq_n, seq, 100, 0., 1.);
   cout << "Plot Win " << endl;
-  //hh.Plot(win_n, win, 100, 0., 1.);
+  hh.Plot(win_n, win, 100, 0., 1.);
   cout << "Plot Size " << endl;
   hh.Plot(size_n, size, 100, color(0.99, 0.2, 0.2));
   cout << "Scatter " << seq.isize() << " " << size.isize() << endl;
@@ -203,6 +203,8 @@ int main( int argc, char** argv )
   MakePNG(win_n);
   MakePNG(size_n);
   MakePNG(scatter_n);
+
+  
 
   return 0;
 }

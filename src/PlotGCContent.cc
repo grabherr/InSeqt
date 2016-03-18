@@ -2,12 +2,33 @@
 #include "base/CommandLineParser.h"
 #include "src/DNAVector.h"
 #include "visual/Histogram.h"
+#include "base/FileParser.h"
 
 
+void ReadFileNames(string & fileName)
+{
+  FlatFileParser parser;
+  
+  parser.Open(fileName);
+
+  fileName = "";
+
+  while (parser.ParseLine()) {
+    if (parser.GetItemCount() == 0)
+      continue;
+    for (int i=0; i<parser.GetItemCount(); i++) {
+      if (fileName != "")
+	fileName += ",";
+      fileName += parser.AsString(i);
+    }
+  }
+}
+ 
 int main( int argc, char** argv )
 {
 
   commandArg<string> fileCmmd("-i","input file");
+  //commandArg<bool> listCmmd("-f","", "");
   commandLineParser P(argc,argv);
   P.SetDescription("Testing the file parser.");
   P.registerArg(fileCmmd);
@@ -16,6 +37,16 @@ int main( int argc, char** argv )
   
   string fileName = P.GetStringValueFor(fileCmmd);
  
+  FlatFileParser parser;
+  
+  parser.Open(fileName);
+  parser.ParseLine();
+
+  if (parser.AsString(0)[0] != '@') {
+    ReadFileNames(fileName);
+  }
+
+
   vecDNAVector dna;
   dna.Read(fileName);
   
@@ -29,7 +60,28 @@ int main( int argc, char** argv )
 
   double avg = 0.;
   svec<int> lengths;
+
+  string last;
+  int same = 0;
+  
+  svec<int> cycles;
+
   for (i=0; i<dna.isize(); i++) {
+
+    StringParser pp;
+    pp.SetLine(dna.Name(i), "/");
+    const string & id = pp.AsString(1);
+    if (id == last) {
+      same++;
+    } else {
+      if (same >= cycles.isize())
+	cycles.resize(same+1, 0);
+      cycles[same]++;
+      same = 0;
+      last = id;
+    }
+
+
     int n = 0;
     int gc = 0;
     int n_w = 0;
@@ -67,6 +119,12 @@ int main( int argc, char** argv )
   cout << "Reads: " << dna.isize() << endl;
   cout << "Average: " << avg << endl;
   cout << "Median: " << median << endl;
+
+  for (i=0; i<cycles.isize(); i++) {
+    if (cycles[i] > 0)
+      cout << "# " << i+1 << " " << cycles[i] << endl;
+  }
+
 
   Histogram hh;
   hh.Plot("seq.ps", seq, 100, 0., 1.);

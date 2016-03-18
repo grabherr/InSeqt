@@ -37,7 +37,7 @@ void Histogram::Scatter(const string & fileName,
 			color c)
 {
   double hi1 = data1[0];
-  double hi2 = data1[0];
+  double hi2 = data2[0];
 
   int i;
   for (i=0; i<data1.isize(); i++) {
@@ -117,7 +117,8 @@ void Histogram::Plot(const string & fileName,
   for (i=0; i<data.isize(); i++) {
     //cout << lo << " " << data[i] << " " << scale << endl;
     int index = (int)(scale*(lo + data[i]));
-    counts[index] += 1.;
+    if (index < counts.isize())
+      counts[index] += 1.;
     //cout << "Add to " << index << " " << counts[index] << endl;
     if (counts[index] > max)
       max = counts[index];

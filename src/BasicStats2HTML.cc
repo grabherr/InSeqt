@@ -28,6 +28,10 @@ int main( int argc, char** argv )
   int n50 = -1;
   int total = -1;
 
+  int i;
+  svec<int> cycle_num;
+  svec<int> cycle_count;
+
   while (parser.ParseLine()) {
     if (parser.GetItemCount() == 0)
       continue;
@@ -41,6 +45,10 @@ int main( int argc, char** argv )
       total = parser.AsInt(1);
     if (parser.AsString(0) == "N50:")
       n50 = parser.AsInt(1);
+    if (parser.AsString(0) == "#") {
+      cycle_num.push_back(parser.AsInt(1));
+      cycle_count.push_back(parser.AsInt(2));
+    }
   }
 
 
@@ -76,6 +84,13 @@ int main( int argc, char** argv )
   cout << "    <br>" << endl;
   cout << "    <br>" << endl;
   cout << "    <br>" << endl;
+
+  for (i=0; i<cycle_num.isize(); i++) {
+    cout << "# cycles: " << cycle_num[i] << " reads: " << cycle_count[i] << "<br>" << endl;
+  }
+  cout << "    <br>" << endl;
+  cout << "    <br>" << endl;
+
   cout << "    Average GC content:<br>" << endl;
   cout << "    <img alt=\"GC Content overall\" src=\"seq.png\" height=\"340\" width=\"340\"><img" << endl;
   cout << "      alt=\"GC content in 1kb windows\" src=\"win.png\" height=\"340\"" << endl;

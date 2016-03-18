@@ -2,20 +2,77 @@
 #include "base/CommandLineParser.h"
 #include "src/DNAVector.h"
 #include "visual/Histogram.h"
+#include "base/FileParser.h"
 
 
+bool MakePNG(const string & fileName)
+{
+  char tmp[512];
+  strcpy(tmp, fileName.c_str());
+  tmp[strlen(tmp)-2] = 0;
+  strcat(tmp, "png");
+  string cmmd = "convert ";
+  cmmd += fileName;
+  cmmd += " ";
+  cmmd += tmp;
+  int r = system(cmmd.c_str());
+
+  if (r != 0) {
+    cout << "ERROR: imagemagick is not installed!!" << endl;
+    exit(-1);
+  }
+  return true;
+}
+
+
+void ReadFileNames(string & fileName)
+{
+  FlatFileParser parser;
+  
+  parser.Open(fileName);
+
+  fileName = "";
+
+  while (parser.ParseLine()) {
+    if (parser.GetItemCount() == 0)
+      continue;
+    for (int i=0; i<parser.GetItemCount(); i++) {
+      if (fileName != "")
+	fileName += ",";
+      fileName += parser.AsString(i);
+    }
+  }
+}
+ 
 int main( int argc, char** argv )
 {
 
   commandArg<string> fileCmmd("-i","input file");
+  commandArg<string> outCmmd("-o","output directory");
+  //commandArg<bool> listCmmd("-f","", "");
   commandLineParser P(argc,argv);
   P.SetDescription("Testing the file parser.");
   P.registerArg(fileCmmd);
+  P.registerArg(outCmmd);
  
   P.parse();
   
   string fileName = P.GetStringValueFor(fileCmmd);
+  string outName = P.GetStringValueFor(outCmmd);
  
+  FlatFileParser parser;
+  
+  parser.Open(fileName);
+  parser.ParseLine();
+
+  if (parser.AsString(0)[0] != '@' && parser.AsString(0)[0] != '>') {
+    ReadFileNames(fileName);
+  }
+
+  string makeOut = "mkdir ";
+  makeOut += outName;
+  int rr = system(makeOut.c_str());
+
   vecDNAVector dna;
   dna.Read(fileName);
   
@@ -29,13 +86,37 @@ int main( int argc, char** argv )
 
   double avg = 0.;
   svec<int> lengths;
+
+  string last;
+  int same = 0;
+  
+  svec<int> cycles;
+  int total = 0;
+
   for (i=0; i<dna.isize(); i++) {
+
+    StringParser pp;
+    pp.SetLine(dna.Name(i), "/");
+    if (pp.GetItemCount() > 2) {
+      const string & id = pp.AsString(1);
+      if (id == last) {
+	same++;
+      } else {
+	if (same >= cycles.isize())
+	  cycles.resize(same+1, 0);
+	cycles[same]++;
+	same = 0;
+	last = id;
+      }
+    }
+
     int n = 0;
     int gc = 0;
     int n_w = 0;
     int gc_w = 0;
     const DNAVector & d = dna[i];
     size.push_back(d.isize());
+    total += d.isize();
     avg += d.isize();
     lengths.push_back(d.isize());
 
@@ -54,8 +135,8 @@ int main( int argc, char** argv )
 	}
       }
     }
-    if (n > 50)
-      seq.push_back((double)gc/(double)n);
+    //if (n > 50)
+    seq.push_back((double)gc/(double)n);
   
 
   }
@@ -63,17 +144,65 @@ int main( int argc, char** argv )
   Sort(lengths);
   int median = lengths[lengths.isize()/2];
 
-  cout << "Basic stats" << endl;
+  int nn = 0;
+  int n50 = 0;
+  for (i=0; i<lengths.isize(); i++) {
+    nn += lengths[i];
+    if (nn >= total/2) {
+      n50 = lengths[i];
+      break;
+    }
+  }
+
+  string summary = outName;
+  summary += "/basicstats.out";
+  FILE * pRep = fopen(summary.c_str(), "w");
+  //cout << "Basic stats" << endl;
   cout << "Reads: " << dna.isize() << endl;
   cout << "Average: " << avg << endl;
   cout << "Median: " << median << endl;
+  cout << "Total: " << total << endl;
+  cout << "N50: " << n50 << endl;
+
+  fprintf(pRep, "Reads: %d\n", dna.isize());
+  fprintf(pRep, "Average: %f\n", avg);
+  fprintf(pRep, "Median: %d\n", median);
+  fprintf(pRep, "Total: %d\n", total);
+  fprintf(pRep, "N50: %d\n", n50);
+
+
+  for (i=0; i<cycles.isize(); i++) {
+    if (cycles[i] > 0) {
+      cout << "# " << i+1 << " " << cycles[i] << endl;
+      fprintf(pRep, "# %d %d\n", i+1, cycles[i]);
+    }
+  }
+  fclose(pRep);
 
   Histogram hh;
-  hh.Plot("seq.ps", seq, 100, 0., 1.);
-  hh.Plot("win.ps", win, 100, 0., 1.);
-  hh.Plot("size.ps", size, 100, color(0.99, 0.2, 0.2));
-  hh.Scatter("scatter.ps", seq, size, color(0.3, 0.0, 0.4));
 
+  string seq_n = outName;
+  seq_n += "/seq.ps";
+  string win_n = outName;
+  win_n += "/win.ps";
+  string size_n = outName;
+  size_n += "/size.ps";
+  string scatter_n = outName;
+  scatter_n += "/scatter.ps";
+
+  cout << "Plot Seq " << endl;
+  hh.Plot(seq_n, seq, 100, 0., 1.);
+  cout << "Plot Win " << endl;
+  //hh.Plot(win_n, win, 100, 0., 1.);
+  cout << "Plot Size " << endl;
+  hh.Plot(size_n, size, 100, color(0.99, 0.2, 0.2));
+  cout << "Scatter " << seq.isize() << " " << size.isize() << endl;
+  hh.Scatter(scatter_n, seq, size, color(0.3, 0.0, 0.4));
+
+  MakePNG(seq_n);
+  MakePNG(win_n);
+  MakePNG(size_n);
+  MakePNG(scatter_n);
 
   return 0;
 }

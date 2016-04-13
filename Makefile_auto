@@ -2,17 +2,23 @@
 ### This file is generated automatically.  DO NOT MODIFY BY HAND!
 ###
 
+aligns/KmerAlignCore.o: $(SRC)/aligns/KmerAlignCore.cc $(SRC)/aligns/KmerAlignCore.h $(SRC)/base/ErrorHandling.h $(SRC)/base/SVector.h $(SRC)/src/DNAVector.h 
+aligns/KmerDynProg.o: $(SRC)/aligns/KmerAlignCore.h $(SRC)/aligns/KmerDynProg.cc $(SRC)/aligns/KmerDynProg.h $(SRC)/base/ErrorHandling.h $(SRC)/base/SVector.h $(SRC)/src/DNAVector.h 
 base/ErrorHandling.o: $(SRC)/base/ErrorHandling.cc $(SRC)/base/ErrorHandling.h 
 base/FileParser.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.cc $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/util/mutil.h 
 base/StreamParser.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StreamParser.cc $(SRC)/base/StreamParser.h $(SRC)/util/mutil.h 
 base/StringUtil.o: $(SRC)/base/StringUtil.cc $(SRC)/base/StringUtil.h 
 base/ThreadHandler.o: $(SRC)/base/ThreadHandler.cc $(SRC)/base/ThreadHandler.h 
 base/WebServer.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/WebServer.cc $(SRC)/base/WebServer.h $(SRC)/extern/mongoose/mongoose.h $(SRC)/util/mutil.h 
-src/BasicStats.o: $(SRC)/base/CommandLineParser.h $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StringUtil.h $(SRC)/src/BasicStats.cc $(SRC)/src/DNAVector.h $(SRC)/util/mutil.h $(SRC)/visual/Color.h $(SRC)/visual/Eps.h $(SRC)/visual/Histogram.h $(SRC)/visual/Whiteboard.h 
+src/BasicStats.o: $(SRC)/base/CommandLineParser.h $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StringUtil.h $(SRC)/src/BasicStats.cc $(SRC)/src/DNAVector.h $(SRC)/src/DataRead.h $(SRC)/util/mutil.h $(SRC)/visual/Color.h $(SRC)/visual/Eps.h $(SRC)/visual/Histogram.h $(SRC)/visual/Whiteboard.h 
 src/BasicStats2HTML.o: $(SRC)/base/CommandLineParser.h $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StringUtil.h $(SRC)/src/BasicStats2HTML.cc $(SRC)/util/mutil.h 
+src/ChungSeq.o: $(SRC)/base/CommandLineParser.h $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StringUtil.h $(SRC)/src/ChungSeq.cc $(SRC)/src/DNAVector.h $(SRC)/util/mutil.h 
 src/Coordinate.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/SVector.h $(SRC)/src/Coordinate.cc $(SRC)/src/Coordinate.h 
 src/DNAVector.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/src/Coordinate.h $(SRC)/src/DNAVector.cc $(SRC)/src/DNAVector.h $(SRC)/util/mutil.h 
+src/FindOverlapCands.o: $(SRC)/aligns/KmerAlignCore.h $(SRC)/base/CommandLineParser.h $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/RandomStuff.h $(SRC)/base/SVector.h $(SRC)/base/StringUtil.h $(SRC)/src/DNAVector.h $(SRC)/src/DataRead.h $(SRC)/src/FindOverlapCands.cc $(SRC)/src/SequenceMatch.h $(SRC)/util/mutil.h 
 src/PlotGCContent.o: $(SRC)/base/CommandLineParser.h $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StringUtil.h $(SRC)/src/DNAVector.h $(SRC)/src/PlotGCContent.cc $(SRC)/util/mutil.h $(SRC)/visual/Color.h $(SRC)/visual/Eps.h $(SRC)/visual/Histogram.h $(SRC)/visual/Whiteboard.h 
+src/ReduceReads.o: $(SRC)/base/CommandLineParser.h $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/base/StringUtil.h $(SRC)/src/DNAVector.h $(SRC)/src/ReduceReads.cc $(SRC)/util/mutil.h 
+src/SequenceMatch.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/src/SequenceMatch.cc $(SRC)/src/SequenceMatch.h $(SRC)/util/mutil.h 
 util/FindProcess.o: $(SRC)/base/ErrorHandling.h $(SRC)/base/FileParser.h $(SRC)/base/SVector.h $(SRC)/util/FindProcess.cc $(SRC)/util/FindProcess.h $(SRC)/util/mutil.h 
 util/KillProcesses.o: $(SRC)/util/KillProcesses.cc $(SRC)/util/mutil.h 
 util/SComm.o: $(SRC)/util/SComm.cc $(SRC)/util/SComm.h 
@@ -39,6 +45,20 @@ BasicStats2HTML:  base/ErrorHandling.o base/FileParser.o base/StringUtil.o src/B
 	$(BIN)/checkLock $(BIN)/$@
 	$(CPLUSPLUS) $(LINK_OPTIONS) -o $(BIN)/$@  $(OBJ)/src/BasicStats2HTML.o -L. $(LINK_LIBS) -l_BasicStats2HTML_temp
 	/bin/rm lib_BasicStats2HTML_temp.a
+ChungSeq:  checkLock
+ChungSeq:  base/ErrorHandling.o base/FileParser.o base/StringUtil.o src/ChungSeq.o src/Coordinate.o src/DNAVector.o util/mutil.o
+	/bin/rm -f lib_ChungSeq_temp.a
+	ar -qc lib_ChungSeq_temp.a $(OBJ)/base/ErrorHandling.o $(OBJ)/base/FileParser.o $(OBJ)/base/StringUtil.o $(OBJ)/src/ChungSeq.o $(OBJ)/src/Coordinate.o $(OBJ)/src/DNAVector.o $(OBJ)/util/mutil.o
+	$(BIN)/checkLock $(BIN)/$@
+	$(CPLUSPLUS) $(LINK_OPTIONS) -o $(BIN)/$@  $(OBJ)/src/ChungSeq.o -L. $(LINK_LIBS) -l_ChungSeq_temp
+	/bin/rm lib_ChungSeq_temp.a
+FindOverlapCands:  checkLock
+FindOverlapCands:  aligns/KmerAlignCore.o base/ErrorHandling.o base/FileParser.o base/StringUtil.o src/Coordinate.o src/DNAVector.o src/FindOverlapCands.o src/SequenceMatch.o util/mutil.o
+	/bin/rm -f lib_FindOverlapCands_temp.a
+	ar -qc lib_FindOverlapCands_temp.a $(OBJ)/aligns/KmerAlignCore.o $(OBJ)/base/ErrorHandling.o $(OBJ)/base/FileParser.o $(OBJ)/base/StringUtil.o $(OBJ)/src/Coordinate.o $(OBJ)/src/DNAVector.o $(OBJ)/src/FindOverlapCands.o $(OBJ)/src/SequenceMatch.o $(OBJ)/util/mutil.o
+	$(BIN)/checkLock $(BIN)/$@
+	$(CPLUSPLUS) $(LINK_OPTIONS) -o $(BIN)/$@  $(OBJ)/src/FindOverlapCands.o -L. $(LINK_LIBS) -l_FindOverlapCands_temp
+	/bin/rm lib_FindOverlapCands_temp.a
 KillProcesses:  checkLock
 KillProcesses:  util/KillProcesses.o util/mutil.o
 	/bin/rm -f lib_KillProcesses_temp.a
@@ -53,6 +73,13 @@ PlotGCContent:  base/ErrorHandling.o base/FileParser.o base/StringUtil.o src/Coo
 	$(BIN)/checkLock $(BIN)/$@
 	$(CPLUSPLUS) $(LINK_OPTIONS) -o $(BIN)/$@  $(OBJ)/src/PlotGCContent.o -L. $(LINK_LIBS) -l_PlotGCContent_temp
 	/bin/rm lib_PlotGCContent_temp.a
+ReduceReads:  checkLock
+ReduceReads:  base/ErrorHandling.o base/FileParser.o base/StringUtil.o src/Coordinate.o src/DNAVector.o src/ReduceReads.o util/mutil.o
+	/bin/rm -f lib_ReduceReads_temp.a
+	ar -qc lib_ReduceReads_temp.a $(OBJ)/base/ErrorHandling.o $(OBJ)/base/FileParser.o $(OBJ)/base/StringUtil.o $(OBJ)/src/Coordinate.o $(OBJ)/src/DNAVector.o $(OBJ)/src/ReduceReads.o $(OBJ)/util/mutil.o
+	$(BIN)/checkLock $(BIN)/$@
+	$(CPLUSPLUS) $(LINK_OPTIONS) -o $(BIN)/$@  $(OBJ)/src/ReduceReads.o -L. $(LINK_LIBS) -l_ReduceReads_temp
+	/bin/rm lib_ReduceReads_temp.a
 ScatterPlot:  checkLock
 ScatterPlot:  base/ErrorHandling.o base/FileParser.o base/StringUtil.o util/mutil.o visual/Color.o visual/Eps.o visual/ScatterPlot.o
 	/bin/rm -f lib_ScatterPlot_temp.a
@@ -64,6 +91,8 @@ ScatterPlot:  base/ErrorHandling.o base/FileParser.o base/StringUtil.o util/muti
 # Target lists
 
 OBJECTS = \
+  aligns/KmerAlignCore.o\
+  aligns/KmerDynProg.o\
   base/ErrorHandling.o\
   base/FileParser.o\
   base/StreamParser.o\
@@ -72,9 +101,13 @@ OBJECTS = \
   base/WebServer.o\
   src/BasicStats.o\
   src/BasicStats2HTML.o\
+  src/ChungSeq.o\
   src/Coordinate.o\
   src/DNAVector.o\
+  src/FindOverlapCands.o\
   src/PlotGCContent.o\
+  src/ReduceReads.o\
+  src/SequenceMatch.o\
   util/FindProcess.o\
   util/KillProcesses.o\
   util/SComm.o\
@@ -93,8 +126,11 @@ nolink: $(OBJECTS)
 EXECUTABLES = \
   BasicStats\
   BasicStats2HTML\
+  ChungSeq\
+  FindOverlapCands\
   KillProcesses\
   PlotGCContent\
+  ReduceReads\
   ScatterPlot\
 
 everything: $(EXECUTABLES)
@@ -103,7 +139,10 @@ everything: $(EXECUTABLES)
 src: \
   BasicStats\
   BasicStats2HTML\
+  ChungSeq\
+  FindOverlapCands\
   PlotGCContent\
+  ReduceReads\
 
 .PHONY: util
 util: \

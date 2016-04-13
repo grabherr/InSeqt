@@ -3,7 +3,7 @@
 #include "src/DNAVector.h"
 #include "visual/Histogram.h"
 #include "base/FileParser.h"
-
+#include "src/DataRead.h"
 
 bool MakePNG(const string & fileName)
 {
@@ -25,24 +25,6 @@ bool MakePNG(const string & fileName)
 }
 
 
-void ReadFileNames(string & fileName)
-{
-  FlatFileParser parser;
-  
-  parser.Open(fileName);
-
-  fileName = "";
-
-  while (parser.ParseLine()) {
-    if (parser.GetItemCount() == 0)
-      continue;
-    for (int i=0; i<parser.GetItemCount(); i++) {
-      if (fileName != "")
-	fileName += ",";
-      fileName += parser.AsString(i);
-    }
-  }
-}
  
 int main( int argc, char** argv )
 {
@@ -60,21 +42,13 @@ int main( int argc, char** argv )
   string fileName = P.GetStringValueFor(fileCmmd);
   string outName = P.GetStringValueFor(outCmmd);
  
-  FlatFileParser parser;
-  
-  parser.Open(fileName);
-  parser.ParseLine();
-
-  if (parser.AsString(0)[0] != '@' && parser.AsString(0)[0] != '>') {
-    ReadFileNames(fileName);
-  }
-
+ 
   string makeOut = "mkdir ";
   makeOut += outName;
   int rr = system(makeOut.c_str());
 
   vecDNAVector dna;
-  dna.Read(fileName);
+  ReadDNA(dna, fileName);
   
   int i, j;
 

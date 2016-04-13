@@ -90,6 +90,8 @@ int main(int argc,char** argv)
   
   commandArg<string> aStringCmmd("-i","input sequence file or file list");
   commandArg<string> outCmmd("-o","output file");
+  commandArg<int> nCmmd("-n","chunk index (0-based)", 0);
+  commandArg<int> chunksCmmd("-c","total chunks", 1);
   commandArg<int> distCmmd("-distance","distance between seeds", 1);
   commandArg<int> numCmmd("-w","width of the filter", 2);
   commandArg<double> fracCmmd("-f","fraction of reads to examine (<=1.)", 1.0);
@@ -97,6 +99,8 @@ int main(int argc,char** argv)
   P.SetDescription("Finds overlaps between sequences.");
   P.registerArg(aStringCmmd);
   P.registerArg(outCmmd);
+  P.registerArg(nCmmd);
+  P.registerArg(chunksCmmd);
   P.registerArg(distCmmd);
   P.registerArg(numCmmd);
   P.registerArg(fracCmmd);
@@ -109,12 +113,39 @@ int main(int argc,char** argv)
   int num12 = P.GetIntValueFor(numCmmd);
   double fraction = P.GetDoubleValueFor(fracCmmd);
   
+  int chunks = P.GetIntValueFor(chunksCmmd);
+  int thisone = P.GetIntValueFor(nCmmd);
+
   vecDNAVector dna;
    
   ReadDNA(dna, fileName);
  
 
   int i, j, l;
+
+  svec<int> order;
+  MakeRandomList(order, dna.isize());
+
+  int upto = (int)((double)dna.isize()*fraction);
+  cout << "Will examine " << upto << " sequences." << endl;
+
+
+  // Set up query
+  vecDNAVector query;  
+  for (i=0; i<upto; i++) {
+    query.push_back(dna[order[i]], dna.Name(order[i]));
+  }
+  
+  // There is a little bit of a round-off error here...
+  int size = dna.isize()/chunks;
+  int from = thisone*size;
+  int to = from + size;
+
+  cout << "Only keep sequences from " << from << " to " << to << " of " << dna.isize() << endl;
+  for (i=0; i<from; i++)
+    dna[i].clear();
+  for (i=to; i<dna.isize(); i++)
+    dna[i].clear();
 
 
   KmerAlignCore<KmerAlignCoreRecordWithScore> core;
@@ -131,19 +162,19 @@ int main(int argc,char** argv)
 
   
   FILE * pOut = fopen(outName.c_str(), "w");
+  outName += ".allreadnames";
+  FILE * pAll = fopen(outName.c_str(), "w");
   fprintf(pOut, "Seq1\tSeq2\tLen1\tLen2\tOri\t#Kmers\n");
 
-  svec<int> order;
-  MakeRandomList(order, dna.isize());
-
-  int upto = (int)((double)dna.isize()*fraction);
-  cout << "Will examine " << upto << " sequences." << endl;
-  for (int x=0; x<upto; x++) {
-    i = order[x];
-    const DNAVector & d = dna[i];
-    cout << dna.Name(i) << endl;
+ 
+  for (int i=0; i<query.isize(); i++) {   
+    const DNAVector & d = query[i];
+    cout << query.Name(i) << endl;
     svec<SingleHit> hits;
     int min_k = d.isize()/k/20;
+    fprintf(pAll, "%s\n", 
+	    query.Name(i).c_str());
+    fflush(pAll);
 
     for (j=0; j<=d.isize()-k*num12; j+=distance) {
       svec<SingleHitNoPos> tmp;
@@ -156,7 +187,7 @@ int main(int argc,char** argv)
       int l;
       for (l=0; l<matches.isize(); l++) {
 	//cout << "Match w/ " << matches[l].GetContig() << endl;
-	if (matches[l].GetContig() != i)
+	if (matches[l].GetContig() != order[i])
 	  tmp.push_back(SingleHitNoPos(matches[l].GetContig(), matches[l].GetPosition()));
       }
 
@@ -170,7 +201,7 @@ int main(int argc,char** argv)
       //cout << "Matches: " << matches.isize() << " " << matches_rc.isize() << endl;
       int fw_count = tmp.isize();
       for (l=0; l<matches_rc.isize(); l++) {
-	if (matches_rc[l].GetContig() != i)
+	if (matches_rc[l].GetContig() != order[i])
 	  tmp.push_back(SingleHitNoPos(matches_rc[l].GetContig(), matches_rc[l].GetPosition()));
       }
       UniqueSort(tmp);
@@ -196,10 +227,10 @@ int main(int argc,char** argv)
 	  kmers++;
       } else {
 	if (kmers > min_k) {
-	  cout << dna.Name(i) << " overlaps w/ " << dna.Name(hits[j-1].Contig()) << " " << kmers << endl;
+	  cout << query.Name(i) << " overlaps w/ " << dna.Name(hits[j-1].Contig()) << " " << kmers << endl;
 	  fprintf(pOut, "%s\t%s\t%d\t%d\t.\t%d\n", 
-		  dna.Name(i).c_str(), dna.Name(hits[j-1].Contig()).c_str(), 
-		  dna[i].isize(), dna[hits[j-1].Contig()].isize(), kmers);
+		  query.Name(i).c_str(), dna.Name(hits[j-1].Contig()).c_str(), 
+		  query[i].isize(), dna[hits[j-1].Contig()].isize(), kmers);
 	  fflush(pOut);
 	}
 	kmers = 0;
@@ -208,12 +239,14 @@ int main(int argc,char** argv)
     if (kmers > min_k) {
       cout << dna.Name(i) << " overlaps w/ " << dna.Name(hits[j-1].Contig()) << " " << kmers << endl;
       fprintf(pOut, "%s\t%s\t%d\t%d\t.\t%d\n", 
-	      dna.Name(i).c_str(), dna.Name(hits[j-1].Contig()).c_str(), 
-	      dna[i].isize(), dna[hits[j-1].Contig()].isize(), kmers);
+	      query.Name(i).c_str(), dna.Name(hits[j-1].Contig()).c_str(), 
+	      query[i].isize(), dna[hits[j-1].Contig()].isize(), kmers);
     }
    
   }
-  
+
+  fclose(pOut);
+  fclose(pAll);
    
   return 0;
 

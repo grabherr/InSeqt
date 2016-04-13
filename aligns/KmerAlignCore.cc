@@ -40,6 +40,8 @@ void KmerAlignCore<DataType>::AddData(const vecDNAVector & bases,
   cout << "Counting k-mers..." << endl;
   for (j=0; j<(int)bases.size(); j++) {
     const DNAVector & b = bases[j];
+    if (b.isize() == 0)
+      continue;
     const NumVector & t = tags[j];
 
     if (j % 10000 == 0)
@@ -62,6 +64,8 @@ void KmerAlignCore<DataType>::AddData(const vecDNAVector & bases,
   cout << "done, assigning k-mers..." << endl;
   for (j=0; j<(int)bases.size(); j++) {
     const DNAVector & b = bases[j];
+    if (b.isize() == 0)
+      continue;
     const NumVector & t = tags[j];
 
     if (j % 10000 == 0)

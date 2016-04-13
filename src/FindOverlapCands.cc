@@ -166,6 +166,7 @@ int main(int argc,char** argv)
   FILE * pAll = fopen(outName.c_str(), "w");
   fprintf(pOut, "Seq1\tSeq2\tLen1\tLen2\tOri\t#Kmers\n");
 
+  int maxSingle = 100;
  
   for (int i=0; i<query.isize(); i++) {   
     const DNAVector & d = query[i];
@@ -175,7 +176,8 @@ int main(int argc,char** argv)
     fprintf(pAll, "%s\n", 
 	    query.Name(i).c_str());
     fflush(pAll);
-
+   
+    int maxHits = d.isize()*100;
     for (j=0; j<=d.isize()-k*num12; j+=distance) {
       svec<SingleHitNoPos> tmp;
       DNAVector sub;
@@ -209,13 +211,23 @@ int main(int argc,char** argv)
       //if (tmp.isize() > 0) {
       //cout << "    pos: " << tmp[0].Pos() << endl;
       //}
-      for (l=0; l<fw_count; l++) {
-	hits.push_back(SingleHit(tmp[l].Contig(), tmp[l].Pos(), j));
+      if (tmp.isize() < maxSingle) {
+	for (l=0; l<fw_count; l++) {
+	  hits.push_back(SingleHit(tmp[l].Contig(), tmp[l].Pos(), j));
+	}
+      
+      
+	for (; l<tmp.isize(); l++) {
+	  hits.push_back(SingleHit(tmp[l].Contig(), tmp[l].Pos(), d.isize()-j));
+	}
       }
-      for (; l<tmp.isize(); l++) {
-	hits.push_back(SingleHit(tmp[l].Contig(), tmp[l].Pos(), d.isize()-j));
-      }
+      if (hits.isize() > maxHits)
+	break;
     }
+
+    if (hits.isize() > maxHits)
+      continue;
+
     UniqueSort(hits);
     
     int kmers = 0;

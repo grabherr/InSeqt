@@ -15,6 +15,7 @@ bool MakePNG(const string & fileName)
   cmmd += fileName;
   cmmd += " ";
   cmmd += tmp;
+  cout << "Calling " << cmmd << endl;
   int r = system(cmmd.c_str());
 
   if (r != 0) {

@@ -123,7 +123,10 @@ void Histogram::Plot(const string & fileName,
     if (counts[index] > max)
       max = counts[index];
   }
-  
+  cout << "Data points: " << data.isize() << endl;
+  if (data.isize() == 0)
+    max = 1.;
+
   double yscale = 300/max;
 
   string o = fileName;

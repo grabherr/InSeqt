@@ -9,7 +9,12 @@
 class Histogram
 {
  public:
-  Histogram() {}
+  Histogram() {
+    x_max = 300;
+    y_max = 300;
+    x_offset = 20;
+    y_offset = 20;
+  }
 
   void Plot(const string & fileName,
 	    const svec<double>&data, 
@@ -29,6 +34,18 @@ class Histogram
 	    color c = color(0., 0., 0.7));
  private:
   
+  void AddScaleX(ns_whiteboard::whiteboard & board, 
+		 double from,
+		 double to);
+  void AddScaleY(ns_whiteboard::whiteboard & board, 
+		 double from,
+		 double to);
+
+
+  double x_offset;
+  double y_offset;
+  double x_max;
+  double y_max;
 
 };
 

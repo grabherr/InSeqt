@@ -56,15 +56,11 @@ void Histogram::Scatter(const string & fileName,
 
   string o = fileName;
   
-  double x_offset = 20;
-  double y_offset = 20;
 
 
   ns_whiteboard::whiteboard board;
 
  
-  double x_max = 300.;
-  double y_max = 300.;
   double rad = 1.;
 
   //double scale = 12.;
@@ -86,14 +82,66 @@ void Histogram::Scatter(const string & fileName,
 				      1.,
 				      color(0., 0., 0.)) );
 
+  AddScaleX(board, 0, hi1);
 
   ofstream out(o.c_str());
   
   ns_whiteboard::ps_display display(out, x_max + 2 * x_offset, y_max + 2 * y_offset);
   board.DisplayOn(&display);
  
+}
+
+void ReFormat(char * tmp, double max)
+{
+  int i;
+  if (max < 10.) {
+    for (i=0; i<(int)strlen(tmp); i++) {
+      if (tmp[i] == '.' && (int)strlen(tmp) > i+2) {
+	tmp[i+2] = 0;
+	break;
+      }
+    }   
+  } else {
+    for (i=0; i<(int)strlen(tmp); i++) {
+      if (tmp[i] == '.') {
+	tmp[i] = 0;
+	break;
+      }
+    }
+  }
+}
+
+void Histogram::AddScaleX(ns_whiteboard::whiteboard & board, 
+			  double from,
+			  double to)
+{
+  int i;
+  double range = to - from;
+  for (i=0; i<=10; i++) {
+    double v = i*range/10.;
+    double x = x_offset + i*x_max/10.;
+    board.Add( new ns_whiteboard::line( ns_whiteboard::xy_coords(x, y_offset), 
+					ns_whiteboard::xy_coords(x, y_offset-3), 
+					1.,
+					color(0., 0., 0.)) );
+
+    char mark[256];
+    sprintf(mark, "%f", v);
+    ReFormat(mark, to);
+
+    board.Add( new ns_whiteboard::text( ns_whiteboard::xy_coords(x-5, y_offset-12),
+					mark, black, 8., "Times-Roman", 0, true));
+
+  }
+}
+
+void Histogram::AddScaleY(ns_whiteboard::whiteboard & board, 
+			  double from,
+			  double to)
+{
 
 }
+
 
 void Histogram::Plot(const string & fileName,
 		     const svec<double>&data, 
@@ -131,15 +179,11 @@ void Histogram::Plot(const string & fileName,
 
   string o = fileName;
   
-  double x_offset = 20;
-  double y_offset = 20;
 
 
   ns_whiteboard::whiteboard board;
 
  
-  double x_max = 300.;
-  double y_max = 300.;
 
   for (i=0; i<counts.isize(); i++) {
     double x1 = x_max*(double)i/(double)counts.isize();
@@ -168,6 +212,7 @@ void Histogram::Plot(const string & fileName,
 				      1.,
 				      color(0., 0., 0.)) );
 
+  AddScaleX(board, 0, hi-lo);
 
   ofstream out(fileName.c_str());
   

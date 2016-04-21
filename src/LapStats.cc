@@ -103,7 +103,7 @@ int main( int argc, char** argv )
   dist_n += "/lap_dist.ps";
  
   cout << "Plot Dist " << endl;
-  hh.Plot(dist_n, laps_clean, 100, color(0.4, 0.2, 0.9));
+  hh.Plot(dist_n, laps_clean, 100, 0, 200, color(0.4, 0.2, 0.9));
 
   MakePNG(dist_n);
   

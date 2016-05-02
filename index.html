@@ -1,1 +1,97 @@
-InSeqt
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>inSeqt main page</title>
+  </head>
+  <body>
+    <big><big><big>Welcome to<br>
+        </big></big></big><img alt="inSeqt logo" src="Logo.png"
+      height="324" width="751"><br>
+    <br>
+    <big><big><big>The toolkit for assessing long read sequencing data.<br>
+        </big></big></big><br>
+    <br>
+    <b><big>Download</big></b><br>
+    <br>
+    Get the source code from <a
+      href="https://github.com/grabherr/InSeqt">here</a>, or type<br>
+    <br>
+    git clone https://github.com/grabherr/InSeqt.git<br>
+    <br>
+    in a terminal window.<br>
+    <br>
+    <br>
+    <big><b>Build</b><b><br>
+      </b></big><br>
+    cd into your local directory (cd Inseqt) and type make.<br>
+    <br>
+    <br>
+    <big><b>Run</b></big><br>
+    <br>
+    Currently, inSeqt is a collection of individual tools to generate
+    different stats for long read sequencing data, in particular for
+    PacBio reads. Depending on what you would like to know, run one or
+    more of the tools below.<br>
+    <br>
+    <u>Basic Stats</u><u><br>
+    </u><br>
+    To get a quick and basic idea of what the fundamentals of the data
+    look like, run<br>
+    <br>
+    BasicStats -i &lt;file_or_list&gt; -o &lt;output_dir&gt; &gt; out<br>
+    <br>
+    where you either provide a single fastq file, or a list of files,
+    with one entry per line. Follow this up by<br>
+    <br>
+    cd &lt;output_dir&gt;<br>
+    BasicStats2HTML -i ../out<br>
+    <br>
+    and it will generate an HTML file with basic statistics, length and
+    GC distribution etc. <br>
+    <br>
+    <u>Overlap Stats</u><u><br>
+    </u><br>
+    To first generate a list of read-read overlap candidates, run
+    multiple instances of<br>
+    <br>
+    FindOverlapCands -i &lt;input&gt; -o &lt;outfile&gt; -c
+    &lt;chunks&gt; -n &lt;chunkindex&gt; -f &lt;fraction&gt;<br>
+    <br>
+    where -c specifies how many chunks you process (equals the number of
+    instances you run), -n the index of the chunk, and -f the fraction
+    of reads - as an absolute value, not a percentage. For example, to
+    analyze a set of overlaps using 5 processes on 1% of the data, run<br>
+    <br>
+    FindOverlapCands -i &lt;input&gt; -o &lt;outfile&gt; -c 5 -n 0 -f
+    0.01 &gt; overlaps0 &amp;<br>
+    FindOverlapCands -i &lt;input&gt; -o &lt;outfile&gt; -c 5 -n 1 -f
+    0.01 &gt; overlaps1 &amp;<br>
+    FindOverlapCands -i &lt;input&gt; -o &lt;outfile&gt; -c 5 -n 2 -f
+    0.01 &gt; overlaps2 &amp;<br>
+    FindOverlapCands -i &lt;input&gt; -o &lt;outfile&gt; -c 5 -n 3 -f
+    0.01 &gt; overlaps3 &amp;<br>
+    FindOverlapCands -i &lt;input&gt; -o &lt;outfile&gt; -c 5 -n 4 -f
+    0.01 &gt; overlaps4 &amp;<br>
+    <br>
+    Once done, concatenate the overlaps:<br>
+    <br>
+    cat overlaps* &gt; all_overlaps<br>
+    <br>
+    To get a distribution of overlaps, run:<br>
+    <br>
+    LapStats -i all_overlaps -r overlaps0.allreadnames -o
+    &lt;output_dir&gt;<br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    &nbsp;<br>
+    <br>
+    <br>
+  </body>
+</html>

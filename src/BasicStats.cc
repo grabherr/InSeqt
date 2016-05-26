@@ -19,22 +19,33 @@ bool MakePNG(const string & fileName)
   int r = system(cmmd.c_str());
 
   if (r != 0) {
-    cout << "ERROR: imagemagick is not installed!!" << endl;
+    cout << "ERROR: imagemagick could not convert image, returned: " << r << endl;
     exit(-1);
   }
   return true;
 }
 
-
+bool CheckIM()
+{
+  string cmmd = "convert > /dev/null";
+  int r = system(cmmd.c_str());
+  if (r != 0) {
+    cout << "ImageMagick convert not found, returned " << r << " Exiting." << endl;
+    exit(-1);
+  }
+  cout << "ImageMagick installed, OK!" << endl;
+  return true;
+}
  
 int main( int argc, char** argv )
 {
+  CheckIM();
 
   commandArg<string> fileCmmd("-i","input file");
   commandArg<string> outCmmd("-o","output directory");
   //commandArg<bool> listCmmd("-f","", "");
   commandLineParser P(argc,argv);
-  P.SetDescription("Testing the file parser.");
+  P.SetDescription("Compute basic stats for PacBio reads.");
   P.registerArg(fileCmmd);
   P.registerArg(outCmmd);
  

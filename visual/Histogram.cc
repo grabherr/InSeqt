@@ -165,11 +165,11 @@ void Histogram::Plot(const string & fileName,
   for (i=0; i<data.isize(); i++) {
     //cout << lo << " " << data[i] << " " << scale << endl;
     int index = (int)(scale*(lo + data[i]));
-    if (index < counts.isize())
+    if (index < counts.isize()) {
       counts[index] += 1.;
-    //cout << "Add to " << index << " " << counts[index] << endl;
-    if (counts[index] > max)
-      max = counts[index];
+      if (counts[index] > max)
+	max = counts[index];
+    }
   }
   cout << "Data points: " << data.isize() << endl;
   if (data.isize() == 0)

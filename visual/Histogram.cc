@@ -60,6 +60,9 @@ void Histogram::Scatter(const string & fileName,
 
   ns_whiteboard::whiteboard board;
 
+  board.Add( new ns_whiteboard::rect( ns_whiteboard::xy_coords(0, 0), 
+				      ns_whiteboard::xy_coords(2*x_offset+x_max, 2*y_offset+y_max),
+				      color(0.99,0.99,0.99)) );
  
   double rad = 1.;
 
@@ -183,7 +186,10 @@ void Histogram::Plot(const string & fileName,
 
   ns_whiteboard::whiteboard board;
 
- 
+   board.Add( new ns_whiteboard::rect( ns_whiteboard::xy_coords(0, 0), 
+				       ns_whiteboard::xy_coords(2*x_offset+x_max, 2*y_offset+y_max),
+				       color(0.99,0.99,0.99)) );
+
 
   for (i=0; i<counts.isize(); i++) {
     double x1 = x_max*(double)i/(double)counts.isize();

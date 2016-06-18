@@ -125,7 +125,7 @@ int main( int argc, char** argv )
 
     string shortName = GetShort(dna.Name(i));
 
-    if (shortName != lastName || i == dna.isize()-1) {
+    if (localReads > 0 && (shortName != lastName || i == dna.isize()-1)) {
       
       Sort(localSize);
       int localMedian = localSize[localSize.isize()/2];

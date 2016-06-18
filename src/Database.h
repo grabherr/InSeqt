@@ -13,13 +13,13 @@ class KeyValue
   void Set(const string & key, double val) {
     m_key = key;
     char tmp[256];
-    sprinf(tmp, "%f", val);
+    sprintf(tmp, "%f", val);
     m_val = tmp;
   }
   void Set(const string & key, int val) {
     m_key = key;
     char tmp[256];
-    sprinf(tmp, "%d", val);
+    sprintf(tmp, "%d", val);
     m_val = tmp;
   }
   
@@ -34,7 +34,7 @@ class KeyValue
 
 class KeyValueSet
 {
-
+ public:
   string Get(const string & key) const {
     int i;
     for (i=0; i<m_data.isize(); i++) {
@@ -65,6 +65,7 @@ class KeyValueSet
     v.Set(key, val);
     m_data.push_back(v);
   }
+  svec<KeyValue> & Data() {return m_data;}
 
  private:
   svec<KeyValue> m_data;
@@ -77,14 +78,32 @@ class Database
   
 
   int GetLibCount() const {return m_lib.isize();}
-  const KeyValueSet & GetLib(int i) {
+  const KeyValueSet & GetLib(int i) const {
     return m_lib[i];
   }
-    
+  void Add(const KeyValueSet & s) {
+    m_lib.push_back(s);
+  }
+
+
   string Get(const string & key) const {
     return m_global.Get(key);
   }
   KeyValueSet & Global() {return m_global;}
+
+
+  void Add(const string & key, const string & val) {
+    m_global.Add(key, val);
+  }
+  
+  void Add(const string & key, int val) {
+    m_global.Add(key, val);
+  }
+  
+  void Add(const string & key, double val) {
+    m_global.Add(key, val);
+  }
+
 
  private:
   KeyValueSet m_global;
@@ -92,7 +111,7 @@ class Database
 
 };
 
-void Read(Database & d, const string & fileName);
+void ReadDB(Database & d, const string & fileName);
 
 
 #endif //DATABASE_H

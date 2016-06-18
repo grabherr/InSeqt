@@ -2,7 +2,7 @@
 #include "base/FileParser.h"
 
 
-void Read(Database & d, const string & fileName)
+void ReadDB(Database & d, const string & fileName)
 {
 
   FlatFileParser parser;
@@ -15,7 +15,7 @@ void Read(Database & d, const string & fileName)
 
     if (parser.AsString(0) == "SMRT" && parser.AsString(1) != "total") {      
       KeyValueSet n;
-      n.Add("name", parser.AsString(1));
+      n.Add("smrtcell", parser.AsString(1));
       parser.ParseLine();
       n.Add("readcount", parser.AsInt(1));
       parser.ParseLine();
@@ -30,6 +30,7 @@ void Read(Database & d, const string & fileName)
     }
     if (parser.AsString(0) == "SMRT" && parser.AsString(1) == "total") {      
       KeyValueSet & n = d.Global();
+      parser.ParseLine();
       n.Add("readcount_total", parser.AsInt(1));
       parser.ParseLine();
       n.Add("average_total", parser.AsFloat(1));
@@ -46,4 +47,10 @@ void Read(Database & d, const string & fileName)
     }
 
   }
+
+  //svec<KeyValue> & nn = d.Global().Data();
+  //cout << "DATABASE: " << endl;
+  //for (i=0; i<nn.isize(); i++)
+  //cout << nn[i].Key() << " -> " << nn[i].Val() << endl;
+
 }

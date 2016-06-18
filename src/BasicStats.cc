@@ -35,7 +35,7 @@ string GetShort(const string & full) {
     if (tmp[i] == '_') {
       k++;
       if (k == 3) {
-	tmp[i] = '0';
+	tmp[i] = 0;
 	break;
       }
     }

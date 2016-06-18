@@ -134,7 +134,7 @@ int main( int argc, char** argv )
       double local_n50 = 0;
       for (j=0; j<localSize.isize(); j++) {
 	local_nn += localSize[j];
-	if (local_nn >= localReads/2) {
+	if (local_nn >= localTotal/2) {
 	  local_n50 = localSize[j];
 	  break;
 	}
@@ -147,11 +147,12 @@ int main( int argc, char** argv )
       fprintf(pRep, "Median: %d\n", localMedian);
       fprintf(pRep, "Total: %f\n", localTotal);
       fprintf(pRep, "N50: %f\n", local_n50);
-      lastName = shortName;
+      //lastName = shortName;
       localReads = 0;
       localTotal = 0;
       localSize.clear();
     }
+    lastName = shortName;
 
  
     int n = 0;

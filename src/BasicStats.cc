@@ -25,6 +25,25 @@ bool MakePNG(const string & fileName)
   return true;
 }
 
+string GetShort(const string & full) {
+  char tmp[2028];
+  strcpy(tmp, full.c_str());
+
+  int i;
+  int k = 0;
+  for (i=0; i<(int)full.size(); i++) {
+    if (tmp[i] == '_') {
+      k++;
+      if (k == 3) {
+	tmp[i] = '0';
+	break;
+      }
+    }
+  }
+  string ret = tmp;
+  return ret;
+}
+
 bool CheckIM()
 {
   string cmmd = "convert > /dev/null";
@@ -79,6 +98,14 @@ int main( int argc, char** argv )
   svec<int> cycles;
   double  total = 0;
 
+  string summary = outName;
+  summary += "/basicstats.out";
+  FILE * pRep = fopen(summary.c_str(), "w");
+
+  string lastName;
+  int localReads = 0;
+  double localTotal = 0;
+  svec<int> localSize;
   for (i=0; i<dna.isize(); i++) {
 
     StringParser pp;
@@ -96,11 +123,48 @@ int main( int argc, char** argv )
       }
     }
 
+    string shortName = GetShort(dna.Name(i));
+
+    if (shortName != lastName || i == dna.isize()-1) {
+      
+      Sort(localSize);
+      int localMedian = localSize[localSize.isize()/2];
+      
+      double local_nn = 0;
+      double local_n50 = 0;
+      for (j=0; j<localSize.isize(); j++) {
+	local_nn += localSize[j];
+	if (local_nn >= localReads/2) {
+	  local_n50 = localSize[j];
+	  break;
+	}
+      }
+
+
+      fprintf(pRep, "SMRT %s\n", lastName.c_str());
+      fprintf(pRep, "Reads: %d\n", localReads);
+      fprintf(pRep, "Average: %f\n", (double)localTotal/(double)localReads);
+      fprintf(pRep, "Median: %d\n", localMedian);
+      fprintf(pRep, "Total: %f\n", localTotal);
+      fprintf(pRep, "N50: %f\n", local_n50);
+      lastName = shortName;
+      localReads = 0;
+      localTotal = 0;
+      localSize.clear();
+    }
+
+ 
     int n = 0;
     int gc = 0;
     int n_w = 0;
     int gc_w = 0;
     const DNAVector & d = dna[i];
+
+
+    localReads++;
+    localTotal += d.isize();
+    localSize.push_back(d.isize());
+
     size.push_back(d.isize());
     total += d.isize();
     avg += d.isize();
@@ -140,16 +204,15 @@ int main( int argc, char** argv )
     }
   }
 
-  string summary = outName;
-  summary += "/basicstats.out";
-  FILE * pRep = fopen(summary.c_str(), "w");
   //cout << "Basic stats" << endl;
+  cout << "smrt TOTAL " << endl;
   cout << "Reads: " << dna.isize() << endl;
   cout << "Average: " << avg << endl;
   cout << "Median: " << median << endl;
   cout << "Total: " << total << endl;
   cout << "N50: " << n50 << endl;
 
+  fprintf(pRep, "SMRT total\n");
   fprintf(pRep, "Reads: %d\n", dna.isize());
   fprintf(pRep, "Average: %f\n", avg);
   fprintf(pRep, "Median: %d\n", median);

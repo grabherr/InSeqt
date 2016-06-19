@@ -220,13 +220,19 @@ int main( int argc, char** argv )
   fprintf(pRep, "Total: %f\n", total);
   fprintf(pRep, "N50: %f\n", n50);
 
-
-  for (i=0; i<cycles.isize(); i++) {
-    if (cycles[i] > 0) {
-      cout << "# " << i+1 << " " << cycles[i] << endl;
-      fprintf(pRep, "# %d %d\n", i+1, cycles[i]);
-    }
+  int max = 19;
+  for (i=0; i<max; i++) {
+    //if (cycles[i] > 0) {
+    cout << "# " << i+1 << " " << cycles[i] << endl;
+    fprintf(pRep, "# %d %d\n", i+1, cycles[i]);
+      //}
   }
+  int n20above = 0;
+  for (i=max; i<cycles.isize(); i++) {
+    n20above += cycles[i];
+  }
+  fprintf(pRep, "# >=%d %d\n", max+1, n20above);
+
   fclose(pRep);
 
   Histogram hh;

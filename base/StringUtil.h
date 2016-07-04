@@ -17,7 +17,11 @@ string After(string &s, char *t);
 string Before(string &s, char *t);
 bool Contains(string &s, char *t);
 
-bool ContainsAt(string &s, string &t, int at);
+inline bool ContainsAt(string &s, string &t, int at)
+{
+  string::size_type pos = s.find(t);
+  return ( (int) pos == at );
+}
 
 int PositionAfter(string &in, string& s, int startSearchAt);
 

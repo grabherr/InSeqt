@@ -43,7 +43,9 @@ void ReadDB(Database & d, const string & fileName)
     }
     if (parser.AsString(0) == "#") {      
       KeyValueSet & n = d.Global();
-      n.Add(parser.AsString(1), parser.AsInt(2));
+      string kk = "cycle";
+      kk+= parser.AsString(1);
+      n.Add(kk, parser.AsInt(2));
     }
 
   }

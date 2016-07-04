@@ -25,6 +25,19 @@ public:
     m_depend.push_back(dep);
   }
 
+
+  void PrintLogo() const {
+
+    cout << "    _____      _____            _" << endl;
+    cout << "   |_   _|    /  ___|          | |" << endl;
+    cout << "     | | _ __ \\ `--.  ___  __ _| |_" << endl;
+    cout << "     | || '_ \\ `--. \\/ _ \\/ _` | __|" << endl;
+    cout << "    _| || | | /\\__/ /  __/ (_| | |_ " << endl;
+    cout << "    \\___/_| |_\\____/ \\___|\\__, |\\__|" << endl;
+    cout << "                             | |    " << endl;
+    cout << "                             |_|    " << endl;
+  }
+  
   void ParserCL(int argc, char** argv) {
     int i;
     m_exe = argv[0];
@@ -75,6 +88,8 @@ public:
     
 
   void ShowHelp(bool bFull) {
+    PrintLogo();
+    cout << endl;
     int i;
     if (!bFull)
       cout << "For detailed options, type InSeqt -full" << endl << endl;

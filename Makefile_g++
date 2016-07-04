@@ -9,9 +9,9 @@ ifeq ($(QUIET),yes)
   SYS_WARN	+= -w
 else
   ifeq ($(GPP_VERSION),3.4.3)
-    SYS_WARN	+= -Wextra -Wall -Wno-unused -Wno-deprecated
+    SYS_WARN	+= -Wextra -Wall -I. -Wno-unused -Wno-deprecated
   else
-    SYS_WARN	+= -W -Wall -Wno-unused -Wno-deprecated
+    SYS_WARN	+= -W -Wall -I. -Wno-unused -Wno-deprecated
   endif
 endif
 

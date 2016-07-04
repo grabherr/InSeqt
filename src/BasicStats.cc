@@ -58,7 +58,6 @@ bool CheckIM()
  
 int main( int argc, char** argv )
 {
-  CheckIM();
 
   commandArg<string> fileCmmd("-i","input file");
   commandArg<string> outCmmd("-o","output directory");
@@ -72,7 +71,8 @@ int main( int argc, char** argv )
   
   string fileName = P.GetStringValueFor(fileCmmd);
   string outName = P.GetStringValueFor(outCmmd);
- 
+  CheckIM();
+
  
   string makeOut = "mkdir ";
   makeOut += outName;

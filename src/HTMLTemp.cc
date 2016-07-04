@@ -23,7 +23,7 @@ void HTMLRead::Read(const string & fileName, const string & delim)
     pp.SetLine(parser.Line(), m_delim);
     //cout << "Parts " << pp.GetItemCount() << endl;
     if (pp.GetItemCount() > 1 && pp.AsString(1) == "tablerow_begin") {
-      cout << "############ Prepare table!!" << endl;
+      //cout << "############ Prepare table!!" << endl;
       bTable = true;
       HTMLPart tabins;
       tabins.SetToken("internal_table");
@@ -66,20 +66,20 @@ void HTMLRead::FillWrite(const Database & db, const string & fileName)
     const HTMLPart & p = m_parts[i];
  
     if (p.Token() == "internal_table") {
-      cout << "Inserting table!" << endl;
+      //cout << "Inserting table!" << endl;
       for (j=0; j<db.GetLibCount(); j++) {
 	const KeyValueSet & t_db = db.GetLib(j);
-	cout << "Process " << j << endl;
+	//cout << "Process " << j << endl;
 	for (k=0; k<m_table.isize(); k++) {
 	  const HTMLPart & t = m_table[k];	
 	  if (t.Token() == "") {
-	    cout << "Print " << t.Data() << endl;
+	    //cout << "Print " << t.Data() << endl;
 	    fprintf(pOut, "%s", t.Data().c_str());
 	    if (t.HasBR())
 	      fprintf(pOut, "\n");
 	  } else {
 	    string rep = t_db.Get(t.Token());
-	    cout << "Fill " << t.Token() << " -> " << rep << endl;
+	    //cout << "Fill " << t.Token() << " -> " << rep << endl;
 	    fprintf(pOut, "%s", rep.c_str());      
 	  }
 	}

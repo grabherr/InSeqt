@@ -91,6 +91,7 @@ int main( int argc, char** argv )
 
   double avg = 0.;
   svec<int> lengths;
+  svec<double> lengths_polym;
 
   string last;
   int same = 0;
@@ -101,25 +102,40 @@ int main( int argc, char** argv )
   string summary = outName;
   summary += "/basicstats.out";
   FILE * pRep = fopen(summary.c_str(), "w");
+  string cyclesummary = outName;
+  cyclesummary += "/by_cycles.out";
+  FILE * pCycle = fopen(cyclesummary.c_str(), "w");
 
   string lastName;
   int localReads = 0;
   double localTotal = 0;
   svec<int> localSize;
+
+  svec<string> namecache;
+
   for (i=0; i<dna.isize(); i++) {
 
     StringParser pp;
     pp.SetLine(dna.Name(i), "/");
+    bool bCont = false;
     if (pp.GetItemCount() > 2) {
       const string & id = pp.AsString(1);
       if (id == last) {
+	bCont = true;
 	same++;
+	namecache.push_back(dna.Name(i));
       } else {
 	if (same >= cycles.isize())
 	  cycles.resize(same+1, 0);
 	cycles[same]++;
+
+	for (int x=0; x<namecache.isize(); x++)
+	  fprintf(pCycle, "%s\t%d\n", namecache[x].c_str(), same+1);
+
 	same = 0;
 	last = id;
+	namecache.clear();
+	namecache.push_back(dna.Name(i));
       }
     }
 
@@ -171,6 +187,12 @@ int main( int argc, char** argv )
     avg += d.isize();
     lengths.push_back(d.isize());
 
+    if (!bCont) {
+      lengths_polym.push_back(d.isize());
+    } else {
+      lengths_polym[lengths_polym.isize()-1] += d.isize();
+    }
+
     for (j=0; j<d.isize(); j++) {
       if (d[j] == 'A' || d[j] == 'C' || d[j] == 'G' || d[j] == 'T') {
 	n++;
@@ -191,6 +213,11 @@ int main( int argc, char** argv )
   
 
   }
+
+  for (int x=0; x<namecache.isize(); x++)
+    fprintf(pCycle, "%s\t%d\n", namecache[x].c_str(), same+1);
+
+
   avg /= (double)dna.isize();
   Sort(lengths);
   int median = lengths[lengths.isize()/2];
@@ -234,6 +261,7 @@ int main( int argc, char** argv )
   fprintf(pRep, "# >=%d %d\n", max+1, n20above);
 
   fclose(pRep);
+  fclose(pCycle);
 
   Histogram hh;
 
@@ -243,6 +271,8 @@ int main( int argc, char** argv )
   win_n += "/win.ps";
   string size_n = outName;
   size_n += "/size.ps";
+  string sizepolym_n = outName;
+  sizepolym_n += "/sizepolym.ps";
   string scatter_n = outName;
   scatter_n += "/scatter.ps";
 
@@ -254,10 +284,14 @@ int main( int argc, char** argv )
   hh.Plot(size_n, size, 100, color(0.99, 0.2, 0.2));
   cout << "Scatter " << seq.isize() << " " << size.isize() << endl;
   hh.Scatter(scatter_n, seq, size, color(0.3, 0.0, 0.4));
+  cout << "Plot Polym Size " << endl;
+  hh.Plot(sizepolym_n, lengths_polym, 100, color(0.99, 0.2, 0.2));
+
 
   MakePNG(seq_n);
   MakePNG(win_n);
   MakePNG(size_n);
+  MakePNG(sizepolym_n);
   MakePNG(scatter_n);
 
   

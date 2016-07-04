@@ -8,11 +8,12 @@
 #include <set>
 #include <stdlib.h>
 
+using namespace std;
+
 #include "base/StringUtil.h"
 #include "base/FileParser.h"
 
 
-using namespace std;
 
 template<typename argType> 
 class commandArg 

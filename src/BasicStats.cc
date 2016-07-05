@@ -292,11 +292,11 @@ int main( int argc, char** argv )
   hh.Plot(sizepolym_n, lengths_polym, 100, color(0.99, 0.2, 0.2));
 
 
-  MakePNG(seq_n);
-  MakePNG(win_n);
-  MakePNG(size_n);
-  MakePNG(sizepolym_n);
-  MakePNG(scatter_n);
+  //MakePNG(seq_n);
+  //MakePNG(win_n);
+  //MakePNG(size_n);
+  //MakePNG(sizepolym_n);
+  //MakePNG(scatter_n);
 
   
 

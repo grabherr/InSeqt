@@ -36,7 +36,7 @@ void Histogram::Scatter(const string & fileName,
 			const svec<double>&data2, 	  
 			color c)
 {
-  double hi1 = data1[0];
+  double hi1 = 1.;
   double hi2 = data2[0];
 
   int i;
@@ -85,6 +85,7 @@ void Histogram::Scatter(const string & fileName,
 				      1.,
 				      color(0., 0., 0.)) );
 
+  //AddScaleX(board, 0, hi1);
   AddScaleX(board, 0, hi1);
 
   ofstream out(o.c_str());

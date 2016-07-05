@@ -41,16 +41,17 @@ public:
   void ParserCL(int argc, char** argv) {
     int i;
     m_exe = argv[0];
-    //cout << "Running " << m_exe << endl;
+    cout << "Running " << m_exe << endl;
     for (i=strlen(argv[0])-1; i>=0; i--) {
       if (argv[0][i] == '/') {
 	char tmp[1024];
 	strcpy(tmp, argv[0]);
 	tmp[i+1] = 0;
 	m_exe = tmp;
+	break;
       }
     }
-    //cout << m_exe << endl;
+    cout << m_exe << endl;
     for (i=0; i<m_program.isize(); i++)
       m_program[i] = m_exe + m_program[i];
   

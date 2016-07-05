@@ -61,12 +61,16 @@ int main( int argc, char** argv )
 
   commandArg<string> fileCmmd("-i","input file");
   commandArg<string> outCmmd("-o","output directory");
-  //commandArg<bool> listCmmd("-f","", "");
+  
+   
   commandLineParser P(argc,argv);
   P.SetDescription("Compute basic stats for PacBio reads.");
   P.registerArg(fileCmmd);
   P.registerArg(outCmmd);
- 
+
+  
+  
+  
   P.parse();
   
   string fileName = P.GetStringValueFor(fileCmmd);

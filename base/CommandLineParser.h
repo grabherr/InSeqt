@@ -53,14 +53,16 @@ friend bool operator< (const commandArg<argType> &lhs,
 string GetType() 
 {
   string type = typeid(*this).name();
+  cout << "Type " << type << endl;
   if ( type.find("Ib") != string::npos )
     return "bool";
   else if ( type.find("Ii") != string::npos )
     return "int";
   else if ( type.find("Id") != string::npos )
     return "double";
-  else if ( type.find("ISs") != string::npos )
+  else if ( type.find("ISs") != string::npos || type.find("INS") != string::npos)
     return "string";
+
   else
     return "unknown type";
 }

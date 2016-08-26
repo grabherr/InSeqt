@@ -13,7 +13,7 @@ public:
   Command() {
     Add("basic", "BasicStats");
     Add("report", "MakeBasicReport");
-    Add("lapcands", "FindOverlapCands");
+    Add("lapcands", "RunFindOverlapCands");
     Add("esterr", "EstimateErrors");
     Add("lapstats", "LapStats");
 
@@ -40,8 +40,8 @@ public:
   
   void ParserCL(int argc, char** argv) {
     int i;
-    m_exe = argv[0];
-    cout << "Running " << m_exe << endl;
+    m_exe = "";
+    cout << "Running " << argv[0] << endl;
     for (i=strlen(argv[0])-1; i>=0; i--) {
       if (argv[0][i] == '/') {
 	char tmp[1024];

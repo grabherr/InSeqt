@@ -7,7 +7,7 @@
 #include "src/DataRead.h"
 #include "base/RandomStuff.h"
 #include <math.h>
-
+#include "base/StringUtil.h"
 
 void MakeRandomList(svec<int> & l, int n)
 {
@@ -89,7 +89,7 @@ int main(int argc,char** argv)
 
   
   commandArg<string> aStringCmmd("-i","input sequence file or file list");
-  commandArg<string> outCmmd("-o","output file");
+  commandArg<string> outCmmd("-o","output directory");
   commandArg<int> nCmmd("-n","chunk index (0-based)", 0);
   commandArg<int> chunksCmmd("-c","total chunks", 1);
   commandArg<int> distCmmd("-distance","distance between seeds", 1);
@@ -106,16 +106,19 @@ int main(int argc,char** argv)
   P.registerArg(fracCmmd);
 
   P.parse();
+ 
+  int chunks = P.GetIntValueFor(chunksCmmd);
+  int thisone = P.GetIntValueFor(nCmmd);
 
   string fileName = P.GetStringValueFor(aStringCmmd);
   string outName = P.GetStringValueFor(outCmmd);
+  outName += "/overlapcands.out.";
+  outName += Stringify(thisone);
   int distance = P.GetIntValueFor(distCmmd);
   int num12 = P.GetIntValueFor(numCmmd);
   double fraction = P.GetDoubleValueFor(fracCmmd);
   
-  int chunks = P.GetIntValueFor(chunksCmmd);
-  int thisone = P.GetIntValueFor(nCmmd);
-
+ 
   vecDNAVector dna;
    
   ReadDNA(dna, fileName);
@@ -162,28 +165,38 @@ int main(int argc,char** argv)
 
   
   FILE * pOut = fopen(outName.c_str(), "w");
-  outName += ".allreadnames";
+  string done = outName + ".done";
+  string remove = "rm " + done;
+  int retRem = system(remove.c_str());
+  outName += ".allreadnames.";
+  outName += Stringify(thisone);
   FILE * pAll = fopen(outName.c_str(), "w");
   fprintf(pOut, "Seq1\tSeq2\tLen1\tLen2\tOri\t#Kmers\n");
+  
+  
 
   int maxSingle = 100;
  
   for (int i=0; i<query.isize(); i++) {   
     const DNAVector & d = query[i];
-    cout << query.Name(i) << endl;
+    //cout << query.Name(i) << endl;
     svec<SingleHit> hits;
     int min_k = d.isize()/k/20;
     fprintf(pAll, "%s\n", 
 	    query.Name(i).c_str());
     fflush(pAll);
-   
+
+    //cout << "Start." << endl;
     int maxHits = d.isize()*100;
     for (j=0; j<=d.isize()-k*num12; j+=distance) {
+      //cout << "Lookup " << j << endl;
       svec<SingleHitNoPos> tmp;
       DNAVector sub;
       sub.SetToSubOf(d, j, k*num12);
       svec<KmerAlignCoreRecordWithScore> matches;
+      //cout << "Before." << endl;
       core.GetMatches(matches, sub);
+      //cout << "After." << endl;
       int found = 0;
 
       int l;
@@ -202,16 +215,20 @@ int main(int argc,char** argv)
       // cout << "Matches: " << n << " " << log((double)n) << endl;
       //cout << "Matches: " << matches.isize() << " " << matches_rc.isize() << endl;
       int fw_count = tmp.isize();
+      //cout << i << endl;
+      //cout << order[i] << endl;
       for (l=0; l<matches_rc.isize(); l++) {
 	if (matches_rc[l].GetContig() != order[i])
 	  tmp.push_back(SingleHitNoPos(matches_rc[l].GetContig(), matches_rc[l].GetPosition()));
       }
-      UniqueSort(tmp);
+      //cout << "Unique" << endl;
+      //UniqueSort(tmp);
       //cout << j << " -> " << tmp.isize() << endl;
       //if (tmp.isize() > 0) {
       //cout << "    pos: " << tmp[0].Pos() << endl;
       //}
       if (tmp.isize() < maxSingle) {
+	//cout << tmp.isize() << " " << fw_count << endl;
 	for (l=0; l<fw_count; l++) {
 	  hits.push_back(SingleHit(tmp[l].Contig(), tmp[l].Pos(), j));
 	}
@@ -223,15 +240,16 @@ int main(int argc,char** argv)
       }
       if (hits.isize() > maxHits)
 	break;
+     
     }
-
+    //cout << "Done" << endl;
     if (hits.isize() > maxHits)
       continue;
 
     UniqueSort(hits);
-    
+    //cout << "After unique." << endl;
     int kmers = 0;
-    cout << "Hits: " << hits.isize() << endl;
+    //cout << "Hits: " << hits.isize() << endl;
     for (j=1; j<hits.isize(); j++) {
       //cout << j << " Contig " << hits[j].Contig() << " Pos " << hits[j].Pos() << endl;
       if (hits[j].Contig() == hits[j-1].Contig()) {
@@ -254,12 +272,16 @@ int main(int argc,char** argv)
 	      query.Name(i).c_str(), dna.Name(hits[j-1].Contig()).c_str(), 
 	      query[i].isize(), dna[hits[j-1].Contig()].isize(), kmers);
     }
-   
+    //cout << "Done." << endl;
   }
 
   fclose(pOut);
   fclose(pAll);
-   
+
+  FILE * pDone = fopen(done.c_str(), "w");
+  fprintf(pDone, "done\n");
+  fclose(pDone);
+
   return 0;
 
 }

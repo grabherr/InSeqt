@@ -38,26 +38,27 @@ void LoadReads(svec<string> & reads, const string & fileName)
 int main( int argc, char** argv )
 {
 
-  commandArg<string> fileCmmd("-i","input overlap file");
-  commandArg<string> readCmmd("-r","input read file");
-  commandArg<string> outCmmd("-o","output directory");
+  //commandArg<string> fileCmmd("-i","input overlap file");
+  //commandArg<string> readCmmd("-r","input read file");
+  commandArg<string> outCmmd("-o","data directory");
   //commandArg<bool> listCmmd("-f","", "");
   commandLineParser P(argc,argv);
   P.SetDescription("Testing the file parser.");
-  P.registerArg(fileCmmd);
-  P.registerArg(readCmmd);
+  //P.registerArg(fileCmmd);
+  //P.registerArg(readCmmd);
   P.registerArg(outCmmd);
  
   P.parse();
   
-  string fileName = P.GetStringValueFor(fileCmmd);
-  string readName = P.GetStringValueFor(readCmmd);
+  string fileName = P.GetStringValueFor(outCmmd);
+  fileName += "/overlapcands.out";
+  string readName = fileName + ".allreadnames.0";
   string outName = P.GetStringValueFor(outCmmd);
  
  
-  string makeOut = "mkdir ";
-  makeOut += outName;
-  int rr = system(makeOut.c_str());
+  //string makeOut = "mkdir ";
+  //makeOut += outName;
+  //int rr = system(makeOut.c_str());
 
   svec<string> reads;
   LoadReads(reads, readName);

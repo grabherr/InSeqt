@@ -52,7 +52,7 @@ int main( int argc, char** argv )
   
   string fileName = P.GetStringValueFor(outCmmd);
   fileName += "/overlapcands.out";
-  string readName = fileName + ".allreadnames.0";
+  string readName = fileName + ".0.allreadnames.0";
   string outName = P.GetStringValueFor(outCmmd);
  
  

@@ -90,7 +90,7 @@ int main( int argc, char** argv )
     }
   }
   cout << "Concatenating output." << endl;
-  string cat = "cat " + out + "/overlapcands.out.* > ";
+  string cat = "cat " + out + "/overlapcands.out.*.cand > ";
   cat += out + "/overlapcands.out";
   int rrr = system(cat.c_str());
   cout << "All done!!" << endl;

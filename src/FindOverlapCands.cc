@@ -114,6 +114,7 @@ int main(int argc,char** argv)
   string outName = P.GetStringValueFor(outCmmd);
   outName += "/overlapcands.out.";
   outName += Stringify(thisone);
+ 
   int distance = P.GetIntValueFor(distCmmd);
   int num12 = P.GetIntValueFor(numCmmd);
   double fraction = P.GetDoubleValueFor(fracCmmd);
@@ -163,8 +164,8 @@ int main(int argc,char** argv)
   core.SortAll();
   cout << "done" << endl;
 
-  
-  FILE * pOut = fopen(outName.c_str(), "w");
+  string outNamePlus = outName + ".cand";
+  FILE * pOut = fopen(outNamePlus.c_str(), "w");
   string done = outName + ".done";
   string remove = "rm " + done;
   int retRem = system(remove.c_str());

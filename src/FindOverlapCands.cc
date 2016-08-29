@@ -32,11 +32,13 @@ public:
   SingleHitNoPos() {
     m_contig = -1;
     m_pos = -1;
+    m_rc = false;
   }
 
-  SingleHitNoPos(int contig, int pos) {
+  SingleHitNoPos(int contig, int pos, bool rc) {
     m_contig = contig;
     m_pos = pos;
+    m_rc = rc;
   }
 
   bool operator < (const SingleHitNoPos & h) const {
@@ -45,10 +47,12 @@ public:
 
   int Contig() const {return m_contig;}
   int Pos() const {return m_pos;}
+  bool RC() const {return m_rc;}
 
 private:
   int m_contig;
   int m_pos;
+  bool m_rc;
 };
 
 class SingleHit
@@ -58,16 +62,19 @@ public:
     m_contig = -1;
     m_pos = -1;
     m_qPos = -1;
-    m_ori = 0;
+    m_rc = false;
   }
 
-  SingleHit(int contig, int pos, int qPos) {
+  SingleHit(int contig, int pos, int qPos, bool rc) {
     m_contig = contig;
     m_pos = pos;
     m_qPos = qPos;
+    m_rc = rc;
   }
 
   bool operator < (const SingleHit & h) const {
+    if (m_rc != h.m_rc)
+      return h.m_rc;
     if (m_contig != h.m_contig)
       return m_contig < h.m_contig;
     return m_pos < h.m_pos;
@@ -75,12 +82,19 @@ public:
 
   int Contig() const {return m_contig;}
   int Pos() const {return m_pos;}
+  bool RC() const {return m_rc;}
+  char RCC() const {
+    if (m_rc)
+      return '-';
+    else
+      return '+';
+  }
 
 private:
   int m_contig;
   int m_pos;
   int m_qPos;
-  int m_ori;
+  bool m_rc;
 };
 
 
@@ -204,7 +218,7 @@ int main(int argc,char** argv)
       for (l=0; l<matches.isize(); l++) {
 	//cout << "Match w/ " << matches[l].GetContig() << endl;
 	if (matches[l].GetContig() != order[i])
-	  tmp.push_back(SingleHitNoPos(matches[l].GetContig(), matches[l].GetPosition()));
+	  tmp.push_back(SingleHitNoPos(matches[l].GetContig(), matches[l].GetPosition(), false));
       }
 
       
@@ -220,7 +234,7 @@ int main(int argc,char** argv)
       //cout << order[i] << endl;
       for (l=0; l<matches_rc.isize(); l++) {
 	if (matches_rc[l].GetContig() != order[i])
-	  tmp.push_back(SingleHitNoPos(matches_rc[l].GetContig(), matches_rc[l].GetPosition()));
+	  tmp.push_back(SingleHitNoPos(matches_rc[l].GetContig(), matches_rc[l].GetPosition(), true));
       }
       //cout << "Unique" << endl;
       //UniqueSort(tmp);
@@ -231,12 +245,12 @@ int main(int argc,char** argv)
       if (tmp.isize() < maxSingle) {
 	//cout << tmp.isize() << " " << fw_count << endl;
 	for (l=0; l<fw_count; l++) {
-	  hits.push_back(SingleHit(tmp[l].Contig(), tmp[l].Pos(), j));
+	  hits.push_back(SingleHit(tmp[l].Contig(), tmp[l].Pos(), j, tmp[l].RC()));
 	}
       
       
 	for (; l<tmp.isize(); l++) {
-	  hits.push_back(SingleHit(tmp[l].Contig(), tmp[l].Pos(), d.isize()-j));
+	  hits.push_back(SingleHit(tmp[l].Contig(), tmp[l].Pos(), d.isize()-j, tmp[l].RC()));
 	}
       }
       if (hits.isize() > maxHits)
@@ -259,9 +273,9 @@ int main(int argc,char** argv)
       } else {
 	if (kmers > min_k) {
 	  cout << query.Name(i) << " overlaps w/ " << dna.Name(hits[j-1].Contig()) << " " << kmers << endl;
-	  fprintf(pOut, "%s\t%s\t%d\t%d\t.\t%d\n", 
+	  fprintf(pOut, "%s\t%s\t%d\t%d\t%c\t%d\n", 
 		  query.Name(i).c_str(), dna.Name(hits[j-1].Contig()).c_str(), 
-		  query[i].isize(), dna[hits[j-1].Contig()].isize(), kmers);
+		  query[i].isize(), dna[hits[j-1].Contig()].isize(), hits[j-1].RCC(), kmers);
 	  fflush(pOut);
 	}
 	kmers = 0;
@@ -269,9 +283,9 @@ int main(int argc,char** argv)
     }
     if (kmers > min_k) {
       cout << dna.Name(i) << " overlaps w/ " << dna.Name(hits[j-1].Contig()) << " " << kmers << endl;
-      fprintf(pOut, "%s\t%s\t%d\t%d\t.\t%d\n", 
+      fprintf(pOut, "%s\t%s\t%d\t%d\t%c\t%d\n", 
 	      query.Name(i).c_str(), dna.Name(hits[j-1].Contig()).c_str(), 
-	      query[i].isize(), dna[hits[j-1].Contig()].isize(), kmers);
+	      query[i].isize(), dna[hits[j-1].Contig()].isize(), hits[j-1].RCC(), kmers);
     }
     //cout << "Done." << endl;
   }

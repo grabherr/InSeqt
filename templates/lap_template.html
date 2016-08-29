@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+#smrtcells {
+    font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#smrtcells td, #smrtcells th {
+    border: 1px solid #ddd;
+    text-align: left;
+    padding: 8px;
+}
+
+#smrtcells tr:nth-child(even){background-color: #f2f2f2}
+
+#smrtcells tr:hover {background-color: #ddd;}
+
+#smrtcells th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    background-color: #4C50AF;
+    color: white;
+}
+</style>
+<style>
+#overlaps {
+    font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#overlaps td, #overlaps th {
+    border: 1px solid #ddd;
+    text-align: left;
+    padding: 8px;
+}
+
+#overlaps tr:nth-child(even){background-color: #f2f2f2}
+
+#overlaps tr:hover {background-color: #ddd;}
+
+#overlaps th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    background-color: #4C50AF;
+    color: white;
+}
+</style>
+</head>
+<body>
+
+<img alt="inSeqt logo" src="Logo.png"
+      height="130" width="310">
+
+<h2 style="text-align:center">Overlap statistics</h2>
+
+<table id="overlaps">
+  <tr>
+    <th>reads tested (%)</th>
+    <th>passing reads</th>
+    <th>total overlaps</th>
+    <th>overlaps/read</th>
+    <th>overlaps '+'</th>
+    <th>overlaps '-'</th>
+    <th>base coverage</th>
+    <th>genome size ets.</th>
+   </tr>
+  <tr>
+    <td>##InSeqt##tested##InSeqt##</td>
+    <td>##InSeqt##passing##InSeqt##</td>
+    <td>##InSeqt##total##InSeqt##</td>
+    <td>##InSeqt##perread##InSeqt##</td>
+    <td>##InSeqt##lapsplus##InSeqt##</td>
+    <td>##InSeqt##lapsminus##InSeqt##</td>
+    <td>##InSeqt##coverage##InSeqt##</td>
+    <td>##InSeqt##genomesize##InSeqt##</td>
+  </tr>
+
+</table>
+<br><br>
+
+<style>
+/* The Image Box */
+div.img {
+    border: 1px solid #ccc;
+}
+
+div.img:hover {
+    border: 1px solid #777;
+}
+
+/* The Image */
+div.img img {
+    width: 100%;
+    height: auto;
+    cursor: pointer;
+}
+
+/* Description of Image */
+div.desc {
+    padding: 15px;
+    text-align: center;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+/* Add Responsiveness */
+.responsive {
+    padding: 0 6px;
+    float: left;
+    width: 24.99999%;
+}
+
+/* The Modal (background) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    padding-top: 100px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.9); /* Black w/ opacity */
+}
+
+/* Modal Content (image) */
+.modal-content {
+    margin: auto;
+    display: block;
+    width: 80%;
+    max-width: 700px;
+}
+
+/* Caption of Modal Image */
+#caption {
+    margin: auto;
+    display: block;
+    width: 80%;
+    max-width: 700px;
+    text-align: center;
+    color: #ccc;
+    padding: 10px 0;
+    height: 150px;
+}
+
+/* Add Animation */
+.modal-content, #caption {    
+    -webkit-animation-name: zoom;
+    -webkit-animation-duration: 0.6s;
+    animation-name: zoom;
+    animation-duration: 0.6s;
+}
+
+@-webkit-keyframes zoom {
+    from {transform:scale(0)} 
+    to {transform:scale(1)}
+}
+
+@keyframes zoom {
+    from {transform:scale(0.1)} 
+    to {transform:scale(1)}
+}
+
+/* The Close Button */
+.close {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.close:hover,
+.close:focus {
+    color: #bbb;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Responsive Columns */
+@media only screen and (max-width: 700px){
+    .responsive {
+        width: 49.99999%;
+        margin: 6px 0;
+    }
+    .modal-content {
+        width: 100%;
+    }
+}
+
+@media only screen and (max-width: 500px){
+    .responsive {
+        width: 100%;
+    }
+}
+
+/* Clear Floats */
+.clearfix:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+</style>
+</head>
+<body>
+
+<h2 style="text-align:center">Figures and graphs</h2>
+
+<div class="responsive">
+  <div class="img">
+      <img src="lap_dist.png" alt="Overlap distribution" width="300" height="200">
+    <div class="desc">Overlap distribution</div>
+  </div>
+</div>
+
+<div class="responsive">
+  <div class="img">
+      <img src="lap_scatter.png" alt="Read length (x) vs. overlaps (y)" width="300" height="200">
+    <div class="desc">Read length (x) vs. overlaps (y)</div>
+  </div>
+</div>
+
+
+<div class="clearfix"></div>
+
+<!-- The Modal -->
+<div id="myModal" class="modal">
+  <span class="close">×</span>
+  <img class="modal-content" id="img01">
+  <div id="caption"></div>
+</div>
+
+<script>
+// Get the modal
+var modal = document.getElementById('myModal');
+
+// Get the <span> element that closes the modal
+var span = document.getElementsByClassName("close")[0];
+
+// When the user clicks on <span> (x), close the modal
+span.onclick = function() { 
+    modal.style.display = "none";
+}
+
+// Get all images and insert the clicked image inside the modal
+// Get the content of the image description and insert it inside the modal image caption
+var images = document.getElementsByTagName('img');
+var modalImg = document.getElementById("img01");
+var captionText = document.getElementById("caption");
+var i;
+for (i = 0; i < images.length; i++) {
+   images[i].onclick = function(){
+       modal.style.display = "block";
+       modalImg.src = this.src;
+       modalImg.alt = this.alt;
+       captionText.innerHTML = this.nextElementSibling.innerHTML;
+   }
+}
+</script>
+
+<div style="padding:6px;">
+  <p>Click on the thumbnail to enlarge the graph.</p>
+</div>
+
+</body>
+</html>

@@ -15,7 +15,8 @@
     <br>
     <br>
     Look <a
-      href="https://grabherr.github.io/InSeqt/example_main.html">here</a> for sample reports<br>
+      href="https://grabherr.github.io/InSeqt/example_main.html">here</a> and 
+<a href="https://grabherr.github.io/InSeqt/example_overlaps.html">here</a> for sample reports<br>
     <br>
      <b><big>Download</big></b><br>
     <br>
@@ -34,12 +35,13 @@
     <br>
     <big><b>Run</b></big><br>
     <br>
-    Currently, inSeqt is a collection of individual tools to generate
-    different stats for long read sequencing data, in particular for
-    PacBio reads. Depending on what you would like to know, run one or
-    more of the tools below.<br>
+    The main executable is run like so:<br>
+    ./InSeqt<br>
+    This will list all available options.<br>
+    Run ./InSeqt [command] to see the options of each individual command.     
     <br>
-    <u>Basic Stats</u><u><br>
+    <br>
+    <u>InSeqt basic</u><u><br>
     </u><br>
     To get a quick and basic idea of what the fundamentals of the data
     look like, run<br>
@@ -50,12 +52,12 @@
     with one entry per line. Follow this up by<br>
     <br>
     cd &lt;output_dir&gt;<br>
-    BasicStats2HTML -i ../out<br>
+    ./InSeqt report -i ../out<br>
     <br>
     and it will generate an HTML file with basic statistics, length and
     GC distribution etc. <br>
     <br>
-    <u>Overlap Stats</u><u><br>
+    <u>InSeqt lapcands</u><u><br>
     </u><br>
     To first generate a list of read-read overlap candidates, run
     multiple instances of<br>

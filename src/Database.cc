@@ -1,7 +1,22 @@
 #include "src/Database.h"
 #include "base/FileParser.h"
 
+void ReadDBPlain(Database & d, const string & fileName)
+{
 
+  FlatFileParser parser;
+  
+  parser.Open(fileName);
+  int i;
+  KeyValueSet & n = d.Global();
+   while (parser.ParseLine()) {
+    if (parser.GetItemCount() == 0)
+      continue;
+    n.Add(parser.AsString(0), parser.AsString(1));
+    
+  }
+}
+ 
 void ReadDB(Database & d, const string & fileName)
 {
 

@@ -16,13 +16,17 @@ public:
     Add("lapcands", "RunFindOverlapCands");
     Add("esterr", "EstimateErrors");
     Add("lapstats", "LapStats");
+    Add("lapreport", "MakeOverlapReport");
 
+    
+ 
   }
 
-  void Add(const string & cmd, const string & exe, const string & dep = "") {
+  void Add(const string & cmd, const string & exe, const string & loc = "", const string & dep = "") {
     m_cmd.push_back(cmd);
     m_program.push_back(exe);
     m_depend.push_back(dep);
+    m_loc.push_back(loc);
   }
 
 
@@ -52,8 +56,10 @@ public:
       }
     }
     cout << m_exe << endl;
-    for (i=0; i<m_program.isize(); i++)
-      m_program[i] = m_exe + m_program[i];
+    for (i=0; i<m_program.isize(); i++) {
+      if (m_loc[i] == "" || m_loc[i] == "<InSeqt>")
+	m_program[i] = m_exe + m_program[i];
+    }
   
     bool bFull = false;
     if (argc == 2 && strcmp(argv[1], "-full") == 0)
@@ -83,7 +89,7 @@ public:
       doIt += " ";
       doIt += argv[i];
     }
-    //cout << "Run " << doIt << endl;
+    cout << "Run " << doIt << endl;
     int r = system(doIt.c_str());
   }
     
@@ -124,6 +130,7 @@ private:
   svec<string> m_cmd;
   svec<string> m_program;
   svec<string> m_depend;
+  svec<string> m_loc;
 };
 
 
@@ -131,6 +138,37 @@ private:
 int main( int argc, char** argv )
 {
   Command cmd;
+  string conf;
+   
+  for (int i=strlen(argv[0])-1; i>=0; i--) {
+    if (argv[0][i] == '/') {
+      char tmp[1024];
+      strcpy(tmp, argv[0]);
+      tmp[i+1] = 0;
+      conf = tmp;
+      break;
+    }
+  }
+  conf += "/custom/custom.cfg";
+  FILE * p = fopen(conf.c_str(), "r");
+  if (p != NULL) {
+    fclose(p);
+    FlatFileParser parser;
+    
+    parser.Open(conf);
+    while (parser.ParseLine()) {
+      if (parser.GetItemCount() == 0)
+	continue;
+      string c;
+      for (int j=2; j<parser.GetItemCount(); j++) {
+	if (j > 2)
+	  c += " ";
+	c += parser.AsString(j);
+      }
+      cmd.Add(parser.AsString(1), c, parser.AsString(0));
+    }
+  }
+
   cmd.ParserCL(argc, argv);
 
   return 0;

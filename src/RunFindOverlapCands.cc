@@ -96,6 +96,12 @@ int main( int argc, char** argv )
   string cat = "cat " + out + "/overlapcands.out.*.cand > ";
   cat += out + "/overlapcands.out";
   int rrr = system(cat.c_str());
+  
+  string stats = out + "/overlapcands.txt";
+  FILE * pStats = fopen(stats.c_str(), "w");
+  fprintf(pStats, "fraction %f\n", frac);
+  fclose(pStats);
+
   cout << "All done!!" << endl;
   return 0;
 }

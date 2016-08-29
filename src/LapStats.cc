@@ -40,7 +40,7 @@ int main( int argc, char** argv )
 
   //commandArg<string> fileCmmd("-i","input overlap file");
   //commandArg<string> readCmmd("-r","input read file");
-  commandArg<string> outCmmd("-o","data directory");
+  commandArg<string> outCmmd("-i","data directory");
   //commandArg<bool> listCmmd("-f","", "");
   commandLineParser P(argc,argv);
   P.SetDescription("Testing the file parser.");
@@ -106,15 +106,21 @@ int main( int argc, char** argv )
 
   double totalLen = 0.;
   double totalLaps = 0.;
- 
+  double total = 0.;
+  svec<int> for_med;
   for (int j=0; j<laps.isize(); j++) {
     if (laps[j] > 0 && laps[j] < 200) {
+      total += laps[j];
       laps_clean.push_back(laps[j]);
       size.push_back(raw_len[j]);
       totalLaps += lap_len[j];
       totalLen += raw_len[j];
+      for_med.push_back(laps[j]);
     }
   }
+
+  Sort(for_med);
+  double median = for_med[for_med.isize()/2];
   
   double cov = totalLaps / totalLen;
   cout << "Total length:  " << totalLen << endl;
@@ -123,6 +129,38 @@ int main( int argc, char** argv )
   cout << "Base coverage: " << cov << endl;
   cout << "Genome size:   " << totalLen / cov / 1000000 <<  " MB" << endl;
   cout << "NOTE: multiply the genome size estimate according to sub-sampling!" << endl; 
+
+  double frac;
+  FlatFileParser parser2;
+  string fracName = P.GetStringValueFor(outCmmd);
+  fracName += "/overlapcands.txt";
+ 
+  parser2.Open(fracName);
+
+  parser2.ParseLine();
+  frac = parser2.AsFloat(1);
+ 
+
+  string statsName = P.GetStringValueFor(outCmmd);
+  statsName += "/overlapstats.txt";
+  FILE * pStats = fopen(statsName.c_str(), "w");
+  
+ 
+  fprintf(pStats, "tested %d\n", laps.isize());
+  fprintf(pStats, "testedper %f\n", 100*frac);
+  fprintf(pStats, "perread %f\n", (double)total/(double)laps_clean.isize());
+  fprintf(pStats, "perreadmed %f\n", median);
+  fprintf(pStats, "passing %d\n", laps_clean.isize());
+  fprintf(pStats, "total %f\n", total);
+  fprintf(pStats, "totallength %f\n", totalLen);
+  fprintf(pStats, "lapsplus 0\n");
+  fprintf(pStats, "lapsminus 0\n");
+  fprintf(pStats, "coverage %f\n", cov);
+  fprintf(pStats, "genomesize %f\n", totalLen / cov / 1000000 / frac);
+
+  fclose(pStats);
+ 
+    
 
   Histogram hh;
 

@@ -113,5 +113,7 @@ class Database
 
 void ReadDB(Database & d, const string & fileName);
 
+void ReadDBPlain(Database & d, const string & fileName);
+
 
 #endif //DATABASE_H

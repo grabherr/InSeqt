@@ -46,9 +46,9 @@ string GetShort(const string & full) {
 
 bool CheckIM()
 {
-  string cmmd = "convert > /dev/null";
+  string cmmd = "convert > /dev/null ";
   int r = system(cmmd.c_str());
-  if (r != 0) {
+  if (r != 0 && r != 256) {
     cout << "ImageMagick convert not found, returned " << r << " Exiting." << endl;
     exit(-1);
   }
@@ -145,7 +145,7 @@ int main( int argc, char** argv )
 
     string shortName = GetShort(dna.Name(i));
 
-    if (localReads > 0 && (shortName != lastName || i == dna.isize()-1)) {
+    if (localReads > 0 && localSize.isize() > 0 && (shortName != lastName || i == dna.isize()-1)) {
       
       Sort(localSize);
       int localMedian = localSize[localSize.isize()/2];
@@ -251,7 +251,11 @@ int main( int argc, char** argv )
   fprintf(pRep, "Total: %f\n", total);
   fprintf(pRep, "N50: %f\n", n50);
 
+  cout << "Cycles." << endl;
   int max = 19;
+  if (max > cycles.isize())
+    max = cycles.isize();
+  
   for (i=0; i<max; i++) {
     //if (cycles[i] > 0) {
     cout << "# " << i+1 << " " << cycles[i] << endl;
@@ -264,8 +268,10 @@ int main( int argc, char** argv )
   }
   fprintf(pRep, "# >=%d %d\n", max+1, n20above);
 
+  cout << "Done." << endl;
   fclose(pRep);
   fclose(pCycle);
+  
 
   Histogram hh;
 

@@ -17,8 +17,12 @@ void Histogram::Plot(const string & fileName,
 		     int bins, 
 		     color c)
 {
-  double lo = data[0];
-  double hi = data[0];
+  double lo = 0;
+  double hi = 1.;
+  if (data.isize() > 0) {
+    lo = data[0];
+    hi = data[0];
+  }
 
   int i;
   for (i=0; i<data.isize(); i++) {
@@ -37,7 +41,10 @@ void Histogram::Scatter(const string & fileName,
 			color c)
 {
   double hi1 = 1.;
-  double hi2 = data2[0];
+  double hi2 = 1.;
+
+  if (data2.isize() > 0)
+    hi2 = data2[0];
 
   int i;
   for (i=0; i<data1.isize(); i++) {
@@ -162,6 +169,8 @@ void Histogram::Plot(const string & fileName,
   counts.resize(bins, 0);
 
   //cout << "lo=" << lo << " hi=" << hi << endl;
+  if (hi == lo)
+    hi += 0.1;
   
   double scale = 0.999*(double)bins/(hi - lo);
   
@@ -187,11 +196,11 @@ void Histogram::Plot(const string & fileName,
 
   ns_whiteboard::whiteboard board;
 
-   board.Add( new ns_whiteboard::rect( ns_whiteboard::xy_coords(0, 0), 
-				       ns_whiteboard::xy_coords(2*x_offset+x_max, 2*y_offset+y_max),
-				       color(0.99,0.99,0.99)) );
-
-
+  board.Add( new ns_whiteboard::rect( ns_whiteboard::xy_coords(0, 0), 
+				      ns_whiteboard::xy_coords(2*x_offset+x_max, 2*y_offset+y_max),
+				      color(0.99,0.99,0.99)) );
+  
+  
   for (i=0; i<counts.isize(); i++) {
     double x1 = x_max*(double)i/(double)counts.isize();
     double x2 = x_max*(double)(i+1)/(double)counts.isize();

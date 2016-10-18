@@ -28,7 +28,11 @@ void ReadDB(Database & d, const string & fileName)
     if (parser.GetItemCount() == 0)
       continue;
 
-    if (parser.AsString(0) == "SMRT" && parser.AsString(1) != "total") {      
+    // bool bTotal = false;
+    //if (parser.AsString(0) == "SMRT" && (parser.GetItemCount() == 1 || parser.AsString(1) == "total"))
+    //bTotal = true;
+    
+    if (parser.AsString(0) == "SMRT" && parser.GetItemCount() > 1 && parser.AsString(1) != "total") {      
       KeyValueSet n;
       n.Add("smrtcell", parser.AsString(1));
       parser.ParseLine();
@@ -43,7 +47,7 @@ void ReadDB(Database & d, const string & fileName)
       n.Add("n50", parser.AsInt(1));
       d.Add(n);
     }
-    if (parser.AsString(0) == "SMRT" && parser.AsString(1) == "total") {      
+    if (parser.AsString(0) == "SMRT" && (parser.GetItemCount() == 1 || parser.AsString(1) == "total")) {      
       KeyValueSet & n = d.Global();
       parser.ParseLine();
       n.Add("readcount_total", parser.AsInt(1));

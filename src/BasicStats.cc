@@ -31,16 +31,20 @@ string GetShort(const string & full) {
 
   int i;
   int k = 0;
+  bool b = false;
   for (i=0; i<(int)full.size(); i++) {
     if (tmp[i] == '_') {
       k++;
       if (k == 3) {
 	tmp[i] = 0;
+	b = true;
 	break;
       }
     }
   }
   string ret = tmp;
+  if (!b)
+    ret = "";
   return ret;
 }
 

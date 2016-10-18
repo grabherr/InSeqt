@@ -166,9 +166,11 @@ void Histogram::Plot(const string & fileName,
   int i, j;
 
   svec<double> counts;
+  if (bins == 0)
+    bins = 1;
   counts.resize(bins, 0);
 
-  //cout << "lo=" << lo << " hi=" << hi << endl;
+  cout << "lo=" << lo << " hi=" << hi << endl;
   if (hi == lo)
     hi += 0.1;
   
@@ -180,11 +182,11 @@ void Histogram::Plot(const string & fileName,
     int index = (int)(scale*(lo + data[i]));
     if (index < counts.isize()) {
       counts[index] += 1.;
-      if (counts[index] > max)
+      if (counts[index] >= max)
 	max = counts[index];
     }
   }
-  cout << "Data points: " << data.isize() << endl;
+  cout << "Data points: " << data.isize() << " max: " << max << endl;
   if (data.isize() == 0)
     max = 1.;
 
@@ -200,24 +202,26 @@ void Histogram::Plot(const string & fileName,
 				      ns_whiteboard::xy_coords(2*x_offset+x_max, 2*y_offset+y_max),
 				      color(0.99,0.99,0.99)) );
   
-  
-  for (i=0; i<counts.isize(); i++) {
-    double x1 = x_max*(double)i/(double)counts.isize();
-    double x2 = x_max*(double)(i+1)/(double)counts.isize();
-    double y1 = 0;
-    double y2 = counts[i]*yscale;
-    
-    //cout << x1 << " " << x2 << " - " << y1 << " " << y2 <<  " : " << counts[i] << endl;
 
-    double edge = 1.;
-    board.Add( new ns_whiteboard::rect( ns_whiteboard::xy_coords(x1 + x_offset, y1 + y_offset), 
-                                        ns_whiteboard::xy_coords(x2 + x_offset, y2 + y_offset),
-                                        color(0,0,0)) );
-    board.Add( new ns_whiteboard::rect( ns_whiteboard::xy_coords(x1 + x_offset+edge, y1 + y_offset+edge), 
-                                        ns_whiteboard::xy_coords(x2 + x_offset-edge, y2 + y_offset-edge),
-                                        c) );
-
- 
+  if (max > 0.) {
+    for (i=0; i<counts.isize(); i++) {
+      double x1 = x_max*(double)i/(double)counts.isize();
+      double x2 = x_max*(double)(i+1)/(double)counts.isize();
+      double y1 = 0;
+      double y2 = counts[i]*yscale;
+      
+      //cout << "PLOT " << x1 << " " << x2 << " - " << y1 << " " << y2 <<  " : " << yscale << endl;
+      
+      double edge = 1.;
+      board.Add( new ns_whiteboard::rect( ns_whiteboard::xy_coords(x1 + x_offset, y1 + y_offset), 
+					  ns_whiteboard::xy_coords(x2 + x_offset, y2 + y_offset),
+					  color(0,0,0)) );
+      board.Add( new ns_whiteboard::rect( ns_whiteboard::xy_coords(x1 + x_offset+edge, y1 + y_offset+edge), 
+					  ns_whiteboard::xy_coords(x2 + x_offset-edge, y2 + y_offset-edge),
+					  c) );
+      
+      
+    }
   }
   board.Add( new ns_whiteboard::line( ns_whiteboard::xy_coords(x_offset, y_offset), 
 				      ns_whiteboard::xy_coords(x_offset, y_max+y_offset), 

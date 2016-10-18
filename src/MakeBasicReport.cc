@@ -70,7 +70,6 @@ int main( int argc, char** argv )
   string exe = argv[0];
    
   int i;
-
   for (i=strlen(argv[0])-1; i>=0; i--) {
     if (argv[0][i] == '/') {
       char tmp[1024];
@@ -89,9 +88,11 @@ int main( int argc, char** argv )
   
   html.Read(temp, "##InSeqt##");
 
+  cout << "Read db" << endl;
   Database db;
   ReadDB(db, fileName);
-
+  cout << "Write HTML" << endl;
+  
   html.FillWrite(db, out);
 
   return 0;

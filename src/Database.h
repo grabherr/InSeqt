@@ -41,7 +41,7 @@ class KeyValueSet
       if (key == m_data[i].Key())
 	return m_data[i].Val();
     }
-    string empty;
+    string empty = "n/a";
     return empty;
   }
 

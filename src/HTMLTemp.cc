@@ -62,9 +62,11 @@ void HTMLRead::FillWrite(const Database & db, const string & fileName)
   int i, j, k;
   FILE * pOut = fopen(fileName.c_str(), "w");
 
+  //cout << "FillWrite" << endl;
   for (i=0; i<m_parts.isize(); i++) {
+    //cout << "Getting part " << i << endl;
     const HTMLPart & p = m_parts[i];
- 
+    //cout << "Got part " << i << endl;
     if (p.Token() == "internal_table") {
       //cout << "Inserting table!" << endl;
       for (j=0; j<db.GetLibCount(); j++) {

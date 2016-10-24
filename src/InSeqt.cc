@@ -13,11 +13,11 @@ public:
   Command() {
     Add("basic", "BasicStats");
     Add("report", "MakeBasicReport");
-    Add("lapcands", "RunFindOverlapCands");
-    Add("esterr", "EstimateErrors");
+    Add("lapcands", "RunFindOverlapCands");    
     Add("lapstats", "LapStats");
     Add("lapreport", "MakeOverlapReport");
-
+    Add("esterr", "EstimateErrors");
+     
     
  
   }
@@ -79,7 +79,7 @@ public:
     }
     int index = Find(argv[1]);
     if (index < 0) {
-      cout << "Do not understand command '" << argv[1] << "'" << endl;
+      cout << "Do not understand the command '" << argv[1] << "'" << endl;
       cout << "Use the -h or -help option to show all available commands." << endl;
       return;
     }

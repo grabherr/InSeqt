@@ -43,7 +43,7 @@ int main( int argc, char** argv )
   commandArg<string> outCmmd("-i","data directory");
   //commandArg<bool> listCmmd("-f","", "");
   commandLineParser P(argc,argv);
-  P.SetDescription("Testing the file parser.");
+  P.SetDescription("Computes statistics from overlaps.");
   //P.registerArg(fileCmmd);
   //P.registerArg(readCmmd);
   P.registerArg(outCmmd);

@@ -3,7 +3,7 @@
 #ifndef _SEQUENCEMATCH_H_
 #define _SEQUENCEMATCH_H_
 
-#include "base/SVector.h"
+#include "ryggrad/src/base/SVector.h"
 #include <string>
 #include <iostream>
 

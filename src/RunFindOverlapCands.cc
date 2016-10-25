@@ -1,6 +1,6 @@
 #include <string>
-#include "base/CommandLineParser.h"
-#include "base/StringUtil.h"
+#include "ryggrad/src/base/CommandLineParser.h"
+#include "ryggrad/src/base/StringUtil.h"
 #include <unistd.h>
 
 

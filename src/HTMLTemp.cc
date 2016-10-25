@@ -1,6 +1,6 @@
-#include "src/HTMLTemp.h"
-#include "src/Database.h"
-#include "base/FileParser.h"
+#include "HTMLTemp.h"
+#include "Database.h"
+#include "ryggrad/src/base/FileParser.h"
 
 
 void HTMLRead::Read(const string & fileName, const string & delim)

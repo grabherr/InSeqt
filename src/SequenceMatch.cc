@@ -1,7 +1,7 @@
-#include "src/SequenceMatch.h"
+#include "SequenceMatch.h"
 #include "util/mutil.h"
 
-#include "base/FileParser.h"
+#include "ryggrad/src/base/FileParser.h"
 
 
 

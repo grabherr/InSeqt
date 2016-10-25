@@ -1,7 +1,7 @@
 #include <string>
-#include "base/CommandLineParser.h"
-#include "visual/Histogram.h"
-#include "base/FileParser.h"
+#include "ryggrad/src/base/CommandLineParser.h"
+#include "ryggrad/src/visual/Histogram.h"
+#include "ryggrad/src/base/FileParser.h"
 
 bool MakePNG(const string & fileName)
 {

@@ -1,9 +1,9 @@
 #include <string>
-#include "base/CommandLineParser.h"
-#include "src/DNAVector.h"
-#include "visual/Histogram.h"
-#include "base/FileParser.h"
-#include "src/DataRead.h"
+#include "ryggrad/src/base/CommandLineParser.h"
+#include "ryggrad/src/general/DNAVector.h"
+#include "ryggrad/src/visual/Histogram.h"
+#include "ryggrad/src/base/FileParser.h"
+#include "DataRead.h"
 
 
 

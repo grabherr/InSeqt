@@ -1,5 +1,5 @@
-#include "src/Database.h"
-#include "base/FileParser.h"
+#include "Database.h"
+#include "ryggrad/src/base/FileParser.h"
 
 void ReadDBPlain(Database & d, const string & fileName)
 {

@@ -1,8 +1,8 @@
 #ifndef DATAREAD_H
 #define DATAREAD_H
 
-#include "src/DNAVector.h"
-#include "base/FileParser.h"
+#include "ryggrad/src/general/DNAVector.h"
+#include "ryggrad/src/base/FileParser.h"
 
 
 inline void ReadFileNames(string & fileName)

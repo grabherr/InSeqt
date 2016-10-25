@@ -1,8 +1,8 @@
 #include <string>
-#include "base/CommandLineParser.h"
-#include "base/FileParser.h"
-#include "src/Database.h"
-#include "src/HTMLTemp.h"
+#include "ryggrad/src/base/CommandLineParser.h"
+#include "ryggrad/src/base/FileParser.h"
+#include "Database.h"
+#include "HTMLTemp.h"
 
 bool MakePNG(const string & fileName)
 {

@@ -1,7 +1,7 @@
 #ifndef HTMLTEMP_H
 #define HTMLTEMP_H
 
-#include "base/SVector.h"
+#include "ryggrad/src/base/SVector.h"
 
 class HTMLPart
 {

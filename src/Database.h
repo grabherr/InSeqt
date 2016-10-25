@@ -1,7 +1,7 @@
 #ifndef DATABASE_H
 #define DATABASE_H
 
-#include "base/SVector.h"
+#include "ryggrad/src/base/SVector.h"
 
 class KeyValue
 {

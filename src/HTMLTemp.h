@@ -40,12 +40,19 @@ class HTMLRead
   void Read(const string & fileName, const string & delim = "");
   void FillWrite(const Database & db, const string & fileName);
 
- 
+  void SetRelativePath(const string & s) {
+    m_relPath = s;
+    if (s[s.length()-1] != '/')
+      m_relPath += "/";
+  }
+  
  private:
+  string GetRelativePath(const string & out);
+  
   string m_delim;
   svec<HTMLPart> m_parts;
   svec<HTMLPart> m_table;
-
+  string m_relPath;
 };
 
 

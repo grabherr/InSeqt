@@ -85,6 +85,7 @@ int main( int argc, char** argv )
   }
 
   HTMLRead html;
+  html.SetRelativePath(P.GetStringValueFor(fileCmmd));
   
   html.Read(temp, "##InSeqt##");
 

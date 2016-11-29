@@ -81,10 +81,11 @@ int main( int argc, char** argv )
   }
   if (temp == "") {
     temp = exe;
-    temp += "templates/basic_template.html";
+    temp += "../templates/basic_template.html";
   }
 
   HTMLRead html;
+  html.SetRelativePath(P.GetStringValueFor(fileCmmd));
   
   html.Read(temp, "##InSeqt##");
 

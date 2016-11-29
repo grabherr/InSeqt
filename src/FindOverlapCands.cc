@@ -2,7 +2,7 @@
 
 #include "ryggrad/src/base/CommandLineParser.h"
 #include "ryggrad/src/general/DNAVector.h"
-#include "aligns/KmerAlignCore.h"
+#include "ryggrad/src/aligns/KmerAlignCore.h"
 #include "SequenceMatch.h"
 #include "DataRead.h"
 #include "ryggrad/src/base/RandomStuff.h"

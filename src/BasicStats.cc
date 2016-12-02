@@ -160,7 +160,7 @@ int main( int argc, char** argv )
 	  if (rr < 0.6) {
 	    if (x == lencache.isize()-1) {
 	      totaltrunc++;
-	      fprintf(pTrunc, "%s\%d\n", namecache[x].c_str(), lencache[x]);
+	      fprintf(pTrunc, "%s\%d\n", namecache[x].c_str());
 	    } else {
 	      bChim = true;
 	    }
@@ -172,7 +172,7 @@ int main( int argc, char** argv )
 	if (bChim) {
 	  totalchim++;
 	  for (x=0; x<namecache.isize(); x++)
-	    fprintf(pChim, "%s\t%d\n", namecache[x].c_str(), same+1);
+	    fprintf(pChim, "%s\n", namecache[x].c_str());
 	}
 	
 	same = 0;

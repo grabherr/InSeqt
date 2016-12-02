@@ -114,13 +114,26 @@ int main( int argc, char** argv )
   cyclesummary += "/by_cycles.out";
   FILE * pCycle = fopen(cyclesummary.c_str(), "w");
 
+  string chim = outName;
+  chim += "/chimeras.out";
+  FILE * pChim = fopen(chim.c_str(), "w");
+  string trunc = outName;
+  trunc += "/truncated.out";
+  FILE * pTrunc = fopen(trunc.c_str(), "w");
+
+  
   string lastName;
   int localReads = 0;
   double localTotal = 0;
   svec<int> localSize;
 
   svec<string> namecache;
+  svec<int> lencache;
 
+  int lastLen;
+  int totalchim;
+  int totaltrunc;
+  
   for (i=0; i<dna.isize(); i++) {
 
     StringParser pp;
@@ -132,19 +145,43 @@ int main( int argc, char** argv )
 	bCont = true;
 	same++;
 	namecache.push_back(dna.Name(i));
+	lencache.push_back(dna[i].isize());
       } else {
 	if (same >= cycles.isize())
 	  cycles.resize(same+1, 0);
 	cycles[same]++;
-
-	for (int x=0; x<namecache.isize(); x++)
+	int x;
+	for (x=0; x<namecache.isize(); x++)
 	  fprintf(pCycle, "%s\t%d\n", namecache[x].c_str(), same+1);
 
+	bool bChim = false;
+	for (x=1; x<lencache.isize(); x++) {
+	  double rr = (double)lencache[x]/(double)lencache[x-1];
+	  if (rr < 0.6) {
+	    if (x == lencache.isize()-1) {
+	      totaltrunc++;
+	      fprintf(pTrunc, "%s\%d\n", namecache[x].c_str(), lencache[x]);
+	    } else {
+	      bChim = true;
+	    }
+	  }
+	  if (rr > 1./0.6) {
+	    bChim = true;
+	  }
+	}
+	if (bChim) {
+	  totalchim++;
+	  for (x=0; x<namecache.isize(); x++)
+	    fprintf(pChim, "%s\t%d\n", namecache[x].c_str(), same+1);
+	}
+	
 	same = 0;
 	last = id;
 	namecache.clear();
+	lencache.clear();
 	namecache.push_back(dna.Name(i));
-      }
+  	lencache.push_back(dna[i].isize());
+    }
     }
 
     string shortName = GetShort(dna.Name(i));
@@ -254,6 +291,8 @@ int main( int argc, char** argv )
   fprintf(pRep, "Median: %d\n", median);
   fprintf(pRep, "Total: %f\n", total);
   fprintf(pRep, "N50: %f\n", n50);
+  fprintf(pRep, "Chimeric: %d\n", totalchim);
+  fprintf(pRep, "Truncated: %d\n", totaltrunc);
 
   cout << "Cycles." << endl;
   int max = 19;
@@ -271,10 +310,16 @@ int main( int argc, char** argv )
     n20above += cycles[i];
   }
   fprintf(pRep, "# >=%d %d\n", max+1, n20above);
-
+  cout << endl;
+  cout << "Wrote chimeras to " << chim << endl;
+  cout << "Wrote truncated reads to " << trunc << endl;
+  
+  
   cout << "Done." << endl;
   fclose(pRep);
   fclose(pCycle);
+  fclose(pChim);
+  fclose(pTrunc);
   
 
   Histogram hh;

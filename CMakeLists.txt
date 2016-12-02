@@ -25,6 +25,8 @@ set(SOURCE_FILES_ESTIMATEERRORS  ryggrad/src/base/ErrorHandling.cc ryggrad/src/b
 
 set(SOURCE_FILES_FINDOVERLAPCANDS ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/FileParser.cc ryggrad/src/base/StringUtil.cc ryggrad/src/util/mutil.cc ryggrad/src/general/DNAVector.cc ryggrad/src/aligns/KmerAlignCore.cc src/FindOverlapCands.cc)
 
+set(SOURCE_FILES_PULLREADS ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/FileParser.cc ryggrad/src/base/StringUtil.cc ryggrad/src/util/mutil.cc ryggrad/src/general/DNAVector.cc src/PullReads.cc)
+
 set(SOURCE_FILES_INSEQT ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/FileParser.cc ryggrad/src/base/StringUtil.cc ryggrad/src/general/DNAVector.cc ryggrad/src/util/mutil.cc ryggrad/src/visual/Color.cc ryggrad/src/visual/Eps.cc ryggrad/src/visual/Histogram.cc src/InSeqt.cc) 
 set(SOURCE_FILES_LAPSTATS  ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/FileParser.cc  ryggrad/src/base/StringUtil.cc ryggrad/src/util/mutil.cc ryggrad/src/visual/Color.cc ryggrad/src/visual/Eps.cc ryggrad/src/visual/Histogram.cc src/LapStats.cc)  
 set(SOURCE_FILES_MAKEBASICREPORT  ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/FileParser.cc  ryggrad/src/base/StringUtil.cc ryggrad/src/util/mutil.cc ryggrad/src/visual/Color.cc ryggrad/src/visual/Eps.cc ryggrad/src/visual/Histogram.cc src/Database.cc src/HTMLTemp.cc src/MakeBasicReport.cc)
@@ -46,5 +48,6 @@ add_executable(ParseAligns          ${SOURCE_FILES_PARSEALIGNS})
 add_executable(PlotGCContent        ${SOURCE_FILES_PLOTGCCONTENT})
 add_executable(RunFindOverlapCands  ${SOURCE_FILES_RUNFINDOVERLAPCANDS})
 add_executable(ScatterPlot          ${SOURCE_FILES_SCATTERPLOT}) 
+add_executable(PullReads            ${SOURCE_FILES_PULLREADS}) 
 
 

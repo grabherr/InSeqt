@@ -17,7 +17,8 @@ public:
     Add("lapstats", "LapStats");
     Add("lapreport", "MakeOverlapReport");
     Add("esterr", "EstimateErrors");
-     
+    Add("extract", "PullReads");
+    
     
  
   }

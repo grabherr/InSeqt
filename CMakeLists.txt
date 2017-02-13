@@ -35,6 +35,9 @@ set(SOURCE_FILES_PARSEALIGNS ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/
 set(SOURCE_FILES_PLOTGCCONTENT ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/FileParser.cc  ryggrad/src/base/StringUtil.cc ryggrad/src/general/DNAVector.cc ryggrad/src/util/mutil.cc ryggrad/src/visual/Color.cc ryggrad/src/visual/Eps.cc ryggrad/src/visual/Histogram.cc src/PlotGCContent.cc)  
 set(SOURCE_FILES_RUNFINDOVERLAPCANDS ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/FileParser.cc  ryggrad/src/base/StringUtil.cc ryggrad/src/general/DNAVector.cc ryggrad/src/util/mutil.cc src/RunFindOverlapCands.cc) 
 set(SOURCE_FILES_SCATTERPLOT ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/FileParser.cc  ryggrad/src/base/StringUtil.cc ryggrad/src/general/DNAVector.cc ryggrad/src/util/mutil.cc ryggrad/src/visual/Color.cc ryggrad/src/visual/Compounds.h ryggrad/src/visual/Eps.cc ryggrad/src/visual/ScatterPlot.cc)  
+set(SOURCE_FILES_MAKESITEMAP ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/FileParser.cc  ryggrad/src/base/StringUtil.cc ryggrad/src/general/DNAVector.cc ryggrad/src/util/mutil.cc src/MakeSiteMap.cc)  
+set(SOURCE_FILES_FINDSITELAPS ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/FileParser.cc  ryggrad/src/base/StringUtil.cc ryggrad/src/general/DNAVector.cc ryggrad/src/util/mutil.cc src/FindSiteLaps.cc)  
+
 
 add_executable(BasicStats           ${SOURCE_FILES_BASICSTATS})
 add_executable(BasicStats2HTML      ${SOURCE_FILES_BASICSTATS2HTML})
@@ -49,5 +52,7 @@ add_executable(PlotGCContent        ${SOURCE_FILES_PLOTGCCONTENT})
 add_executable(RunFindOverlapCands  ${SOURCE_FILES_RUNFINDOVERLAPCANDS})
 add_executable(ScatterPlot          ${SOURCE_FILES_SCATTERPLOT}) 
 add_executable(PullReads            ${SOURCE_FILES_PULLREADS}) 
+add_executable(MakeSiteMap          ${SOURCE_FILES_MAKESITEMAP}) 
+add_executable(FindSiteLaps         ${SOURCE_FILES_FINDSITELAPS}) 
 
 

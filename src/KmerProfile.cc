@@ -47,8 +47,13 @@ int main( int argc, char** argv )
     }
   }
   cout << k << endl;
+  double len = 0.;
   for (i=0; i<freq.isize(); i++)
-    cout << freq[i]/total << endl;
+    len += freq[i]*freq[i];
+  len = sqrt(len);
+  
+  for (i=0; i<freq.isize(); i++)
+    cout << freq[i]/len << endl;
   
   return 0;
 }

@@ -1,4 +1,4 @@
-#define FORCE_DEBUG
+//#define FORCE_DEBUG
 #include <string>
 #include "ryggrad/src/base/CommandLineParser.h"
 #include "ryggrad/src/base/FileParser.h"
@@ -183,14 +183,16 @@ int main( int argc, char** argv )
 
   
   cout << "Lookup mers..." << endl;
-
+  svec<int> busy;
+  busy.resize(reads.isize(), 0);
+  
   for (i=0; i<reads.isize(); i+=2) {
     svec<OptiMer> tmp;
     reads[i].AddOptimers(tmp, k, 0);
     cout << "Test read " << i << " " << reads[i].Name() << endl;
     
     svec<int> cands;
-    for (j=0; j<tmp.isize(); j++) {
+    for (j=0; j<tmp.isize(); j+= k) {
       int index = BinSearch(mers, tmp[j]);
        if (index < 0)
 	continue;
@@ -211,6 +213,10 @@ int main( int argc, char** argv )
 
 	bool bNew = true;
 	int y;
+
+	if (busy[mers[x].Seq()] == 1)
+	  continue;
+	/*
 	//cout << "size " << cands.isize() << endl;
 	for (y=0; y<cands.isize(); y++) {
 	  //cout << "??" << cands[y] << " " << mers[x].Seq() << endl;
@@ -218,41 +224,46 @@ int main( int argc, char** argv )
 	    bNew = false;
 	    break;
 	  }
-	}
+	  }*/
 
 	//cout << "NEW " << bNew << endl;
-	if (bNew) {
-	  int shift = mers[x].Pos() - j;
-	  cout << "Overlap " << reads[i].Name() << " vs " << reads[mers[x].Seq()].Name() <<  " " << shift;
-	  cout << " " << mers[x].Pos() << " " << j << endl;
-	  cands.push_back(mers[x].Seq());
-	  int nnn = reads[i].Dist().isize()+reads[mers[x].Seq()].Dist().isize();
-	  for (y=-nnn; y<nnn; y++) {
-	    int a = y;
-	    int b = y+shift;
-	    //int b = y;
+	//	if (bNew) {
+	int shift = mers[x].Pos() - j;
+	cout << "Overlap " << reads[i].Name() << " vs " << reads[mers[x].Seq()].Name() <<  " " << shift;
+	cout << " " << mers[x].Pos() << " " << j << endl;
+
+	cands.push_back(mers[x].Seq());
+	busy[mers[x].Seq()] = 1;
+	
+	int nnn = reads[i].Dist().isize()+reads[mers[x].Seq()].Dist().isize();
+	for (y=-nnn; y<nnn; y++) {
+	  int a = y;
+	  int b = y+shift;
+	  //int b = y;
 	    //int a = y+shift;
-	    bool bDo = false;
-	    string toPrint;
-	    if (a >=0 && a < reads[i].Dist().isize()) {
+	  bool bDo = false;
+	  string toPrint;
+	  if (a >=0 && a < reads[i].Dist().isize()) {
 	      toPrint += Stringify(reads[i].Dist()[a]);
 	      bDo = true;
-	    } else {
-	      toPrint += "---";
-	    }
-	    toPrint += "  ";
-	    if (b >=0 && b < reads[mers[x].Seq()].Dist().isize()) {
-	      toPrint += Stringify(reads[mers[x].Seq()].Dist()[b]);
-	      bDo = true;
-	    } else {
-	      toPrint += "---";
-	    }
-	    if (bDo)
-	      cout << toPrint << endl;
+	  } else {
+	    toPrint += "---";
 	  }
+	  toPrint += "  ";
+	  if (b >=0 && b < reads[mers[x].Seq()].Dist().isize()) {
+	    toPrint += Stringify(reads[mers[x].Seq()].Dist()[b]);
+	    bDo = true;
+	  } else {
+	    toPrint += "---";
+	  }
+	  if (bDo)
+	    cout << toPrint << endl;
+	
 	}
       }
     }
+    for (j=0; j<cands.isize(); j++)
+      busy[cands[j]] = 0;
   }
 
 

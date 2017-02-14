@@ -37,7 +37,7 @@ int main( int argc, char** argv )
       for (i=0; i<(int)l.length()-(int)site.length(); i++) {
 	//cout << i << " " << l.length() << endl;
 	for (j=0; j<site.length(); j++) {
-	  if (site[j] != l[i+j])
+	  if (site[j] != toupper(l[i+j]))
 	    break;
 	}
 	if (j == site.length()) {

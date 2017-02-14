@@ -11,10 +11,13 @@ double Distance(const svec<double> & a, const svec<double> & b)
 {
   double d = 0.;
   int i;
-  for (i=0; i<a.isize(); i++)
-    d += (a[i]-b[i])*(a[i]-b[i]);
+  for (i=0; i<a.isize(); i++) {
+    //cout << a[i] << " " << b[i] << endl;
+    //d += (a[i]-b[i])*(a[i]-b[i]);
+    d += a[i]*b[i];
+  }
 
-  return sqrt(d/(double)a.isize());
+  return sqrt(d);
 }
 
 int main( int argc, char** argv )
@@ -64,6 +67,7 @@ int main( int argc, char** argv )
   
   for (i=0; i<dna.isize(); i++) {
     const DNAVector & d = dna[i];
+    //cout << "Check " << dna.Name(i) << endl;
     svec<double> tmp;
     tmp.resize(freq.isize(), 0.);
     double total = 0.;
@@ -74,8 +78,12 @@ int main( int argc, char** argv )
 	total += 1.;
       }
     }
+    double len = 0.;
+    for (j=0; j<freq.isize(); j++)
+      len += tmp[j]*tmp[j];
+    len = sqrt(len);
     for (j=0; j<tmp.isize(); j++)
-      tmp[j] /= total;
+      tmp[j] /= len;
     
     cout << dna.Name(i) << " " << Distance(tmp, freq) << endl;
   }

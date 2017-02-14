@@ -144,7 +144,7 @@ int main( int argc, char** argv )
       OptiRead rr;
       rr.Dist() = mm;
       rr.Name() = name;
-      if (name != "") {
+      if (name != "" && mm.isize() >= k) {
 	reads.push_back(rr);
 	rr.Flip();
 	rr.Name() += " RC";
@@ -158,14 +158,15 @@ int main( int argc, char** argv )
     for (i=0; i< parser.GetItemCount(); i++)
       mm.push_back(parser.AsFloat(i));
   }
-
-  OptiRead rr2;
-  rr2.Dist() = mm;
-  rr2.Name() = name;
-  reads.push_back(rr2);
-  rr2.Name() += " RC";
-  rr2.Flip();
-  reads.push_back(rr2);
+  if (mm.isize() > k) {
+    OptiRead rr2;
+    rr2.Dist() = mm;
+    rr2.Name() = name;
+    reads.push_back(rr2);
+    rr2.Name() += " RC";
+    rr2.Flip();
+    reads.push_back(rr2);
+  }
   
   cout << "Build mer list..." << endl;
   svec<OptiMer> mers;

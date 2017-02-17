@@ -38,6 +38,7 @@ set(SOURCE_FILES_SCATTERPLOT ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/
 set(SOURCE_FILES_MAKESITEMAP ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/FileParser.cc  ryggrad/src/base/StringUtil.cc ryggrad/src/general/DNAVector.cc ryggrad/src/util/mutil.cc src/MakeSiteMap.cc)  
 set(SOURCE_FILES_FINDSITELAPS ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/FileParser.cc  ryggrad/src/base/StringUtil.cc ryggrad/src/general/DNAVector.cc ryggrad/src/util/mutil.cc src/FindSiteLaps.cc)  
 set(SOURCE_FILES_POOLBYSITES ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/FileParser.cc  ryggrad/src/base/StringUtil.cc ryggrad/src/general/DNAVector.cc ryggrad/src/util/mutil.cc src/PoolBySites.cc)  
+set(SOURCE_FILES_SITELAPS ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/FileParser.cc  ryggrad/src/base/StringUtil.cc ryggrad/src/general/DNAVector.cc ryggrad/src/util/mutil.cc src/SiteLaps.cc)  
 
 set(SOURCE_FILES_KMERPROFILE ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/FileParser.cc ryggrad/src/base/StringUtil.cc ryggrad/src/util/mutil.cc ryggrad/src/general/DNAVector.cc ryggrad/src/aligns/KmerAlignCore.cc src/KmerProfile.cc)
 set(SOURCE_FILES_SCOREKMERS ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/FileParser.cc ryggrad/src/base/StringUtil.cc ryggrad/src/util/mutil.cc ryggrad/src/general/DNAVector.cc ryggrad/src/aligns/KmerAlignCore.cc src/ScoreKmers.cc)
@@ -61,5 +62,6 @@ add_executable(FindSiteLaps         ${SOURCE_FILES_FINDSITELAPS})
 add_executable(KmerProfile          ${SOURCE_FILES_KMERPROFILE}) 
 add_executable(ScoreKmers           ${SOURCE_FILES_SCOREKMERS}) 
 add_executable(PoolBySites          ${SOURCE_FILES_POOLBYSITES}) 
+add_executable(SiteLaps             ${SOURCE_FILES_SITELAPS}) 
 
 

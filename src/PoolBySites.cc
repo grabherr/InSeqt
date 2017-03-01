@@ -4,382 +4,213 @@
 #include "ryggrad/src/base/FileParser.h"
 
 
-class OptiMer
+
+
+string Clean(const string &s)
+{
+  int l = (int)s.length();
+  if (s[l-2] == 'R' && s[l-1] == 'C') {
+    char tmp[1024];
+    strcpy(tmp, s.c_str());
+    tmp[l-3] = 0;
+    return tmp;
+  }
+  return s;
+}
+
+
+class Pool
 {
 public:
-  OptiMer() {
-    m_seq = -1;
-    m_pos = -1;
-  }
+  Pool() {}
 
-  bool operator < (const OptiMer & m) const {
-    for (int i=0; i<m_data.isize(); i++) {
-      if (m_data[i] != m.m_data[i])
-	return m_data[i] < m.m_data[i];
-    }
-    return false;
+  void push_back(const string & s) {
+    m_data.push_back(Clean(s));
+  }
+  int isize() const {return m_data.isize();}
+  string & operator[] (int i) {return m_data[i];}
+  const string & operator[] (int i) const {return m_data[i];}
+  void clear() {m_data.clear();}
+  
+  void Absorb(Pool & p ) {
+    int i;
+    for (i=0; i<p.isize(); i++)
+      m_data.push_back(p[i]);
+    UniqueSort(m_data);
+    p.clear();
   }
   
-  bool operator != (const OptiMer & m) const {
-    for (int i=0; i<m_data.isize(); i++) {
-      if (m_data[i] != m.m_data[i])
-	return true;
-    }
-    return false;
-  }
-  bool operator == (const OptiMer & m) const {
-    for (int i=0; i<m_data.isize(); i++) {
-      if (m_data[i] != m.m_data[i])
-	return false;
-    }
-    return true;
-  }
+private:
+  svec<string> m_data;
+};
 
-  int & Seq() {return m_seq;}
-  int & Pos() {return m_pos;}
- 
-  const int & Seq() const {return m_seq;}
-  const int & Pos() const {return m_pos;}
- 
-  svec<int> & Data() {return m_data;}
-  const svec<int> & Data() const {return m_data;}
+class PoolData
+{
+public:
+  PoolData() {}
 
-  void Print() const {
-    for (int i=0; i<m_data.isize(); i++)
-      cout << " " << m_data[i];
-    cout << " seq: " << m_seq << " pos: " << m_pos << endl;
+  void push_back(int s) {
+    m_data.push_back(s);
+  }
+  int isize() const {return m_data.isize();}
+  int & operator[] (int i) {return m_data[i];}  
+  const int & operator[] (int i) const {return m_data[i];}
+  void resize(int n) {
+    m_data.resize(n);
   }
   
+  void clear() {m_data.clear();}
+  
+  void Absorb(PoolData & p ) {
+    int i;
+    for (i=0; i<p.isize(); i++)
+      m_data.push_back(p[i]);
+    UniqueSort(m_data);
+    p.clear();
+  }
+
+  void USort() {
+    UniqueSort(m_data);
+  }
 private:
   svec<int> m_data;
-  int m_seq;
-  int m_pos;
 };
 
-
-class OptiRead
+class SeqLap
 {
 public:
-  OptiRead() {
-    m_ori = 1;
+  SeqLap() {}
+
+  string seq1;
+  string seq2;
+
+  bool operator < (const SeqLap & s) const {
+    return (seq1 < s.seq1);
   }
-  
-  svec<int> & Dist() {return m_dist;}
-  string & Name() {return m_name;}
-  const svec<int> & Dist() const {return m_dist;}
-  const string & Name() const {return m_name;}
-  int & Ori() {return m_ori;}
-  const int & Ori() const {return m_ori;}
-
-  void Flip() {
-    m_ori = -m_ori;
-    svec<int> tmp;
-    tmp.resize(m_dist.isize());
-    int k = m_dist.isize()-1;
-    for (int i=0; i<m_dist.isize(); i++) {
-      tmp[k] = m_dist[i];
-      k--;
-    }
-    m_dist = tmp;
-  }
-
-  void AddOptimers(svec<OptiMer> & om, int k, int index) {
-    int i, j;
-    OptiMer mm;
-    mm.Seq() = index;
-    mm.Data().resize(k);
-    for (i=0; i<=m_dist.isize()-k; i++) {
-      mm.Pos() = i;
-      for (j=0; j<k; j++) {
-	mm.Data()[j] = m_dist[i+j];
-      }
-      om.push_back(mm);
-    }
-
-  }
-
   
 private:
-  svec<int> m_dist;
-  string m_name;
-  int m_ori;
 };
-
-
-
-class Link
-{
-public:
-  Link() {
-    forward = -1;
-    back = -1;
-    last = -1;
-    first = -1;
-    id = -1;
-  }
-
-  int forward;
-  int back;
-  int last;
-  int first;
-  int id;
-};
-
-
-void DoLink(svec<Link> & l, int i, int j, int & id)
-{
-  Link & a = l[i];
-  Link & b = l[j];
-
-  /*
-  if (a.forward == -1 && b.back == -1) {
-    a.forward = j;
-    b.back = i;
-    a.last = b.last;
-    b.first = a.first;
-    return;
-  }
-  if (a.forward == -1) {
-    a.forward = b.first;
-    l[b.first].back = i;
-    l[b.first].first = a.first;
-    a.last = b.last;
-    return;
-  }
-  if (b.back == -1) {
-    b.back = a.last;
-    l[a.last].forward = j;
-    l[a.last].last = b.last;
-    b.first = a.first;
-    return;
-    }*/
-
-  if (a.id == b.id && a.id != -1) {
-    //cout << "Nothing to do." << endl;
-    return;
-  }
-  
-  //cout << "Link " << i << " to " << j << endl;
-  //cout << "a " << a.last << " " <<  b.first << endl;
-  
-  l[a.last].forward = b.first;
-  l[b.first].back = a.last;
-  l[a.last].last = l[b.first].last;
-  l[b.first].first = l[a.last].first;
-
-  if (a.id == -1 && b.id == -1) {
-    a.id = id;
-    b.id = id;
-    a.last = j;
-    b.first = i;
-    //cout << "Create cluster " << id << " first: " << a.first << " last: " << b.last << endl;
-    id++;
-  } else {
-    int first = a.first;
-    int last = b.last;
-    int next = a.first;
-    //cout << "First: " << a.first << " last: " << b.last << endl; 
-    do {
-      //cout << reads[next].Name() << endl;
-      l[next].first = first;
-      l[next].last = last;
-      //cout << "Update " << ext << " to " << first << " " << last << endl;
-      next = l[next].forward;
-      
-    } while (next != -1);
-    
-
-    if (l[i].id != -1) {
-      next = j;
-      do {
-	//cout << reads[next].Name() << endl;
-	if (l[next].id == l[i].id)
-	  break;
-	l[next].id = l[i].id;       
-	next = l[next].forward;
-      } while (next != -1);
-    } else {
-      next = i;
-      do {
-	//cout << reads[next].Name() << endl;
-	if (l[next].id == l[i].id)
-	  break;
-	l[next].id = l[j].id;
-	next = l[next].back;
-      } while (next != -1);
-
-    }
-  }
-}
 
 
 int main( int argc, char** argv )
 {
 
   commandArg<string> fileCmmd("-i","input file");
-  commandArg<int> kCmmd("-k","seed size", 6);
-  commandArg<int> wCmmd("-w","wiggle", 5);
   commandLineParser P(argc,argv);
   P.SetDescription("Find overlaps in restriction maps.");
   P.registerArg(fileCmmd);
-  P.registerArg(kCmmd);
-  P.registerArg(wCmmd);
  
   P.parse();
   
   string fileName = P.GetStringValueFor(fileCmmd);
-  int k = P.GetIntValueFor(kCmmd);
-  int w = P.GetIntValueFor(wCmmd);
 
   //comment. ???
   FlatFileParser parser;
   
   parser.Open(fileName);
 
-  string l;
- 
+  
   int i, j;
 
-  svec<int> mm;
-  string name;
-
-
-  svec<OptiRead> reads;
-  cout << "LOG Read data..." << endl;
-
+  svec<SeqLap> laps;
+  svec<string> all;
+ 
+  cout << "LOG Reading data." << endl;
+  int l = 0;
   while (parser.ParseLine()) {
     if (parser.GetItemCount() == 0)
       continue;
-    if (parser.Line()[0] == '>') {
-      OptiRead rr;
-      rr.Dist() = mm;
-      rr.Name() = name;
-      if (name != "" && mm.isize() >= k) {
-	reads.push_back(rr);
-	rr.Flip();
-	rr.Name() += "_RC";
-	reads.push_back(rr);
-      }
-      
-      name = parser.Line();
-      mm.clear();
-      continue;
-    }
-    for (i=0; i< parser.GetItemCount(); i++)
-      mm.push_back(parser.AsFloat(i));
+
+    SeqLap tmp;
+    tmp.seq1 = parser.AsString(0);
+    tmp.seq2 = parser.AsString(1);
+    laps.push_back(tmp);
+    tmp.seq2 = parser.AsString(0);
+    tmp.seq1 = parser.AsString(1);
+    laps.push_back(tmp);
+    all.push_back(parser.AsString(0));
+    all.push_back(parser.AsString(1));
+ 
+    if (l % 100000 == 0)
+      cout << "LOG Read " << l/1000 << " k" << endl;
+    l++;
   }
-  if (mm.isize() > k) {
-    OptiRead rr2;
-    rr2.Dist() = mm;
-    rr2.Name() = name;
-    reads.push_back(rr2);
-    rr2.Name() += " RC";
-    rr2.Flip();
-    reads.push_back(rr2);
-  }
+
+  cout << "LOG Sorting laps: " << laps.isize() << endl;
+  //UniqueSort(laps);
+  Sort(laps);
+
+  //for (i=0; i<laps.isize(); i++)
+  //cout << laps[i].seq1 << " - " << laps[i].seq2 << endl;
   
-  cout << "LOG Build mer list..." << endl;
-  svec<OptiMer> mers;
-  for (i=0; i<reads.isize(); i++) {
-    reads[i].AddOptimers(mers, k, i);
-  }
+  cout << "LOG Sorting reads: " << all.isize() << endl;
+  UniqueSort(all);
+  
+  cout << "LOG Done, have: " << all.isize() << endl;
+  bool bOK = false;
 
-  cout << "LOG Sort mers... " << mers.isize() << endl;
-  Sort(mers);
-
-  svec<Link> link;
-  link.resize(reads.isize());
-  for (i=0; i<link.isize(); i++) {
-    link[i].last = i;
-    link[i].first = i;
-  }
-
+  int k = 0;
   svec<int> pool;
-  pool.resize(reads.isize(), -1);
-  
-  int kp = 0;
+  pool.resize(all.isize(), -1);
 
-  int counter = 0;
-  int cluster = 0;
-  cout << "Start going through mers..." << endl;
-  for (i=0; i<mers.isize(); i++) {
-    counter++;
-    if (counter % 1000 == 0)
-      cout << "LOG Progress: " << 100*(double)i/(double)mers.isize() << "%" << endl;
-    for (j=i+1; j<mers.isize(); j++) {
-      if (mers[j] != mers[i]) {
-	break;
-      }
-      //cout << "same " << i << " " << j << endl;
-    }
-    if (j-i < 25) {
-      for (int x = i; x<j; x++) {
-	cout << reads[mers[x].Seq()].Name() << " ";
-	//cout << "Loop " << reads[mers[x].Seq()].Name() << " " << reads[mers[x-1].Seq()].Name() << " " << i << " " << j << " " << x << endl;
-	//DoLink(link, mers[x-1].Seq(), mers[x].Seq(), cluster);
-	
-	/*
-	//cout << "Pooling" << endl;
-	int t = pool[mers[x].Seq()];
-	if (t != -1) {
-	//cout << "Adjust from " << t << " to " << kp << endl;
-	for (int y=0; y<pool.isize(); y++) {
-	if (pool[y] == t) {
-	pool[y] = kp;
-	}
-	}
-	}
-	//cout << "Assign " 
-	pool[mers[x].Seq()] = kp;
-	*/
-      }
-      kp++;
-    }
-    if (j > i)
-      cout << endl;
-    i = j-1;
-    
-  }
-
-  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  return 0;
-  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  
-  svec<int> done;
-  done.resize(reads.isize(), 0);
-
-  /*
-  cout << "DEBUG" << endl;
-  for (int i=0; i<reads.isize(); i++) {
-    cout << "Read " << i << " " << reads[i].Name() << " ";
-    cout << " <- " << link[i].back << " " << link[i].forward << " -> ";
-    cout << " f " << link[i].first << " r " << link[i].last << endl;
-   }
-  */
-  
-  int pp = 0;
-  for (i=0; i<reads.isize(); i++) {
-    if (done[i])
+  for (i=0; i<all.isize(); i++) {
+    if (pool[i] != -1)
       continue;
-    Link & l = link[i];
-    if (l.first != i)
-      continue;
-    int next = i;
-    cout << "Pool " << pp << endl;
-    pp++;
+
+    int curr = i;
+
+    svec<int> members;
+    int counter = 0;
+    members.push_back(curr);
+    pool[curr] = k;
+    int depth = 0;
     do {
-      cout << reads[next].Name() << endl;
-      //<< " " << l.first << " " << link[next].id << endl;
-      //cout << " -> " << link[next].forward << " <- " << link[next].back << endl;
-      next = link[next].forward;
-    } while (next != -1);
-  }
+      curr = members[counter];
+      //cout << "Start w/ " << all[curr] << endl;
+      SeqLap tmp;
+      tmp.seq1 = all[curr];      
+      int index = BinSearch(laps, tmp);
+      //cout << "Index " << index << endl;
+      int added = 0;
 
+      int countCands = 0;
+      for (j=index; j<laps.isize(); j++) {
+	countCands++;
+	if (laps[j].seq1 != all[curr]) {
+	  break;
+	}
+      }
+
+      if (countCands < 10) {
+	for (j=index; j<laps.isize(); j++) {
+	  //cout << "Try...  " << laps[j].seq1 <<  " " << laps[j].seq2 << " " << all[curr] << endl;
+	  if (laps[j].seq1 != all[curr]) {
+	    //cout << "BREAK" << endl;
+	    break;
+	  }
+	  //cout << "Found lap w/ " << laps[j].seq2 << endl;
+	  int mm = BinSearch(all, laps[j].seq2);
+	  if (pool[mm] != -1)
+	    continue;
+	  pool[mm] = k;
+	  members.push_back(mm);
+	  added++;
+	  //cout << "  members: " << members.isize() << " counter " << counter << endl;
+	}
+      }
+      if (added > 0)
+	depth++;
+      counter++;
+      //cout << "Cont, " << counter << endl;
+    } while (counter < members.isize());
+    cout << "POOL " << k << " members " << members.isize() << " depth " << depth << endl;
+    for (j=0; j<members.isize(); j++) {
+      cout << all[members[j]] << endl;
+    }
+    cout << "END" << endl;
+    k++;
+  }
+  
   
   return 0;
 }

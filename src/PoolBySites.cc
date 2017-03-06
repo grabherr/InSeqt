@@ -96,14 +96,20 @@ int main( int argc, char** argv )
 {
 
   commandArg<string> fileCmmd("-i","input file");
+  commandArg<int> mdCmmd("-max","max depth", -1);
   commandLineParser P(argc,argv);
   P.SetDescription("Find overlaps in restriction maps.");
   P.registerArg(fileCmmd);
+  P.registerArg(mdCmmd);
  
   P.parse();
   
   string fileName = P.GetStringValueFor(fileCmmd);
+  int max = P.GetIntValueFor(mdCmmd);
 
+  if (max < 0)
+    max = 0x7FFFFFFF;
+  
   //comment. ???
   FlatFileParser parser;
   
@@ -181,7 +187,7 @@ int main( int argc, char** argv )
 	}
       }
 
-      if (countCands < 10) {
+      if (countCands < 500) {
 	for (j=index; j<laps.isize(); j++) {
 	  //cout << "Try...  " << laps[j].seq1 <<  " " << laps[j].seq2 << " " << all[curr] << endl;
 	  if (laps[j].seq1 != all[curr]) {
@@ -202,7 +208,7 @@ int main( int argc, char** argv )
 	depth++;
       counter++;
       //cout << "Cont, " << counter << endl;
-    } while (counter < members.isize());
+    } while (counter < members.isize() && depth < max);
     cout << "POOL " << k << " members " << members.isize() << " depth " << depth << endl;
     for (j=0; j<members.isize(); j++) {
       cout << all[members[j]] << endl;

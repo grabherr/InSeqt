@@ -137,6 +137,7 @@ public:
   void LoadReads(const string& fileName, int seedSize)  { m_reads.LoadReads(fileName, seedSize);       }
   void BuildOptimers(int seedSize)                      { m_optimers.BuildOptimers(m_reads, seedSize); }
   void PoolReads();
+  void PoolReadPairs();
 
 private:
   OptiReads m_reads;     /// Optical Reads

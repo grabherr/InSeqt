@@ -77,6 +77,7 @@ bool Optimer::operator != (const Optimer & m) const {
   }
   return false;
 }
+
 bool Optimer::operator == (const Optimer & m) const {
   for (int i=0; i<m_data.isize(); i++) {
     if (m_data[i] != m.m_data[i])
@@ -117,7 +118,6 @@ void Optimers::BuildOptimers(const OptiReads& optiReads , int seedSize) {
 void OptiMapAlignUnit::PoolReads() {
   int kp      = 0;
   int counter = 0;
-  int cluster = 0;
   int i,j     = 0;
   ORLinks link(m_reads.NumReads());
   cout << "Start going through mers..." << endl;
@@ -129,28 +129,10 @@ void OptiMapAlignUnit::PoolReads() {
       if (m_optimers[j] != m_optimers[i]) {
         break;
       }
-      //cout << "same " << i << " " << j << endl;
     }
     if (j-i < 25) {
       for (int x = i; x<j; x++) {
         cout << m_reads[m_optimers[x].Seq()].Name() << " ";
-      //cout << "Loop " << m_reads[m_optimers[x].Seq()].Name() << " " << m_reads[m_optimers[x-1].Seq()].Name() << " " << i << " " << j << " " << x << endl;
-      //DoLink(link, m_optimers[x-1].Seq(), m_optimers[x].Seq(), cluster);
-	
-      /*
-      //cout << "Pooling" << endl; 
-      int t = pool[m_optimers[x].Seq()];
-      if (t != -1) {
-      //cout << "Adjust from " << t << " to " << kp << endl;
-      for (int y=0; y<pool.isize(); y++) {
-        if (pool[y] == t) {
-          pool[y] = kp;
-	}
-      }
-    }
-    //cout << "Assign " 
-    pool[m_optimers[x].Seq()] = kp;
-    */
       }
       kp++;
     }
@@ -158,43 +140,31 @@ void OptiMapAlignUnit::PoolReads() {
       cout << endl;
     i = j-1;
   }
+}
 
-  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  return;
-  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  
-  svec<int> done;
-  done.resize(m_reads.NumReads(), 0);
-
-  /*
-  cout << "DEBUG" << endl;
-  for (int i=0; i<m_reads.isize(); i++) {
-    cout << "Read " << i << " " << m_reads[i].Name() << " ";
-    cout << " <- " << link[i].back << " " << link[i].GetForward() << " -> ";
-    cout << " f " << link[i].GetFirst() << " r " << link[i].last << endl;
-   }
-  */
-  
-  int pp = 0;
-  for (int i=0; i<m_reads.NumReads(); i++) {
-    if (done[i])
-      continue;
-    const ORLink & l = link[i];
-    if (l.GetFirst() != i)
-      continue;
-    int next = i;
-    cout << "Pool " << pp << endl;
-    pp++;
-    do {
-      cout << m_reads[next].Name() << endl;
-      //<< " " << l.GetFirst() << " " << link[next].id << endl;
-      //cout << " -> " << link[next].GetForward() << " <- " << link[next].back << endl;
-      next = link[next].GetForward();
-    } while (next != -1);
-  }  
+void OptiMapAlignUnit::PoolReadPairs() {
+  int kp      = 0;
+  int counter = 0;
+  int i,j     = 0;
+  ORLinks link(m_reads.NumReads());
+  cout << "Start going through mers..." << endl;
+  for (i=0; i<m_optimers.NumMers(); i++) {
+    counter++;
+    if (counter % 1000 == 0)
+      cout << "LOG Progress: " << 100*(double)i/(double)m_optimers.NumMers() << "%" << endl;
+    for (j=i+1; j<m_optimers.NumMers(); j++) {
+      if (m_optimers[j] != m_optimers[i]) {
+        break;
+      }
+    }
+    if (j-i < 25) {
+      for (int x = i; x<j; x++) {
+        for(int y=x+1; y<j; y++) {
+          cout << m_reads[m_optimers[x].Seq()].Name() << " " << m_reads[m_optimers[y].Seq()].Name() << endl;
+        }
+      }
+      kp++;
+    }
+    i = j-1;
+  }
 }

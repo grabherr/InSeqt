@@ -119,7 +119,6 @@ void OptiMapAlignUnit::FindCandidLaps(int seedSize) {
   optimers.BuildOptimers(m_reads, seedSize); 
   int counter = 0;
   int i,j     = 0;
-  ORLinks link(m_reads.NumReads());
   cout << "Start going through mers..." << endl;
   for (i=0; i<optimers.NumMers(); i++) {
     counter++;

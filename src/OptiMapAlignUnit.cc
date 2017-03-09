@@ -114,56 +114,28 @@ void Optimers::BuildOptimers(const OptiReads& optiReads , int seedSize) {
   Sort(m_mers);
 }
 
-
-void OptiMapAlignUnit::PoolReads() {
-  int kp      = 0;
+void OptiMapAlignUnit::FindCandidLaps(int seedSize) {
+  Optimers  optimers;  // To build optimers from optical reads
+  optimers.BuildOptimers(m_reads, seedSize); 
   int counter = 0;
   int i,j     = 0;
   ORLinks link(m_reads.NumReads());
   cout << "Start going through mers..." << endl;
-  for (i=0; i<m_optimers.NumMers(); i++) {
+  for (i=0; i<optimers.NumMers(); i++) {
     counter++;
     if (counter % 1000 == 0)
-      cout << "LOG Progress: " << 100*(double)i/(double)m_optimers.NumMers() << "%" << endl;
-    for (j=i+1; j<m_optimers.NumMers(); j++) {
-      if (m_optimers[j] != m_optimers[i]) {
-        break;
-      }
-    }
-    if (j-i < 25) {
-      for (int x = i; x<j; x++) {
-        cout << m_reads[m_optimers[x].Seq()].Name() << " ";
-      }
-      kp++;
-    }
-    if (j > i)
-      cout << endl;
-    i = j-1;
-  }
-}
-
-void OptiMapAlignUnit::PoolReadPairs() {
-  int kp      = 0;
-  int counter = 0;
-  int i,j     = 0;
-  ORLinks link(m_reads.NumReads());
-  cout << "Start going through mers..." << endl;
-  for (i=0; i<m_optimers.NumMers(); i++) {
-    counter++;
-    if (counter % 1000 == 0)
-      cout << "LOG Progress: " << 100*(double)i/(double)m_optimers.NumMers() << "%" << endl;
-    for (j=i+1; j<m_optimers.NumMers(); j++) {
-      if (m_optimers[j] != m_optimers[i]) {
+      cout << "LOG Progress: " << 100*(double)i/(double)optimers.NumMers() << "%" << endl;
+    for (j=i+1; j<optimers.NumMers(); j++) {
+      if (optimers[j] != optimers[i]) {
         break;
       }
     }
     if (j-i < 25) {
       for (int x = i; x<j; x++) {
         for(int y=x+1; y<j; y++) {
-          cout << m_reads[m_optimers[x].Seq()].Name() << " " << m_reads[m_optimers[y].Seq()].Name() << endl;
+          cout << m_reads[optimers[x].Seq()].Name() << " " << m_reads[optimers[y].Seq()].Name() << endl;
         }
       }
-      kp++;
     }
     i = j-1;
   }

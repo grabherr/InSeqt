@@ -21,12 +21,8 @@ int main( int argc, char** argv )
   OptiMapAlignUnit omaUnit; 
   // 1. Load Optical Reads
   omaUnit.LoadReads(fileName, k);
-  // 2. Build optimers from opti reads with the given seed size
-  omaUnit.BuildOptimers(k);
-  // 3. Create Links for linking optimers
-  //ORLinks links(optiReads.NumReads());
-  // 4. Pool linked optimers together
-  omaUnit.PoolReads();
+  // 2. Build Optimers and find those that share a seed as cadidates for overlap detection 
+  omaUnit.FindCandidLaps(k);
   
   return 0;
 }

@@ -132,15 +132,12 @@ private:
 class OptiMapAlignUnit 
 {
 public:
-  OptiMapAlignUnit(): m_reads(), m_optimers() {}
+  OptiMapAlignUnit(): m_reads() {}
   
   void LoadReads(const string& fileName, int seedSize)  { m_reads.LoadReads(fileName, seedSize);       }
-  void BuildOptimers(int seedSize)                      { m_optimers.BuildOptimers(m_reads, seedSize); }
-  void PoolReads();
-  void PoolReadPairs();
+  void FindCandidLaps(int seedSize);
 
 private:
   OptiReads m_reads;     /// Optical Reads
-  Optimers  m_optimers;  /// Optimers built from optical reads
 };
 #endif //OPTIMAPALIGNUNIT_H

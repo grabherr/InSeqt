@@ -140,5 +140,6 @@ void OptiMapAlignUnit::FindCandidLaps(int seedSize, OverlapCandids& lapCandids) 
     }
     i = j-1;
   }
+  cout << "LOG Sort overlap candidates... " << lapCandids.NumCandids() << endl;
   lapCandids.SortAll();
 }

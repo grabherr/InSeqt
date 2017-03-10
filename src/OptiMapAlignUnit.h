@@ -110,6 +110,8 @@ class OverlapCandids
 public:
   OverlapCandids(): m_candids() {}
   
+  int NumCandids() { return m_candids.isize(); }
+
   void AddCandid(int rIdx1, int rIdx2, int offsetDelta) {
     m_candids.push_back(OverlapCandid(rIdx1, rIdx2, offsetDelta));
   }

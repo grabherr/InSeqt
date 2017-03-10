@@ -19,10 +19,15 @@ int main( int argc, char** argv )
   int k = P.GetIntValueFor(kCmmd);
   int w = P.GetIntValueFor(wCmmd);
   OptiMapAlignUnit omaUnit; 
+
   // 1. Load Optical Reads
   omaUnit.LoadReads(fileName, k);
+
   // 2. Build Optimers and find those that share a seed as cadidates for overlap detection 
-  omaUnit.FindCandidLaps(k);
+  OverlapCandids lapCandids;
+  omaUnit.FindCandidLaps(k, lapCandids);
+
+  // 3. Use the Overlap candids to do finer alignment and find true overlaps
   
   return 0;
 }

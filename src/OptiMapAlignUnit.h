@@ -84,13 +84,50 @@ private:
   svec<Optimer> m_mers;  /// List of optimes
 };
 
+class OverlapCandid
+{
+public:
+  OverlapCandid(): m_rIdx1(-1), m_rIdx2(-1), m_offsetDelta(-1) {}
+  OverlapCandid(int idx1, int idx2, int delta): m_rIdx1(idx1), m_rIdx2(idx2), m_offsetDelta(delta) {}
+
+  int GetFirstReadIndex() const  { return m_rIdx1;       }
+  int GetSecondReadIndex() const { return m_rIdx2;       }
+  int GetOffsetDelta() const     { return m_offsetDelta; }
+
+  inline bool operator < (const OverlapCandid& rhs) const {
+    tie(m_rIdx1, m_rIdx2, m_offsetDelta)
+       < tie(rhs.m_rIdx1, rhs.m_rIdx2, rhs.m_offsetDelta); // keep the same order
+  }
+
+private:
+  int m_rIdx1;        /// The index of the first read
+  int m_rIdx2;        /// The index of the second read 
+  int m_offsetDelta;  /// offset2 - offset1  Where the offsets are where the seed match starts froom
+};
+
+class OverlapCandids
+{
+public:
+  OverlapCandids(): m_candids() {}
+  
+  void AddCandid(int rIdx1, int rIdx2, int offsetDelta) {
+    m_candids.push_back(OverlapCandid(rIdx1, rIdx2, offsetDelta));
+  }
+  
+  void SortAll() { Sort(m_candids); }
+
+private:
+  svec<OverlapCandid> m_candids; /// unordered set of overlap candidates (for uniqueness)
+};
+
 class OptiMapAlignUnit 
 {
 public:
   OptiMapAlignUnit(): m_reads() {}
   
-  void LoadReads(const string& fileName, int seedSize)  { m_reads.LoadReads(fileName, seedSize);       }
-  void FindCandidLaps(int seedSize);
+  void LoadReads(const string& fileName, int seedSize)  { m_reads.LoadReads(fileName, seedSize); }
+
+  void FindCandidLaps(int seedSize, OverlapCandids& lapCandids);
 
 private:
   OptiReads m_reads;     /// Optical Reads

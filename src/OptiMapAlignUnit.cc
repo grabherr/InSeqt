@@ -114,7 +114,7 @@ void Optimers::BuildOptimers(const OptiReads& optiReads , int seedSize) {
   Sort(m_mers);
 }
 
-void OptiMapAlignUnit::FindCandidLaps(int seedSize) {
+void OptiMapAlignUnit::FindCandidLaps(int seedSize, OverlapCandids& lapCandids) {
   Optimers  optimers;  // To build optimers from optical reads
   optimers.BuildOptimers(m_reads, seedSize); 
   int counter = 0;
@@ -122,7 +122,7 @@ void OptiMapAlignUnit::FindCandidLaps(int seedSize) {
   cout << "Start going through mers..." << endl;
   for (i=0; i<optimers.NumMers(); i++) {
     counter++;
-    if (counter % 1000 == 0)
+    if (counter % 10000 == 0)
       cout << "LOG Progress: " << 100*(double)i/(double)optimers.NumMers() << "%" << endl;
     for (j=i+1; j<optimers.NumMers(); j++) {
       if (optimers[j] != optimers[i]) {
@@ -132,10 +132,13 @@ void OptiMapAlignUnit::FindCandidLaps(int seedSize) {
     if (j-i < 25) {
       for (int x = i; x<j; x++) {
         for(int y=x+1; y<j; y++) {
-          cout << m_reads[optimers[x].Seq()].Name() << " " << m_reads[optimers[y].Seq()].Name() << endl;
+          cout << m_reads[optimers[x].Seq()].Name() << " " << m_reads[optimers[y].Seq()].Name()
+               << " " << optimers[x].Pos()-optimers[y].Pos() << endl;
+          lapCandids.AddCandid(x, y, optimers[x].Pos()-optimers[y].Pos());
         }
       }
     }
     i = j-1;
   }
+  lapCandids.SortAll();
 }

@@ -112,6 +112,8 @@ public:
   
   int NumCandids() { return m_candids.isize(); }
 
+  void ReserveInit(int initialCapacity) { m_candids.reserve(initialCapacity); } 
+
   void AddCandid(int rIdx1, int rIdx2, int offsetDelta) {
     m_candids.push_back(OverlapCandid(rIdx1, rIdx2, offsetDelta));
   }

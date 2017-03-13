@@ -56,7 +56,7 @@ void OptiReads::LoadReads(const string& fileName, int seedSize) {
     rr2.Dist() = mm;
     rr2.Name() = name;
     m_oReads.push_back(rr2);
-    rr2.Name() += " RC";
+    rr2.Name() += "_RC";
     rr2.Flip();
     m_oReads.push_back(rr2);
   }
@@ -120,6 +120,7 @@ void OptiMapAlignUnit::FindCandidLaps(int seedSize, OverlapCandids& lapCandids) 
   int counter = 0;
   int i,j     = 0;
   cout << "Start going through mers..." << endl;
+  lapCandids.ReserveInit(optimers.NumMers());
   for (i=0; i<optimers.NumMers(); i++) {
     counter++;
     if (counter % 10000 == 0)

@@ -102,7 +102,7 @@ public:
 private:
   int m_rIdx1;        /// The index of the first read
   int m_rIdx2;        /// The index of the second read 
-  int m_offsetDelta;  /// offset2 - offset1  Where the offsets are where the seed match starts froom
+  int m_offsetDelta;  /// offset2 - offset1  Where the offsets are where the seed match starts from
 };
 
 class OverlapCandids
@@ -110,13 +110,13 @@ class OverlapCandids
 public:
   OverlapCandids(): m_candids() {}
   
-  int NumCandids() { return m_candids.isize(); }
+  const OverlapCandid& operator[](int idx) const { return m_candids[idx]; }
+
+  int NumCandids() const { return m_candids.isize(); }
 
   void ReserveInit(int initialCapacity) { m_candids.reserve(initialCapacity); } 
 
-  void AddCandid(int rIdx1, int rIdx2, int offsetDelta) {
-    m_candids.push_back(OverlapCandid(rIdx1, rIdx2, offsetDelta));
-  }
+  void AddCandid(int rIdx1, int rIdx2, int offsetDelta);
   
   void SortAll() { Sort(m_candids); }
 
@@ -132,6 +132,8 @@ public:
   void LoadReads(const string& fileName, int seedSize)  { m_reads.LoadReads(fileName, seedSize); }
 
   void FindCandidLaps(int seedSize, OverlapCandids& lapCandids);
+
+  void WriteLapCandids(const OverlapCandids& candids);
 
 private:
   OptiReads m_reads;     /// Optical Reads

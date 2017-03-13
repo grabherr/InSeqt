@@ -114,6 +114,24 @@ void Optimers::BuildOptimers(const OptiReads& optiReads , int seedSize) {
   Sort(m_mers);
 }
 
+void OverlapCandids::AddCandid(int rIdx1, int rIdx2, int offsetDelta) {
+  // Make sure that rIdx1, rIdx2 are in increasing order (so that sorting will bring all relevant pairs together)
+  if(rIdx1>rIdx2) {
+    int temp = rIdx1;
+    rIdx1 = rIdx2;
+    rIdx2 = temp; // Swap rIdx1 & rIdx2
+    offsetDelta *= -1;
+  }
+  m_candids.push_back(OverlapCandid(rIdx1, rIdx2, offsetDelta));
+}
+ 
+void OptiMapAlignUnit::WriteLapCandids(const OverlapCandids& candids) {
+  for (int i = 0; i<candids.NumCandids(); i++) {
+    cout << m_reads[candids[i].GetFirstReadIndex()].Name() << " " << m_reads[candids[i].GetSecondReadIndex()].Name()
+         << " " << candids[i].GetOffsetDelta() << endl;
+  }
+}
+
 void OptiMapAlignUnit::FindCandidLaps(int seedSize, OverlapCandids& lapCandids) {
   Optimers  optimers;  // To build optimers from optical reads
   optimers.BuildOptimers(m_reads, seedSize); 
@@ -133,9 +151,7 @@ void OptiMapAlignUnit::FindCandidLaps(int seedSize, OverlapCandids& lapCandids) 
     if (j-i < 25) {
       for (int x = i; x<j; x++) {
         for(int y=x+1; y<j; y++) {
-          cout << m_reads[optimers[x].Seq()].Name() << " " << m_reads[optimers[y].Seq()].Name()
-               << " " << optimers[x].Pos()-optimers[y].Pos() << endl;
-          lapCandids.AddCandid(x, y, optimers[x].Pos()-optimers[y].Pos());
+          lapCandids.AddCandid(optimers[x].Seq(), optimers[y].Seq(), optimers[y].Pos()-optimers[x].Pos());
         }
       }
     }
@@ -143,4 +159,5 @@ void OptiMapAlignUnit::FindCandidLaps(int seedSize, OverlapCandids& lapCandids) 
   }
   cout << "LOG Sort overlap candidates... " << lapCandids.NumCandids() << endl;
   lapCandids.SortAll();
+  WriteLapCandids(lapCandids);
 }

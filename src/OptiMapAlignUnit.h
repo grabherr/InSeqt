@@ -12,12 +12,14 @@ public:
     m_ori = 1;
   }
   
-  svec<int> & Dist() {return m_dist;}
-  string & Name() {return m_name;}
-  const svec<int> & Dist() const {return m_dist;}
-  const string & Name() const {return m_name;}
-  int & Ori() {return m_ori;}
-  const int & Ori() const {return m_ori;}
+  int operator[](int idx) const  { return m_dist[idx];    }
+  svec<int> & Dist()             { return m_dist;         }
+  string & Name()                { return m_name;         }
+  int & Ori()                    { return m_ori;          }
+  const svec<int> & Dist() const { return m_dist;         }
+  const string & Name() const    { return m_name;         }
+  const int & Ori() const        { return m_ori;          }
+  int Size() const               { return m_dist.isize(); }
 
   void Flip();
 
@@ -95,9 +97,15 @@ public:
   int GetOffsetDelta() const     { return m_offsetDelta; }
 
   inline bool operator < (const OverlapCandid& rhs) const {
-    tie(m_rIdx1, m_rIdx2, m_offsetDelta)
-       < tie(rhs.m_rIdx1, rhs.m_rIdx2, rhs.m_offsetDelta); // keep the same order
+    return(tie(m_rIdx1, m_rIdx2, m_offsetDelta)
+       < tie(rhs.m_rIdx1, rhs.m_rIdx2, rhs.m_offsetDelta)); // keep the same order
   }
+
+  inline bool operator == (const OverlapCandid& rhs) const {
+    return(tie(m_rIdx1, m_rIdx2, m_offsetDelta)
+       == tie(rhs.m_rIdx1, rhs.m_rIdx2, rhs.m_offsetDelta)); // keep the same order
+  }
+
 
 private:
   int m_rIdx1;        /// The index of the first read
@@ -116,7 +124,8 @@ public:
 
   void ReserveInit(int initialCapacity) { m_candids.reserve(initialCapacity); } 
 
-  void AddCandid(int rIdx1, int rIdx2, int offsetDelta);
+  void AddCandidSort(int rIdx1, int rIdx2, int offsetDelta);
+  void AddCandid(const OverlapCandid& lapCandid);
   
   void SortAll() { Sort(m_candids); }
 
@@ -131,7 +140,9 @@ public:
   
   void LoadReads(const string& fileName, int seedSize)  { m_reads.LoadReads(fileName, seedSize); }
 
-  void FindCandidLaps(int seedSize, OverlapCandids& lapCandids);
+  void FindLapCandids(int seedSize, OverlapCandids& lapCandids);
+
+  void FinalOverlaps(const OverlapCandids& lapCandids, int tolerance, OverlapCandids& finalOverlaps);
 
   void WriteLapCandids(const OverlapCandids& candids);
 

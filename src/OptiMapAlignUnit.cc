@@ -114,7 +114,7 @@ void Optimers::BuildOptimers(const OptiReads& optiReads , int seedSize) {
   Sort(m_mers);
 }
 
-void OverlapCandids::AddCandid(int rIdx1, int rIdx2, int offsetDelta) {
+void OverlapCandids::AddCandidSort(int rIdx1, int rIdx2, int offsetDelta) {
   // Make sure that rIdx1, rIdx2 are in increasing order (so that sorting will bring all relevant pairs together)
   if(rIdx1>rIdx2) {
     int temp = rIdx1;
@@ -125,6 +125,10 @@ void OverlapCandids::AddCandid(int rIdx1, int rIdx2, int offsetDelta) {
   m_candids.push_back(OverlapCandid(rIdx1, rIdx2, offsetDelta));
 }
  
+void OverlapCandids::AddCandid(const OverlapCandid& lapCandid) {
+  m_candids.push_back(lapCandid);
+}
+
 void OptiMapAlignUnit::WriteLapCandids(const OverlapCandids& candids) {
   for (int i = 0; i<candids.NumCandids(); i++) {
     cout << m_reads[candids[i].GetFirstReadIndex()].Name() << " " << m_reads[candids[i].GetSecondReadIndex()].Name()
@@ -132,7 +136,7 @@ void OptiMapAlignUnit::WriteLapCandids(const OverlapCandids& candids) {
   }
 }
 
-void OptiMapAlignUnit::FindCandidLaps(int seedSize, OverlapCandids& lapCandids) {
+void OptiMapAlignUnit::FindLapCandids(int seedSize, OverlapCandids& lapCandids) {
   Optimers  optimers;  // To build optimers from optical reads
   optimers.BuildOptimers(m_reads, seedSize); 
   int counter = 0;
@@ -151,7 +155,7 @@ void OptiMapAlignUnit::FindCandidLaps(int seedSize, OverlapCandids& lapCandids) 
     if (j-i < 25) {
       for (int x = i; x<j; x++) {
         for(int y=x+1; y<j; y++) {
-          lapCandids.AddCandid(optimers[x].Seq(), optimers[y].Seq(), optimers[y].Pos()-optimers[x].Pos());
+          lapCandids.AddCandidSort(optimers[x].Seq(), optimers[y].Seq(), optimers[y].Pos()-optimers[x].Pos());
         }
       }
     }
@@ -159,5 +163,35 @@ void OptiMapAlignUnit::FindCandidLaps(int seedSize, OverlapCandids& lapCandids) 
   }
   cout << "LOG Sort overlap candidates... " << lapCandids.NumCandids() << endl;
   lapCandids.SortAll();
-  WriteLapCandids(lapCandids);
+}
+
+void OptiMapAlignUnit::FinalOverlaps(const OverlapCandids& lapCandids, int tolerance,  OverlapCandids& finalOverlaps) {
+  cout << "LOG Refine overlap candidates... " << lapCandids.NumCandids() << endl;
+  finalOverlaps.ReserveInit(lapCandids.NumCandids()/2); // Rough estimate 
+  OverlapCandid currCandid;
+  int rejectCnt = 0;
+  for(int i=0; i<lapCandids.NumCandids(); i++) {
+    if(lapCandids[i]==currCandid) { continue; }
+    currCandid = lapCandids[i];  
+    const OptiRead& read1    = m_reads[currCandid.GetFirstReadIndex()]; 
+    const OptiRead& read2    = m_reads[currCandid.GetSecondReadIndex()]; 
+    int delta     = currCandid.GetOffsetDelta();
+    int readPos1  = delta>=0 ? 0 : -delta;
+    int readPos2  = delta>=0 ? delta : 0;
+    bool overlaps = true;
+    while(readPos1 < read1.Size() && readPos2 < read2.Size()) {
+      if(abs(read1[readPos1] - read2[readPos2]) <= tolerance) {
+        readPos1++;
+        readPos2++;
+      } else {
+        overlaps = false;
+        rejectCnt++;
+        break;
+      }
+    }
+    if(overlaps) { finalOverlaps.AddCandid(currCandid); }
+  }
+  cout << "LOG Total number of overlap candidates rejected: " << rejectCnt << endl;
+  cout << "LOG Final number of overlaps: " << finalOverlaps.NumCandids() << endl;
+  WriteLapCandids(finalOverlaps);
 }

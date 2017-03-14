@@ -25,9 +25,11 @@ int main( int argc, char** argv )
 
   // 2. Build Optimers and find those that share a seed as cadidates for overlap detection 
   OverlapCandids lapCandids;
-  omaUnit.FindCandidLaps(k, lapCandids);
+  omaUnit.FindLapCandids(k, lapCandids);
+ 
+  // 3. Take the overlap candidates and refine to remove false positives
+  OverlapCandids finalOverlaps;
+  omaUnit.FinalOverlaps(lapCandids, w, finalOverlaps);
 
-  // 3. Use the Overlap candids to do finer alignment and find true overlaps
-  
   return 0;
 }

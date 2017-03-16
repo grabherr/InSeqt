@@ -2,6 +2,7 @@
 #define OPTIMAPALIGNUNIT_H
 
 #include <string>
+#include <parallel/algorithm>
 #include "ryggrad/src/base/CommandLineParser.h"
 #include "ryggrad/src/base/FileParser.h"
 
@@ -127,7 +128,9 @@ public:
   void AddCandidSort(int rIdx1, int rIdx2, int offsetDelta);
   void AddCandid(const OverlapCandid& lapCandid);
   
-  void SortAll() { Sort(m_candids); }
+  void SortAll() { 
+    __gnu_parallel::sort(m_candids.begin(), m_candids.end());
+  }
 
 private:
   svec<OverlapCandid> m_candids; /// unordered set of overlap candidates (for uniqueness)

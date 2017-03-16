@@ -111,7 +111,7 @@ void Optimers::BuildOptimers(const OptiReads& optiReads , int seedSize) {
     AddSingleReadOptimers(optiReads, seedSize, rIdx);
   }
   cout << "LOG Sort mers... " << m_mers.isize() << endl;
-  Sort(m_mers);
+  __gnu_parallel::sort(m_mers.begin(), m_mers.end());
 }
 
 void OverlapCandids::AddCandidSort(int rIdx1, int rIdx2, int offsetDelta) {

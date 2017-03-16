@@ -68,4 +68,5 @@ add_executable(SiteLaps             ${SOURCE_FILES_SITELAPS})
 add_executable(SimulateReadData     ${SOURCE_FILES_SIMULATEREADDATA})
 
 
+SET_TARGET_PROPERTIES(SiteLaps PROPERTIES COMPILE_FLAGS "-fopenmp" LINK_FLAGS "-fopenmp")
   

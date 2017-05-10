@@ -16,8 +16,12 @@ public:
   int operator[](int idx) const  { return m_dist[idx];    }
   svec<int> & Dist()             { return m_dist;         }
   string & Name()                { return m_name;         }
+  int& PreDist()                 { return m_preDist;      }
+  int& PostDist()                { return m_postDist;     }
   int & Ori()                    { return m_ori;          }
   const svec<int> & Dist() const { return m_dist;         }
+  const int& PreDist() const     { return m_preDist;      }
+  const int& PostDist() const    { return m_postDist;     }
   const string & Name() const    { return m_name;         }
   const int & Ori() const        { return m_ori;          }
   int Size() const               { return m_dist.isize(); }
@@ -25,9 +29,11 @@ public:
   void Flip();
 
 private:
-  svec<int> m_dist;
-  string m_name;
-  int m_ori;
+  svec<int> m_dist;       /// Distmer values
+  int m_preDist;          /// Number of bits prior to the start of the first distmer value
+  int m_postDist;         /// Number of bits left over after the last distmer value
+  string m_name;          /// Name of optiRead
+  int m_ori;              /// Orientation
 };
 
 class OptiReads 

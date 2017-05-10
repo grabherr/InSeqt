@@ -1,4 +1,7 @@
-#define FORCE_DEBUG
+#ifndef FORCE_DEBUG
+#define NDEBUG
+#endif
+
 #include <string>
 #include "ryggrad/src/base/CommandLineParser.h"
 #include "ryggrad/src/base/FileParser.h"
@@ -33,22 +36,31 @@ int main( int argc, char** argv )
     if (parser.GetItemCount() == 0)
       continue;
     if (parser.Line()[0] == '>') {
+      bool wrotePrefix = false;
       int n = -1;
       for (i=0; i<(int)l.length()-(int)site.length(); i++) {
-	//cout << i << " " << l.length() << endl;
 	for (j=0; j<site.length(); j++) {
 	  if (site[j] != toupper(l[i+j]))
 	    break;
 	}
 	if (j == site.length()) {
 	  if (n >= 0) {
+            if (!wrotePrefix) {
+              cout << n; // Output prefix (number of trailing bits before the first motif location)
+              wrotePrefix = true; 
+            }
 	    cout << " " << i-n;
 	  } 
 	  n = i;
 	}
       }
-      if (l != "")
-	cout << endl;
+      if (l != "") {
+        if(wrotePrefix) { 
+	  cout << " " << l.length() - n << endl; // Output postfix (number of leading bits after last motif location)
+        } else {
+	  cout << endl;
+        }
+      }
       l = "";
       cout << parser.Line() << endl;
       continue;

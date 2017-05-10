@@ -34,31 +34,26 @@ void OptiReads::LoadReads(const string& fileName, int seedSize) {
     if (parser.GetItemCount() == 0)
       continue;
     if (parser.Line()[0] == '>') {
+      name = parser.Line();
       OptiRead rr;
-      rr.Dist() = mm;
       rr.Name() = name;
-      if (name != "" && mm.isize() >= seedSize) {
+
+      // Obtain the pre/post values and  distmer values
+      parser.ParseLine();
+      rr.PreDist()  = parser.AsFloat(0);
+      for (i=1; i< parser.GetItemCount()-1; i++) // index starts at 1 and ends at length-1 since pre/postDist are loaded separately
+        mm.push_back(parser.AsFloat(i));
+      rr.PostDist() = parser.AsFloat(i); // Load postDist (last item in distmer sequence)
+      rr.Dist() = mm;
+
+      if (mm.isize() >= seedSize) {
         m_oReads.push_back(rr);
         rr.Flip();
         rr.Name() += "_RC";
         m_oReads.push_back(rr);
       }  
-      
-      name = parser.Line();
       mm.clear();
-      continue;
     }
-    for (i=0; i< parser.GetItemCount(); i++)
-      mm.push_back(parser.AsFloat(i));
-  }
-  if (mm.isize() > seedSize) {
-    OptiRead rr2;
-    rr2.Dist() = mm;
-    rr2.Name() = name;
-    m_oReads.push_back(rr2);
-    rr2.Name() += "_RC";
-    rr2.Flip();
-    m_oReads.push_back(rr2);
   }
 }  
 

@@ -6,7 +6,7 @@
 #include "OptiMapAlignUnit.h"
 
 
-void OptiRead::Flip() {
+void RSiteRead::Flip() {
   m_ori = -m_ori;
   svec<int> tmp;
   tmp.resize(m_dist.isize());
@@ -18,7 +18,7 @@ void OptiRead::Flip() {
   m_dist = tmp;
 }
 
-void OptiReads::LoadReads(const string& fileName, int seedSize) {
+void RSiteReads::LoadReads(const string& fileName, int seedSize) {
   FlatFileParser parser;
   parser.Open(fileName);
 
@@ -35,7 +35,7 @@ void OptiReads::LoadReads(const string& fileName, int seedSize) {
       continue;
     if (parser.Line()[0] == '>') {
       name = parser.Line();
-      OptiRead rr;
+      RSiteRead rr;
       rr.Name() = name;
 
       // Obtain the pre/post values and  distmer values
@@ -57,7 +57,7 @@ void OptiReads::LoadReads(const string& fileName, int seedSize) {
   }
 }  
 
-bool Optimer::operator < (const Optimer & m) const {
+bool Dmer::operator < (const Dmer & m) const {
   for (int i=0; i<m_data.isize(); i++) {
     if (m_data[i] != m.m_data[i])
       return m_data[i] < m.m_data[i];
@@ -65,7 +65,7 @@ bool Optimer::operator < (const Optimer & m) const {
   return false;
 }
   
-bool Optimer::operator != (const Optimer & m) const {
+bool Dmer::operator != (const Dmer & m) const {
   for (int i=0; i<m_data.isize(); i++) {
     if (m_data[i] != m.m_data[i])
       return true;
@@ -73,7 +73,7 @@ bool Optimer::operator != (const Optimer & m) const {
   return false;
 }
 
-bool Optimer::operator == (const Optimer & m) const {
+bool Dmer::operator == (const Dmer & m) const {
   for (int i=0; i<m_data.isize(); i++) {
     if (m_data[i] != m.m_data[i])
       return false;
@@ -81,14 +81,14 @@ bool Optimer::operator == (const Optimer & m) const {
   return true;
 }
 
-void Optimer::Print() const {
+void Dmer::Print() const {
   for (int i=0; i<m_data.isize(); i++)
     cout << " " << m_data[i];
   cout << " seq: " << m_seq << " pos: " << m_pos << endl;
 }
 
-void Optimers::AddSingleReadOptimers(const OptiReads& optiReads , int seedSize, int rIdx) {
-  Optimer mm;
+void Dmers::AddSingleReadDmers(const RSiteReads& optiReads , int seedSize, int rIdx) {
+  Dmer mm;
   mm.Seq() = rIdx;
   mm.Data().resize(seedSize);
   for (int i=0; i<=optiReads[rIdx].Dist().isize()-seedSize; i++) {
@@ -100,10 +100,10 @@ void Optimers::AddSingleReadOptimers(const OptiReads& optiReads , int seedSize, 
   }
 }
 
-void Optimers::BuildOptimers(const OptiReads& optiReads , int seedSize) {
+void Dmers::BuildDmers(const RSiteReads& optiReads , int seedSize) {
   cout << "LOG Build mer list..." << endl;
   for (int rIdx=0; rIdx<optiReads.NumReads(); rIdx++) {
-    AddSingleReadOptimers(optiReads, seedSize, rIdx);
+    AddSingleReadDmers(optiReads, seedSize, rIdx);
   }
   cout << "LOG Sort mers... " << m_mers.isize() << endl;
   __gnu_parallel::sort(m_mers.begin(), m_mers.end());
@@ -132,25 +132,25 @@ void OptiMapAlignUnit::WriteLapCandids(const OverlapCandids& candids) {
 }
 
 void OptiMapAlignUnit::FindLapCandids(int seedSize, OverlapCandids& lapCandids) {
-  Optimers  optimers;  // To build optimers from optical reads
-  optimers.BuildOptimers(m_reads, seedSize); 
+  Dmers  dmers;  // To build dmers from optical reads
+  dmers.BuildDmers(m_reads, seedSize); 
   int counter = 0;
   int i,j     = 0;
   cout << "Start going through mers..." << endl;
-  lapCandids.ReserveInit(optimers.NumMers());
-  for (i=0; i<optimers.NumMers(); i++) {
+  lapCandids.ReserveInit(dmers.NumMers());
+  for (i=0; i<dmers.NumMers(); i++) {
     counter++;
     if (counter % 10000 == 0)
-      cout << "LOG Progress: " << 100*(double)i/(double)optimers.NumMers() << "%" << endl;
-    for (j=i+1; j<optimers.NumMers(); j++) {
-      if (optimers[j] != optimers[i]) {
+      cout << "LOG Progress: " << 100*(double)i/(double)dmers.NumMers() << "%" << endl;
+    for (j=i+1; j<dmers.NumMers(); j++) {
+      if (dmers[j] != dmers[i]) {
         break;
       }
     }
     if (j-i < 25) {
       for (int x = i; x<j; x++) {
         for(int y=x+1; y<j; y++) {
-          lapCandids.AddCandidSort(optimers[x].Seq(), optimers[y].Seq(), optimers[y].Pos()-optimers[x].Pos());
+          lapCandids.AddCandidSort(dmers[x].Seq(), dmers[y].Seq(), dmers[y].Pos()-dmers[x].Pos());
         }
       }
     }
@@ -168,8 +168,8 @@ void OptiMapAlignUnit::FinalOverlaps(const OverlapCandids& lapCandids, int toler
   for(int i=0; i<lapCandids.NumCandids(); i++) {
     if(lapCandids[i]==currCandid) { continue; }
     currCandid = lapCandids[i];  
-    const OptiRead& read1    = m_reads[currCandid.GetFirstReadIndex()]; 
-    const OptiRead& read2    = m_reads[currCandid.GetSecondReadIndex()]; 
+    const RSiteRead& read1    = m_reads[currCandid.GetFirstReadIndex()]; 
+    const RSiteRead& read2    = m_reads[currCandid.GetSecondReadIndex()]; 
     int delta     = currCandid.GetOffsetDelta();
     int readPos1  = delta>=0 ? 0 : -delta;
     int readPos2  = delta>=0 ? delta : 0;

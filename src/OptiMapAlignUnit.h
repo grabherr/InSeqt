@@ -6,10 +6,10 @@
 #include "ryggrad/src/base/CommandLineParser.h"
 #include "ryggrad/src/base/FileParser.h"
 
-class OptiRead
+class RSiteRead
 {
 public:
-  OptiRead() {
+  RSiteRead() {
     m_ori = 1;
   }
   
@@ -36,30 +36,30 @@ private:
   int m_ori;              /// Orientation
 };
 
-class OptiReads 
+class RSiteReads 
 {
 public:
-  OptiReads(): m_oReads() {}
-  const OptiRead& operator[](int idx) const { return m_oReads[idx];     }
+  RSiteReads(): m_oReads() {}
+  const RSiteRead& operator[](int idx) const { return m_oReads[idx];     }
   int NumReads() const                      { return m_oReads.isize();  }  
 
   void LoadReads(const string& fileName, int seedSize);
 
 private:
-  svec<OptiRead> m_oReads;  /// List of optical reads
+  svec<RSiteRead> m_oReads;  /// List of optical reads
 };
 
-class Optimer
+class Dmer
 {
 public:
-  Optimer() {
+  Dmer() {
     m_seq = -1;
     m_pos = -1;
   }
 
-  bool operator < (const Optimer & m) const;
-  bool operator != (const Optimer & m) const; 
-  bool operator == (const Optimer & m) const; 
+  bool operator < (const Dmer & m) const;
+  bool operator != (const Dmer & m) const; 
+  bool operator == (const Dmer & m) const; 
 
   int & Seq() {return m_seq;}
   int & Pos() {return m_pos;}
@@ -78,19 +78,19 @@ private:
   int m_pos;
 };
 
-class Optimers 
+class Dmers 
 {
 public:
-  Optimers(): m_mers() {}
+  Dmers(): m_mers() {}
 
-  const Optimer& operator[](int idx) const { return m_mers[idx];     }
+  const Dmer& operator[](int idx) const { return m_mers[idx];     }
   int NumMers()                            { return m_mers.isize();  }  
 
-  void AddSingleReadOptimers(const OptiReads& optiReads , int seedSize, int rIdx);
-  void BuildOptimers(const OptiReads& optiReads , int seedSize); 
+  void AddSingleReadDmers(const RSiteReads& optiReads , int seedSize, int rIdx);
+  void BuildDmers(const RSiteReads& optiReads , int seedSize); 
 
 private:
-  svec<Optimer> m_mers;  /// List of optimes
+  svec<Dmer> m_mers;  /// List of optimes
 };
 
 class OverlapCandid
@@ -156,6 +156,6 @@ public:
   void WriteLapCandids(const OverlapCandids& candids);
 
 private:
-  OptiReads m_reads;     /// Optical Reads
+  RSiteReads m_reads;     /// Optical Reads
 };
 #endif //OPTIMAPALIGNUNIT_H

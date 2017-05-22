@@ -18,6 +18,11 @@ void RSiteRead::Flip() {
   m_dist = tmp;
 }
 
+int RSiteReads::AddRead(const RSiteRead& rr) {
+  m_oReads.push_back(rr);
+  return m_oReads.isize()-1;
+}
+
 void RSiteReads::LoadReads(const string& fileName, int seedSize) {
   FlatFileParser parser;
   parser.Open(fileName);
@@ -128,6 +133,59 @@ void OptiMapAlignUnit::WriteLapCandids(const OverlapCandids& candids) {
   for (int i = 0; i<candids.NumCandids(); i++) {
     cout << m_reads[candids[i].GetFirstReadIndex()].Name() << " " << m_reads[candids[i].GetSecondReadIndex()].Name()
          << " " << candids[i].GetOffsetDelta() << endl;
+  }
+}
+
+void OptiMapAlignUnit::MakeRSites(const string& fileName, const string& motif, int seedSize) {
+  FlatFileParser parser;
+  parser.Open(fileName);
+  string l;
+  int i, j;
+  svec<int> mm;
+  string name;
+  while (parser.ParseLine()) {
+    if (parser.GetItemCount() == 0)
+      continue;
+    if (parser.Line()[0] == '>') {
+      RSiteRead rr;
+      rr.Name() = name;
+      bool wrotePrefix = false;
+      int n = -1;
+      for (i=0; i<(int)l.length()-(int)motif.length(); i++) {
+	for (j=0; j<motif.length(); j++) {
+	  if (motif[j] != toupper(l[i+j]))
+	    break;
+	}
+	if (j == motif.length()) {
+	  if (n >= 0) {
+            // Obtain the pre/post & dmer values
+            if (!wrotePrefix) {
+              rr.PreDist() = n; // prefix (number of trailing bits before the first motif location)
+              wrotePrefix = true; 
+            }
+            mm.push_back(i-n);
+	  } 
+	  n = i;
+	}
+      }
+      if (l != "") {
+        if(wrotePrefix) { 
+          rr.PostDist() = parser.AsFloat(i); // postfix (number of leading bits after last motif location, last item in distmer sequence)
+        } 
+      }
+      if (mm.isize() >= seedSize) {
+        rr.Dist() = mm;
+        m_reads.AddRead(rr);
+        rr.Flip();
+        rr.Name() += "_RC";
+        m_reads.AddRead(rr);
+      }  
+      mm.clear();
+      l = "";
+      name = parser.Line();
+      continue;
+    }
+    l += parser.Line();
   }
 }
 

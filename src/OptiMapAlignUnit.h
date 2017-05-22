@@ -41,7 +41,9 @@ class RSiteReads
 public:
   RSiteReads(): m_oReads() {}
   const RSiteRead& operator[](int idx) const { return m_oReads[idx];     }
-  int NumReads() const                      { return m_oReads.isize();  }  
+  int NumReads() const                       { return m_oReads.isize();  }  
+
+  int AddRead(const RSiteRead& rr); 
 
   void LoadReads(const string& fileName, int seedSize);
 
@@ -147,6 +149,8 @@ class OptiMapAlignUnit
 public:
   OptiMapAlignUnit(): m_reads() {}
   
+  void MakeRSites(const string& fileName, const string& motif, int seedSize); 
+
   void LoadReads(const string& fileName, int seedSize)  { m_reads.LoadReads(fileName, seedSize); }
 
   void FindLapCandids(int seedSize, OverlapCandids& lapCandids);
@@ -156,6 +160,6 @@ public:
   void WriteLapCandids(const OverlapCandids& candids);
 
 private:
-  RSiteReads m_reads;     /// Optical Reads
+  RSiteReads m_reads;     /// Restriction Site based (i.e. Optical) Reads
 };
 #endif //OPTIMAPALIGNUNIT_H

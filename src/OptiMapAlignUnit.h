@@ -39,16 +39,26 @@ private:
 class RSiteReads 
 {
 public:
-  RSiteReads(): m_oReads() {}
-  const RSiteRead& operator[](int idx) const { return m_oReads[idx];     }
-  int NumReads() const                       { return m_oReads.isize();  }  
+  // Default Ctor
+  RSiteReads(): m_rReads() {}
+  // Ctor 1
+  RSiteReads(int numOfReads): m_readCount(0), m_rReads() {
+    Resize(numOfReads);   
+  }
+
+  void Resize(int size)                      { m_rReads.resize(size);    }
+
+  const RSiteRead& operator[](int idx) const { return m_rReads[idx];     }
+  RSiteRead& operator[](int idx)             { return m_rReads[idx];     }
+  int NumReads() const                       { return m_readCount;       }
 
   int AddRead(const RSiteRead& rr); 
 
-  void LoadReads(const string& fileName, int seedSize);
+  //void LoadReads(const string& fileName, int seedSize);
 
 private:
-  svec<RSiteRead> m_oReads;  /// List of optical reads
+  int m_readCount;
+  svec<RSiteRead> m_rReads;  /// List of site reads
 };
 
 class Dmer
@@ -88,8 +98,8 @@ public:
   const Dmer& operator[](int idx) const { return m_mers[idx];     }
   int NumMers()                            { return m_mers.isize();  }  
 
-  void AddSingleReadDmers(const RSiteReads& optiReads , int seedSize, int rIdx);
-  void BuildDmers(const RSiteReads& optiReads , int seedSize); 
+  void AddSingleReadDmers(const RSiteReads& rReads , int seedSize, int rIdx);
+  void BuildDmers(const RSiteReads& rReads , int seedSize); 
 
 private:
   svec<Dmer> m_mers;  /// List of optimes
@@ -147,11 +157,13 @@ private:
 class OptiMapAlignUnit 
 {
 public:
-  OptiMapAlignUnit(): m_reads() {}
-  
-  void MakeRSites(const string& fileName, const string& motif, int seedSize); 
+  OptiMapAlignUnit(): m_rReads(), m_motifs() {}
 
-  void LoadReads(const string& fileName, int seedSize)  { m_reads.LoadReads(fileName, seedSize); }
+  void GenerateMotifs(int motifLength, int numOfMotifs);  
+
+  void MakeRSites(const string& fileName, int numOfReads, int seedSize); 
+
+  //void LoadReads(const string& fileName, int seedSize)  { m_rReads.LoadReads(fileName, seedSize); }
 
   void FindLapCandids(int seedSize, OverlapCandids& lapCandids);
 
@@ -160,6 +172,7 @@ public:
   void WriteLapCandids(const OverlapCandids& candids);
 
 private:
-  RSiteReads m_reads;     /// Restriction Site based (i.e. Optical) Reads
+  svec<RSiteReads> m_rReads;        /// Restriction Site reads per motif
+  svec<string> m_motifs;            /// Vector of all motifs for which restriction site reads have been generated
 };
 #endif //OPTIMAPALIGNUNIT_H

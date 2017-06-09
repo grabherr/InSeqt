@@ -10,7 +10,7 @@ int main( int argc, char** argv )
 {
 
   commandArg<string> fileCmmd("-i","input fasta file");
-  commandArg<int> readCountCmmd("-c","input fasta file");
+  commandArg<int> readCountCmmd("-c","number of reads in input fasta file");
   commandArg<int> kCmmd("-k","seed size", 6);
   commandArg<int>  wCmmd("-w","Wiggle i.e. Error Tolerance in finding overlaps", 5);
   commandArg<int>  coreCmmd("-n","Number of Cores to run with", 2);
@@ -35,9 +35,11 @@ int main( int argc, char** argv )
 
   omp_set_num_threads(numOfCores); //The sort functions use OpenMP
 
-  // 1. Construct Restriction-site Reads
+  // 1a. Populate the motifs 
+  omaUnit.GenerateMotifs(4, 100);
+  // 1b. Construct Restriction-site Reads
   clock1_optiLoad = clock();
-  omaUnit.MakeRSites(fileName, readCnt, seedSize);
+  omaUnit.MakeRSites(fileName, readCnt);
 
   // 2. Build Optimers and find those that share a seed as cadidates for overlap detection 
   clock2_overlapCand = clock();

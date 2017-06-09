@@ -26,6 +26,7 @@ public:
   const int & Ori() const        { return m_ori;          }
   int Size() const               { return m_dist.isize(); }
 
+  string ToString() const;
   void Flip();
 
 private:
@@ -40,7 +41,7 @@ class RSiteReads
 {
 public:
   // Default Ctor
-  RSiteReads(): m_rReads() {}
+  RSiteReads(): m_readCount(0), m_rReads() {}
   // Ctor 1
   RSiteReads(int numOfReads): m_readCount(0), m_rReads() {
     Resize(numOfReads);   
@@ -53,6 +54,7 @@ public:
   int NumReads() const                       { return m_readCount;       }
 
   int AddRead(const RSiteRead& rr); 
+  string ToString() const;
 
   //void LoadReads(const string& fileName, int seedSize);
 
@@ -159,9 +161,17 @@ class OptiMapAlignUnit
 public:
   OptiMapAlignUnit(): m_rReads(), m_motifs() {}
 
+  /* Generate Permutation of the given alphabet to reach number of motifs required */
   void GenerateMotifs(int motifLength, int numOfMotifs);  
 
-  void MakeRSites(const string& fileName, int numOfReads, int seedSize); 
+  /* Function to obtain Permutations of string characters */
+  void Permutation(string alphabet, int startLen, int len);
+
+  /* Function to swap two characters */
+  void Swap(char& a, char& b);
+
+  void MakeRSites(const string& fileName, int numOfReads); 
+  void CreateRSitesPerString(const string& origString, const string& origName); 
 
   //void LoadReads(const string& fileName, int seedSize)  { m_rReads.LoadReads(fileName, seedSize); }
 

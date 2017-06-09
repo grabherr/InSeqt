@@ -2,9 +2,18 @@
 #define NDEBUG
 #endif
 
-
+#include <sstream>
 #include "OptiMapAlignUnit.h"
 
+string RSiteRead::ToString() const {
+  stringstream ss;
+  ss << PreDist() << ", ";
+  for (int i=0; i<m_dist.isize(); i++) {
+    ss << m_dist[i] << ", ";
+  }
+  ss << PostDist();
+  return ss.str();
+}
 
 void RSiteRead::Flip() {
   m_ori = -m_ori;
@@ -16,6 +25,10 @@ void RSiteRead::Flip() {
     k--;
   }
   m_dist = tmp;
+  int tmp_pp; //Swap pre/postfix
+  tmp_pp     = m_preDist;
+  m_preDist  = m_postDist;
+  m_postDist = tmp_pp;
 }
 
 int RSiteReads::AddRead(const RSiteRead& rr) {
@@ -23,6 +36,16 @@ int RSiteReads::AddRead(const RSiteRead& rr) {
   m_readCount++;
   return m_readCount-1;
 }
+
+string RSiteReads::ToString() const {
+  string strOut;
+  for(int i=0; i<m_readCount; i++) {
+    strOut += m_rReads[i].ToString();
+    strOut += "\n";
+  }
+  return strOut;
+}
+
 /*
 void RSiteReads::LoadReads(const string& fileName, int seedSize) {
   FlatFileParser parser;
@@ -139,70 +162,102 @@ void OptiMapAlignUnit::WriteLapCandids(const OverlapCandids& candids) {
 }
 */
 void OptiMapAlignUnit::GenerateMotifs(int motifLength, int numOfMotifs) {
-  m_motifs.resize(numOfMotifs);
-  m_rReads.resize(numOfMotifs); 
-  vector<char> alphabet = {'A', 'C', 'G', 'T'}; //Should be in lexographic order
-  int cnt = 0;
-  //while(cnt<numOfMotifs) {
-  //}
+  m_motifs.reserve(numOfMotifs);
+  string alphabet = "ACGT"; //Should be in lexographic order
+  Permutation(alphabet, 0, alphabet.length() - 1);
+  m_rReads.resize(m_motifs.isize());
 }
   
-void OptiMapAlignUnit::MakeRSites(const string& fileName, int numOfReads, int seedSize) {
+void OptiMapAlignUnit::Swap(char& a, char& b)
+{
+  char temp;
+  temp = a;
+  a = b;
+  b = temp;
+}
+ 
+void OptiMapAlignUnit::Permutation(string alphabet,int startIdx,int len)
+{
+  int j;
+  if (startIdx == len) {
+      m_motifs.push_back(alphabet);
+      FILE_LOG(logDEBUG1) << alphabet;
+  } else {
+    for (j = startIdx; j < alphabet.length(); j++)
+    {
+      Swap(alphabet[startIdx],alphabet[j]);
+      Permutation(alphabet, startIdx + 1, len);
+      Swap(alphabet[startIdx], alphabet[j]);
+    }  
+  }
+}
+
+void OptiMapAlignUnit::MakeRSites(const string& fileName, int numOfReads) {
   FlatFileParser parser;
   parser.Open(fileName);
   string l;
-  int i, j;
-  svec<int> mm;
   string name;
   //Initialize memory for reads
   for(int mi=0; mi<m_motifs.isize(); mi++) {
-    m_rReads[mi].Resize(numOfReads);
+    m_rReads[mi].Resize(numOfReads*2); //Twice the number of reads to allow for recording reverse complements
   }
   while (parser.ParseLine()) {
     if (parser.GetItemCount() == 0)
       continue;
     if (parser.Line()[0] == '>') {
-      for(int mi=0; mi<m_motifs.isize(); mi++) {
-        RSiteRead rr;
-        rr.Name() = name;
-        bool wrotePrefix = false;
-        int n = -1;
-        for (i=0; i<(int)l.length()-(int)m_motifs[mi].length(); i++) {
-	  for (j=0; j<m_motifs[mi].length(); j++) {
-	    if (m_motifs[mi][j] != toupper(l[i+j]))
-	      break;
-	  }
-	  if (j == m_motifs[mi].length()) {
-	    if (n >= 0) {
-              // Obtain the pre/post & dmer values
-              if (!wrotePrefix) {
-                rr.PreDist() = n; // prefix (number of trailing bits before the first motif location)
-                wrotePrefix = true; 
-              }
-              mm.push_back(i-n);
-	    } 
-	    n = i;
-	  }
-        }
-        if (l != "") {
-          if(wrotePrefix) { 
-            rr.PostDist() = parser.AsFloat(i); // postfix (number of leading bits after last motif location, last item in dmer sequence)
-          } 
-        }
-        if (mm.isize() >= seedSize) {
-          rr.Dist() = mm;
-          m_rReads[mi].AddRead(rr);
-          rr.Flip();
-          rr.Name() += "_RC";
-          m_rReads[mi].AddRead(rr);
-        }  
-        mm.clear();
-        l = "";
-        name = parser.Line();
-        continue;
-      }
+      CreateRSitesPerString(l, name);
+      l = "";
+      name = parser.Line();
     }
     l += parser.Line();
+  }
+  if( l != "") {
+    CreateRSitesPerString(l, name);
+  }
+  for(int i=0; i<m_rReads.isize(); i++) {
+      FILE_LOG(logDEBUG3) << m_rReads[i].ToString();
+  }
+}
+
+void OptiMapAlignUnit:: CreateRSitesPerString(const string& origString, const string& origName) {
+  if (origString == "" && origName == "") {
+    return;
+  }
+  svec<int> mm;
+  for(int mi=0; mi<m_motifs.isize(); mi++) {
+    RSiteRead rr;
+    rr.Name() = origName;
+    bool wrotePrefix = false;
+    int n = -1;
+    for (int i=0; i<(int)origString.length()-(int)m_motifs[mi].length(); i++) {
+      int j = 0;
+      for (j=0; j<m_motifs[mi].length(); j++) {
+        if (m_motifs[mi][j] != toupper(origString[i+j]))
+          break;
+      }
+      if (j == m_motifs[mi].length()) {
+        if (n >= 0) {
+          // Obtain the pre/post & dmer values
+          if (!wrotePrefix) {
+            rr.PreDist() = n; // prefix (number of trailing bits before the first motif location)
+            wrotePrefix = true; 
+          }
+          mm.push_back(i-n);
+        } 
+        n = i;
+      }
+      if (origString != "") {
+        if(wrotePrefix) { 
+          rr.PostDist() = origString.length() - n - 1; // postfix (number of leading bits after last motif location, last item in dmer sequence)
+        } 
+      }
+    } 
+    rr.Dist() = mm;
+    m_rReads[mi].AddRead(rr);
+    rr.Flip();
+    rr.Name() += "_RC";
+    m_rReads[mi].AddRead(rr);
+    mm.clear();
   }
 }
 

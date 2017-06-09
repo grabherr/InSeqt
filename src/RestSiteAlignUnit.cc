@@ -3,7 +3,7 @@
 #endif
 
 #include <sstream>
-#include "OptiMapAlignUnit.h"
+#include "RestSiteAlignUnit.h"
 
 string RSiteRead::ToString() const {
   stringstream ss;
@@ -154,21 +154,21 @@ void OverlapCandids::AddCandid(const OverlapCandid& lapCandid) {
   m_candids.push_back(lapCandid);
 }
 /*
-void OptiMapAlignUnit::WriteLapCandids(const OverlapCandids& candids) {
+void RestSiteAlignUnit::WriteLapCandids(const OverlapCandids& candids) {
   for (int i = 0; i<candids.NumCandids(); i++) {
     cout << m_rReads[candids[i].GetFirstReadIndex()].Name() << " " << m_rReads[candids[i].GetSecondReadIndex()].Name()
          << " " << candids[i].GetOffsetDelta() << endl;
   }
 }
 */
-void OptiMapAlignUnit::GenerateMotifs(int motifLength, int numOfMotifs) {
+void RestSiteAlignUnit::GenerateMotifs(int motifLength, int numOfMotifs) {
   m_motifs.reserve(numOfMotifs);
   string alphabet = "ACGT"; //Should be in lexographic order
   Permutation(alphabet, 0, alphabet.length() - 1);
   m_rReads.resize(m_motifs.isize());
 }
   
-void OptiMapAlignUnit::Swap(char& a, char& b)
+void RestSiteAlignUnit::Swap(char& a, char& b)
 {
   char temp;
   temp = a;
@@ -176,7 +176,7 @@ void OptiMapAlignUnit::Swap(char& a, char& b)
   b = temp;
 }
  
-void OptiMapAlignUnit::Permutation(string alphabet,int startIdx,int len)
+void RestSiteAlignUnit::Permutation(string alphabet,int startIdx,int len)
 {
   int j;
   if (startIdx == len) {
@@ -192,7 +192,7 @@ void OptiMapAlignUnit::Permutation(string alphabet,int startIdx,int len)
   }
 }
 
-void OptiMapAlignUnit::MakeRSites(const string& fileName, int numOfReads) {
+void RestSiteAlignUnit::MakeRSites(const string& fileName, int numOfReads) {
   FlatFileParser parser;
   parser.Open(fileName);
   string l;
@@ -219,7 +219,7 @@ void OptiMapAlignUnit::MakeRSites(const string& fileName, int numOfReads) {
   }
 }
 
-void OptiMapAlignUnit:: CreateRSitesPerString(const string& origString, const string& origName) {
+void RestSiteAlignUnit:: CreateRSitesPerString(const string& origString, const string& origName) {
   if (origString == "" && origName == "") {
     return;
   }
@@ -262,7 +262,7 @@ void OptiMapAlignUnit:: CreateRSitesPerString(const string& origString, const st
 }
 
 /*
-void OptiMapAlignUnit::FindLapCandids(int seedSize, OverlapCandids& lapCandids) {
+void RestSiteAlignUnit::FindLapCandids(int seedSize, OverlapCandids& lapCandids) {
   Dmers  dmers;  // To build dmers from restriction site reads
   dmers.BuildDmers(m_rReads, seedSize); 
   int counter = 0;
@@ -291,7 +291,7 @@ void OptiMapAlignUnit::FindLapCandids(int seedSize, OverlapCandids& lapCandids) 
   lapCandids.SortAll();
 }
 
-void OptiMapAlignUnit::FinalOverlaps(const OverlapCandids& lapCandids, int tolerance,  OverlapCandids& finalOverlaps) {
+void RestSiteAlignUnit::FinalOverlaps(const OverlapCandids& lapCandids, int tolerance,  OverlapCandids& finalOverlaps) {
   cout << "LOG Refine overlap candidates... " << lapCandids.NumCandids() << endl;
   finalOverlaps.ReserveInit(lapCandids.NumCandids()/2); // Rough estimate 
   OverlapCandid currCandid;

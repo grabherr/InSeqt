@@ -156,10 +156,10 @@ private:
   svec<OverlapCandid> m_candids; /// unordered set of overlap candidates (for uniqueness)
 };
 
-class OptiMapAlignUnit 
+class RestSiteAlignUnit 
 {
 public:
-  OptiMapAlignUnit(): m_rReads(), m_motifs() {}
+  RestSiteAlignUnit(): m_rReads(), m_motifs() {}
 
   /* Generate Permutation of the given alphabet to reach number of motifs required */
   void GenerateMotifs(int motifLength, int numOfMotifs);  

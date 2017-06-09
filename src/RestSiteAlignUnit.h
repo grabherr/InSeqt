@@ -156,6 +156,54 @@ private:
   svec<OverlapCandid> m_candids; /// unordered set of overlap candidates (for uniqueness)
 };
 
+class RestSiteDataParams 
+{
+public:
+  RestSiteDataParams( int totalNumReads=10000000, int meanReadLength=10000, int minAlignLength=4000, 
+                      float deletionErr=0.03, float insertionErr=0.03, float substitutionErr=0.03)
+                     :m_totalNumReads(totalNumReads), m_meanReadLength(meanReadLength), m_minAlignLength(minAlignLength),
+                      m_deletionErr(deletionErr), m_insertionErr(insertionErr), m_substitutionErr(substitutionErr) { }
+
+    bool   TotalNumReads() const     { return m_totalNumReads;   }
+    int    MeanReadLength() const    { return m_meanReadLength;  }  
+    int    MeanAlignLength() const   { return m_minAlignLength;  } 
+    float  DeletionErr() const       { return m_deletionErr;     }
+    float  InsertionErr() const      { return m_insertionErr;    }
+    float  SubstitutionErr() const   { return m_substitutionErr; }
+
+private: 
+  bool    m_totalNumReads;    /// Flag specifying whether the reads are single or double strand
+  int     m_meanReadLength;   /// Length of each motif
+  int     m_minAlignLength;   /// Number of motifs to generate/use
+  float   m_deletionErr;      /// The length of distmers to use for seed finding
+  float   m_insertionErr;     /// The length of distmers to use for seed finding
+  float   m_substitutionErr;  /// The length of distmers to use for seed finding
+};
+
+class RestSiteModelParams 
+{
+public:
+  RestSiteModelParams(bool singleStrand=false, int motifSize=4, int numOfMotifs=20, 
+                      int dmerLength=6, float cndfCoef=2.2, string alphabet="ACGT") 
+                     :m_singleStrand(singleStrand), m_motifSize(motifSize), m_numOfMotifs(numOfMotifs),
+                      m_dmerLength(dmerLength), m_cndfCoef(cndfCoef), m_alphabet(alphabet) { }
+
+    bool   IsSingleStrand() const    { return m_singleStrand;   }
+    int    MotifSize() const         { return m_motifSize;      }  
+    int    NumOfMotifs() const       { return m_numOfMotifs;    } 
+    int    DmerLength() const        { return m_dmerLength;     }
+    float  CNDFCoef() const          { return m_cndfCoef;       }
+    string Alphabet() const          { return m_alphabet;       }
+
+private: 
+  bool    m_singleStrand;   /// Flag specifying whether the reads are single or double strand
+  int     m_motifSize;      /// Length of each motif
+  int     m_numOfMotifs;    /// Number of motifs to generate/use
+  int     m_dmerLength;     /// The length of distmers to use for seed finding
+  float   m_cndfCoef;       /// Cumulative Normal Distribution Function coefficeint used for estimating similarity 
+  string  m_alphabet;       /// Alphabet containing base letters used in the reads/motifs 
+};
+
 class RestSiteAlignUnit 
 {
 public:

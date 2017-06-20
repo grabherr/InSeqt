@@ -2,6 +2,7 @@
 #define NDEBUG
 #endif
 
+#include <cmath>
 #include <sstream>
 #include "RestSiteAlignUnit.h"
 
@@ -117,26 +118,55 @@ void Dmer::Print() const {
   cout << " seq: " << m_seq << " pos: " << m_pos << endl;
 }
 
-void Dmers::AddSingleReadDmers(const RSiteReads& rReads , int seedSize, int rIdx) {
-  Dmer mm;
-  mm.Seq() = rIdx;
-  mm.Data().resize(seedSize);
-  for (int i=0; i<=rReads[rIdx].Dist().isize()-seedSize; i++) {
-    mm.Pos() = i;
-    for (int j=0; j<seedSize; j++) {
-      mm.Data()[j] = rReads[rIdx].Dist()[i+j];
-    }
-    m_mers.push_back(mm);
+void Dmers::BuildDmers(const RSiteReads& rReads , int dmerLength, int motifLength, int countPerDimension) { 
+  m_dmerLength = dmerLength;
+  m_dimCount   = countPerDimension;
+  m_mers.resize(pow(m_dimCount, m_dmerLength)); // TODO Check to be within memory limit
+  cout << "LOG Build mer list..." << endl;
+  for (int rIdx=0; rIdx<rReads.NumReads(); rIdx++) {
+    AddSingleReadDmers(rReads, rIdx);
   }
 }
 
-void Dmers::BuildDmers(const RSiteReads& rReads , int seedSize) {
-  cout << "LOG Build mer list..." << endl;
-  for (int rIdx=0; rIdx<rReads.NumReads(); rIdx++) {
-    AddSingleReadDmers(rReads, seedSize, rIdx);
+void Dmers::AddSingleReadDmers(const RSiteReads& rReads, int rIdx) {
+  Dmer mm;
+  mm.Seq() = rIdx;
+  mm.Data().resize(m_dmerLength);
+  for (int i=0; i<=rReads[rIdx].Dist().isize()-m_dmerLength; i++) {
+    mm.Pos() = i;
+    for (int j=0; j<m_dmerLength; j++) {
+      mm.Data()[j] = rReads[rIdx].Dist()[i+j];
+    }
+    //Find where this dmer should be placed in m_mers
+    int merLoc = MapNToOneDim(mm.Data());
+    m_mers[merLoc].push_back(mm);
+    m_dmerCount++;
   }
-  cout << "LOG Sort mers... " << m_mers.isize() << endl;
-  __gnu_parallel::sort(m_mers.begin(), m_mers.end());
+  cout<<m_dmerCount<<endl;
+}
+
+int Dmers::MapNToOneDim(const svec<int>& nDims) {
+  // This function does not do bound checking and assumes that nDims size is m_dmerLength and values are between 0 and m_dimCount
+  int mapVal = 0;
+  int coeff  = 1;
+  for(int i=0; i<m_dmerLength; i++) {
+    int qVal = nDims[i]/30; //TODO fix exp allocation in separate function
+    if(qVal>29) { qVal = 29; }
+    mapVal += qVal * coeff;
+    coeff  *= m_dimCount;
+  }
+  return mapVal;
+}
+
+svec<int> Dmers::MapOneToNDim(int oneDMappedVal) {
+  svec<int> nDims;
+  nDims.resize(m_dmerLength);
+  int coeff  = m_dimCount;
+  for(int i=0; i<m_dmerLength; i++) {
+    nDims[i] = oneDMappedVal % coeff;
+    oneDMappedVal /= coeff;
+  }
+  return nDims;
 }
 
 void OverlapCandids::AddCandidSort(int rIdx1, int rIdx2, int offsetDelta) {
@@ -163,34 +193,43 @@ void RestSiteAlignUnit::WriteLapCandids(const OverlapCandids& candids) {
 */
 void RestSiteAlignUnit::GenerateMotifs(int motifLength, int numOfMotifs) {
   m_motifs.reserve(numOfMotifs);
-  string alphabet = "ACGT"; //Should be in lexographic order
-  Permutation(alphabet, 0, alphabet.length() - 1);
+  vector<char> alphabet = {'A', 'C', 'G', 'T'}; //Should be in lexographic order
+  vector<vector<char>> tempMotifs; 
+  CartesianPower(alphabet, motifLength, tempMotifs);
+  for(vector<char> sElem:tempMotifs){
+    string motif = "";
+    for(char cElem:sElem) {
+      motif += cElem;
+    }
+    if(motif.length() == motifLength) { 
+      //TODO only add each with RC once
+      m_motifs.push_back(motif); 
+      if(m_motifs.isize() == numOfMotifs) {
+        break;
+      }
+    } 
+  }
   m_rReads.resize(m_motifs.isize());
 }
   
-void RestSiteAlignUnit::Swap(char& a, char& b)
-{
-  char temp;
-  temp = a;
-  a = b;
-  b = temp;
-}
- 
-void RestSiteAlignUnit::Permutation(string alphabet,int startIdx,int len)
-{
-  int j;
-  if (startIdx == len) {
-      m_motifs.push_back(alphabet);
-      FILE_LOG(logDEBUG1) << alphabet;
+void RestSiteAlignUnit::CartesianPower(const vector<char>& input, unsigned k, vector<vector<char>>& result) {
+  if (k == 1) {
+    for (int value: input) {
+      result.push_back( {value} );
+    }
+    return;
   } else {
-    for (j = startIdx; j < alphabet.length(); j++)
-    {
-      Swap(alphabet[startIdx],alphabet[j]);
-      Permutation(alphabet, startIdx + 1, len);
-      Swap(alphabet[startIdx], alphabet[j]);
-    }  
+    CartesianPower(input, k - 1, result);
+    vector<vector<char>> smallerPower = result;
+    for (int elem: input) {
+      for (vector<char> sublist: smallerPower) {
+        sublist.push_back(elem);
+        result.push_back(sublist);
+      }
+    }
+    return;
   }
-}
+} 
 
 void RestSiteAlignUnit::MakeRSites(const string& fileName, int numOfReads) {
   FlatFileParser parser;
@@ -261,13 +300,13 @@ void RestSiteAlignUnit:: CreateRSitesPerString(const string& origString, const s
   }
 }
 
-/*
 void RestSiteAlignUnit::FindLapCandids(int seedSize, OverlapCandids& lapCandids) {
   Dmers  dmers;  // To build dmers from restriction site reads
-  dmers.BuildDmers(m_rReads, seedSize); 
+  dmers.BuildDmers(m_rReads[0], seedSize, 6, 30); //TODO parameterize
+/*
   int counter = 0;
   int i,j     = 0;
-  cout << "Start going through dmers..." << endl;
+  cout << "Start iterating through dmers..." << endl;
   lapCandids.ReserveInit(dmers.NumMers());
   for (i=0; i<dmers.NumMers(); i++) {
     counter++;
@@ -289,8 +328,9 @@ void RestSiteAlignUnit::FindLapCandids(int seedSize, OverlapCandids& lapCandids)
   }
   cout << "LOG Sort overlap candidates... " << lapCandids.NumCandids() << endl;
   lapCandids.SortAll();
+*/
 }
-
+/*
 void RestSiteAlignUnit::FinalOverlaps(const OverlapCandids& lapCandids, int tolerance,  OverlapCandids& finalOverlaps) {
   cout << "LOG Refine overlap candidates... " << lapCandids.NumCandids() << endl;
   finalOverlaps.ReserveInit(lapCandids.NumCandids()/2); // Rough estimate 

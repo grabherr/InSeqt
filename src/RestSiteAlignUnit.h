@@ -71,7 +71,7 @@ public:
     m_pos = -1;
   }
 
-  bool operator < (const Dmer & m) const;
+  bool operator <  (const Dmer & m) const;
   bool operator != (const Dmer & m) const; 
   bool operator == (const Dmer & m) const; 
 
@@ -95,16 +95,20 @@ private:
 class Dmers 
 {
 public:
-  Dmers(): m_mers() {}
+  Dmers(): m_mers(), m_dimCount(0), m_dmerLength(0), m_dmerCount(0) {}
 
-  const Dmer& operator[](int idx) const { return m_mers[idx];     }
-  int NumMers()                            { return m_mers.isize();  }  
-
-  void AddSingleReadDmers(const RSiteReads& rReads , int seedSize, int rIdx);
-  void BuildDmers(const RSiteReads& rReads , int seedSize); 
+  int NumMers()                            { return m_dmerCount;     }
+  void BuildDmers(const RSiteReads& rReads , int dmerLength, int motifLength, int countPerDimension); 
 
 private:
-  svec<Dmer> m_mers;  /// List of optimes
+  void AddSingleReadDmers(const RSiteReads& rReads , int rIdx);
+  inline int MapNToOneDim(const svec<int>& nDims);
+  inline svec<int> MapOneToNDim(int oneDMappedVal);
+
+  svec<svec<Dmer> > m_mers;  /// Multi-dimensional matrix representation of dmers projected on to dimensions
+  int m_dimCount;            /// Number of cells in each dimension (this is dependent on the site values and the reduction coefficient)
+  int m_dmerLength;          /// Number of dimensions in the matrix (i.e. dmer length)
+  int m_dmerCount;           /// Total number of dmers
 };
 
 class OverlapCandid
@@ -211,12 +215,7 @@ public:
 
   /* Generate Permutation of the given alphabet to reach number of motifs required */
   void GenerateMotifs(int motifLength, int numOfMotifs);  
-
-  /* Function to obtain Permutations of string characters */
-  void Permutation(string alphabet, int startLen, int len);
-
-  /* Function to swap two characters */
-  void Swap(char& a, char& b);
+  void CartesianPower(const vector<char>& input, unsigned k, vector<vector<char>>& result); 
 
   void MakeRSites(const string& fileName, int numOfReads); 
   void CreateRSitesPerString(const string& origString, const string& origName); 

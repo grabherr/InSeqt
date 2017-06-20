@@ -54,7 +54,7 @@ int main( int argc, char** argv )
   // 2. Build Optimers and find those that share a seed as cadidates for overlap detection 
   clock2_overlapCand = clock();
   OverlapCandids lapCandids;
-//  rsaUnit.FindLapCandids(seedSize, lapCandids);
+  rsaUnit.FindLapCandids(seedSize, lapCandids);
  
   // 3. Take the overlap candidates and refine to remove false positives
   clock3_finalOverlaps = clock();

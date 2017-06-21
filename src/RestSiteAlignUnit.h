@@ -98,12 +98,14 @@ public:
   Dmers(): m_mers(), m_dimCount(0), m_dmerLength(0), m_dmerCount(0) {}
 
   int NumMers()                            { return m_dmerCount;     }
-  void BuildDmers(const RSiteReads& rReads , int dmerLength, int motifLength, int countPerDimension); 
+  void BuildDmers(const RSiteReads& rReads, int dmerLength, int motifLength, int countPerDimension); 
+  inline void FindNeighbourCells(int initVal, svec<int>& result);
 
 private:
-  void AddSingleReadDmers(const RSiteReads& rReads , int rIdx);
+  void AddSingleReadDmers(const RSiteReads& rReads, int rIdx);
   inline int MapNToOneDim(const svec<int>& nDims);
   inline svec<int> MapOneToNDim(int oneDMappedVal);
+  inline void FindNeighbourCells(int initVal, int depth, svec<int>& result);
 
   svec<svec<Dmer> > m_mers;  /// Multi-dimensional matrix representation of dmers projected on to dimensions
   int m_dimCount;            /// Number of cells in each dimension (this is dependent on the site values and the reduction coefficient)

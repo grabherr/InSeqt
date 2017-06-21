@@ -148,12 +148,12 @@ void Dmers::AddSingleReadDmers(const RSiteReads& rReads, int rIdx) {
 int Dmers::MapNToOneDim(const svec<int>& nDims) {
   // This function does not do bound checking and assumes that nDims size is m_dmerLength and values are between 0 and m_dimCount
   int mapVal = 0;
-  int coeff  = 1;
+  int coeff  = pow(m_dimCount, m_dmerLength-1);
   for(int i=0; i<m_dmerLength; i++) {
     int qVal = nDims[i]/30; //TODO fix exp allocation in separate function
-    if(qVal>29) { qVal = 29; }
+    if(qVal>m_dimCount-1) { qVal = m_dimCount-1; }
     mapVal += qVal * coeff;
-    coeff  *= m_dimCount;
+    coeff  /= m_dimCount;
   }
   return mapVal;
 }
@@ -162,12 +162,33 @@ svec<int> Dmers::MapOneToNDim(int oneDMappedVal) {
   svec<int> nDims;
   nDims.resize(m_dmerLength);
   int coeff  = m_dimCount;
-  for(int i=0; i<m_dmerLength; i++) {
+  for(int i=m_dmerLength-1; i>=0; i--) {
     nDims[i] = oneDMappedVal % coeff;
     oneDMappedVal /= coeff;
   }
   return nDims;
 }
+
+void Dmers::FindNeighbourCells(int initVal, svec<int>& result) {
+  FindNeighbourCells(initVal, m_dmerLength-1, result);
+}
+
+void Dmers::FindNeighbourCells(int initVal, int depth, svec<int>& result) {
+  if(depth == -1) { 
+    result.push_back(initVal);
+    return;
+  }
+  FindNeighbourCells(initVal, depth-1, result);
+  svec<int> tempResult = result;
+  int currDigit = (initVal % (int)pow(m_dimCount, depth+1)) / pow(m_dimCount, depth);
+  if(currDigit < m_dimCount-1) { //only add one to the current digit if it has room to be increased 
+    for(int elem:tempResult) {
+      int newElem = elem + pow(m_dimCount, depth);
+      result.push_back(newElem);
+    }
+  }
+}
+
 
 void OverlapCandids::AddCandidSort(int rIdx1, int rIdx2, int offsetDelta) {
   // Make sure that rIdx1, rIdx2 are in increasing order (so that sorting will bring all relevant pairs together)
@@ -302,34 +323,28 @@ void RestSiteAlignUnit:: CreateRSitesPerString(const string& origString, const s
 
 void RestSiteAlignUnit::FindLapCandids(int seedSize, OverlapCandids& lapCandids) {
   Dmers  dmers;  // To build dmers from restriction site reads
-  dmers.BuildDmers(m_rReads[0], seedSize, 6, 30); //TODO parameterize
-/*
-  int counter = 0;
-  int i,j     = 0;
+  int dmerLen   = 6;
+  int dimCount = 30;
+  dmers.BuildDmers(m_rReads[0], seedSize, dmerLen, dimCount); //TODO parameterize
   cout << "Start iterating through dmers..." << endl;
+  int counter = 0;
+  int loopLim = pow(dimCount, dmerLen);
   lapCandids.ReserveInit(dmers.NumMers());
-  for (i=0; i<dmers.NumMers(); i++) {
+  for (int iterIndex=0; iterIndex<loopLim; iterIndex++) {
     counter++;
     if (counter % 10000 == 0)
-      cout << "LOG Progress: " << 100*(double)i/(double)dmers.NumMers() << "%" << endl;
-    for (j=i+1; j<dmers.NumMers(); j++) {
-      if (dmers[j] != dmers[i]) {
-        break;
-      }
+      cout << "LOG Progress: " << 100*(double)iterIndex/(double)loopLim << "%" << endl;
+    svec<int> neighbourCells;
+    neighbourCells.reserve(pow(2, dmerLen));
+    dmers.FindNeighbourCells(iterIndex, neighbourCells); 
+    for (int nCell:neighbourCells) {
     }
-    if (j-i < 25) {
-      for (int x = i; x<j; x++) {
-        for(int y=x+1; y<j; y++) {
-          lapCandids.AddCandidSort(dmers[x].Seq(), dmers[y].Seq(), dmers[y].Pos()-dmers[x].Pos());
-        }
-      }
-    }
-    i = j-1;
+    //lapCandids.AddCandidSort(dmers[x].Seq(), dmers[y].Seq(), dmers[y].Pos()-dmers[x].Pos());
   }
   cout << "LOG Sort overlap candidates... " << lapCandids.NumCandids() << endl;
   lapCandids.SortAll();
-*/
 }
+
 /*
 void RestSiteAlignUnit::FinalOverlaps(const OverlapCandids& lapCandids, int tolerance,  OverlapCandids& finalOverlaps) {
   cout << "LOG Refine overlap candidates... " << lapCandids.NumCandids() << endl;

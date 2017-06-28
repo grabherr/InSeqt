@@ -84,6 +84,15 @@ public:
   svec<int> & Data() {return m_data;}
   const svec<int> & Data() const {return m_data;}
 
+  inline bool IsMatch(const Dmer& otherDmer, float stdCoeff) const {
+    if(m_seq == otherDmer.m_seq) { return false; } // Same sequence is not a real match
+    for(int i=0; i<m_data.isize(); i++) {
+      if (m_data[i] != otherDmer.m_data[i])
+        return false;
+    }
+    return true;
+  }
+
   void Print() const;
 
 private:
@@ -98,6 +107,8 @@ public:
   Dmers(): m_mers(), m_dimCount(0), m_dmerLength(0), m_dmerCount(0) {}
 
   int NumMers()                            { return m_dmerCount;     }
+  svec<Dmer>& operator[](int index)        { return m_mers[index];   }
+
   void BuildDmers(const RSiteReads& rReads, int dmerLength, int motifLength, int countPerDimension); 
   inline void FindNeighbourCells(int initVal, svec<int>& result);
 
@@ -210,14 +221,13 @@ private:
   string  m_alphabet;       /// Alphabet containing base letters used in the reads/motifs 
 };
 
-class RestSiteAlignUnit 
+class RestSiteAlignCore 
 {
 public:
-  RestSiteAlignUnit(): m_rReads(), m_motifs() {}
-
-  /* Generate Permutation of the given alphabet to reach number of motifs required */
-  void GenerateMotifs(int motifLength, int numOfMotifs);  
-  void CartesianPower(const vector<char>& input, unsigned k, vector<vector<char>>& result); 
+  //Default Ctor
+  RestSiteAlignCore(): m_motif(), m_rReads() {}
+  //Ctor 1
+  RestSiteAlignCore(string motif): m_motif(motif), m_rReads() {}
 
   void MakeRSites(const string& fileName, int numOfReads); 
   void CreateRSitesPerString(const string& origString, const string& origName); 
@@ -231,7 +241,26 @@ public:
   void WriteLapCandids(const OverlapCandids& candids);
 
 private:
-  svec<RSiteReads> m_rReads;        /// Restriction Site reads per motif
-  svec<string> m_motifs;            /// Vector of all motifs for which restriction site reads have been generated
+  string m_motif;          /// Vector of all motifs for which restriction site reads have been generated
+  RSiteReads m_rReads;     /// Restriction Site reads per motif
 };
+
+class RestSiteMapper 
+{
+public:
+  RestSiteMapper(): m_motifs() {}
+
+  /* Generate Permutation of the given alphabet to reach number of motifs required */
+  void GenerateMotifs(int motifLength, int numOfMotifs);  
+  bool ValidateMotif(const string& motif) const; 
+  void FindMatches(const string& fileName, int readCnt, int motifIndex, OverlapCandids& finalOverlaps) const; 
+
+private:
+  void CartesianPower(const vector<char>& input, unsigned k, vector<vector<char>>& result) const; 
+
+  svec<string> m_motifs;             /// Vector of all motifs for which restriction site reads have been generated
+  RestSiteModelParams m_modelParams; /// Model Parameters
+  RestSiteDataParams m_dataParams;   /// Model Parameters
+};
+
 #endif //OPTIMAPALIGNUNIT_H

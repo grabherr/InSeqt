@@ -205,62 +205,21 @@ void OverlapCandids::AddCandid(const OverlapCandid& lapCandid) {
   m_candids.push_back(lapCandid);
 }
 /*
-void RestSiteAlignUnit::WriteLapCandids(const OverlapCandids& candids) {
+void RestSiteAlignCore::WriteLapCandids(const OverlapCandids& candids) {
   for (int i = 0; i<candids.NumCandids(); i++) {
     cout << m_rReads[candids[i].GetFirstReadIndex()].Name() << " " << m_rReads[candids[i].GetSecondReadIndex()].Name()
          << " " << candids[i].GetOffsetDelta() << endl;
   }
 }
 */
-void RestSiteAlignUnit::GenerateMotifs(int motifLength, int numOfMotifs) {
-  m_motifs.reserve(numOfMotifs);
-  vector<char> alphabet = {'A', 'C', 'G', 'T'}; //Should be in lexographic order
-  vector<vector<char>> tempMotifs; 
-  CartesianPower(alphabet, motifLength, tempMotifs);
-  for(vector<char> sElem:tempMotifs){
-    string motif = "";
-    for(char cElem:sElem) {
-      motif += cElem;
-    }
-    if(motif.length() == motifLength) { 
-      //TODO only add each with RC once
-      m_motifs.push_back(motif); 
-      if(m_motifs.isize() == numOfMotifs) {
-        break;
-      }
-    } 
-  }
-  m_rReads.resize(m_motifs.isize());
-}
-  
-void RestSiteAlignUnit::CartesianPower(const vector<char>& input, unsigned k, vector<vector<char>>& result) {
-  if (k == 1) {
-    for (int value: input) {
-      result.push_back( {value} );
-    }
-    return;
-  } else {
-    CartesianPower(input, k - 1, result);
-    vector<vector<char>> smallerPower = result;
-    for (int elem: input) {
-      for (vector<char> sublist: smallerPower) {
-        sublist.push_back(elem);
-        result.push_back(sublist);
-      }
-    }
-    return;
-  }
-} 
 
-void RestSiteAlignUnit::MakeRSites(const string& fileName, int numOfReads) {
+void RestSiteAlignCore::MakeRSites(const string& fileName, int numOfReads) {
   FlatFileParser parser;
   parser.Open(fileName);
   string l;
   string name;
   //Initialize memory for reads
-  for(int mi=0; mi<m_motifs.isize(); mi++) {
-    m_rReads[mi].Resize(numOfReads*2); //Twice the number of reads to allow for recording reverse complements
-  }
+  m_rReads.Resize(numOfReads*2); //Twice the number of reads to allow for recording reverse complements
   while (parser.ParseLine()) {
     if (parser.GetItemCount() == 0)
       continue;
@@ -274,79 +233,87 @@ void RestSiteAlignUnit::MakeRSites(const string& fileName, int numOfReads) {
   if( l != "") {
     CreateRSitesPerString(l, name);
   }
-  for(int i=0; i<m_rReads.isize(); i++) {
-      FILE_LOG(logDEBUG3) << m_rReads[i].ToString();
-  }
+  FILE_LOG(logDEBUG3) << m_rReads.ToString();
 }
 
-void RestSiteAlignUnit:: CreateRSitesPerString(const string& origString, const string& origName) {
+void RestSiteAlignCore:: CreateRSitesPerString(const string& origString, const string& origName) {
   if (origString == "" && origName == "") {
     return;
   }
   svec<int> mm;
-  for(int mi=0; mi<m_motifs.isize(); mi++) {
-    RSiteRead rr;
-    rr.Name() = origName;
-    bool wrotePrefix = false;
-    int n = -1;
-    for (int i=0; i<(int)origString.length()-(int)m_motifs[mi].length(); i++) {
-      int j = 0;
-      for (j=0; j<m_motifs[mi].length(); j++) {
-        if (m_motifs[mi][j] != toupper(origString[i+j]))
-          break;
-      }
-      if (j == m_motifs[mi].length()) {
-        if (n >= 0) {
-          // Obtain the pre/post & dmer values
-          if (!wrotePrefix) {
-            rr.PreDist() = n; // prefix (number of trailing bits before the first motif location)
-            wrotePrefix = true; 
-          }
-          mm.push_back(i-n);
-        } 
-        n = i;
-      }
-      if (origString != "") {
-        if(wrotePrefix) { 
-          rr.PostDist() = origString.length() - n - 1; // postfix (number of leading bits after last motif location, last item in dmer sequence)
-        } 
-      }
-    } 
-    rr.Dist() = mm;
-    m_rReads[mi].AddRead(rr);
-    rr.Flip();
-    rr.Name() += "_RC";
-    m_rReads[mi].AddRead(rr);
-    mm.clear();
-  }
+  RSiteRead rr;
+  rr.Name() = origName;
+  bool wrotePrefix = false;
+  int n = -1;
+  for (int i=0; i<(int)origString.length()-(int)m_motif.length(); i++) {
+    int j = 0;
+    for (j=0; j<m_motif.length(); j++) {
+      if (m_motif[j] != toupper(origString[i+j]))
+        break;
+    }
+    if (j == m_motif.length()) {
+      if (n >= 0) {
+        // Obtain the pre/post & dmer values
+        if (!wrotePrefix) {
+          rr.PreDist() = n; // prefix (number of trailing bits before the first motif location)
+          wrotePrefix = true; 
+        }
+        mm.push_back(i-n);
+      } 
+      n = i;
+    }
+    if (origString != "") {
+      if(wrotePrefix) { 
+        rr.PostDist() = origString.length() - n - 1; // postfix (number of leading bits after last motif location, last item in dmer sequence)
+      } 
+    }
+  } 
+  rr.Dist() = mm;
+  m_rReads.AddRead(rr);
+  rr.Flip();
+  rr.Name() += "_RC";
+  m_rReads.AddRead(rr);
+  mm.clear();
 }
 
-void RestSiteAlignUnit::FindLapCandids(int seedSize, OverlapCandids& lapCandids) {
+void RestSiteAlignCore::FindLapCandids(int seedSize, OverlapCandids& lapCandids) {
   Dmers  dmers;  // To build dmers from restriction site reads
   int dmerLen   = 6;
   int dimCount = 30;
-  dmers.BuildDmers(m_rReads[0], seedSize, dmerLen, dimCount); //TODO parameterize
+  dmers.BuildDmers(m_rReads, seedSize, dmerLen, dimCount); //TODO parameterize
   cout << "Start iterating through dmers..." << endl;
   int counter = 0;
   int loopLim = pow(dimCount, dmerLen);
   lapCandids.ReserveInit(dmers.NumMers());
   for (int iterIndex=0; iterIndex<loopLim; iterIndex++) {
     counter++;
-    if (counter % 10000 == 0)
-      cout << "LOG Progress: " << 100*(double)iterIndex/(double)loopLim << "%" << endl;
-    svec<int> neighbourCells;
-    neighbourCells.reserve(pow(2, dmerLen));
-    dmers.FindNeighbourCells(iterIndex, neighbourCells); 
-    for (int nCell:neighbourCells) {
+    if (counter % 1000000 == 0) {
+//      cout << "\rLOG Progress: " << 100*(double)iterIndex/(double)loopLim << "%" << flush;
+    }
+    if(!dmers[iterIndex].empty()) {
+      svec<int> neighbourCells;
+      neighbourCells.reserve(pow(2, dmerLen));
+      dmers.FindNeighbourCells(iterIndex, neighbourCells); 
+      for (Dmer dm1:dmers[iterIndex]) {
+        for (int nCell:neighbourCells) {
+          for (Dmer dm2:dmers[nCell]) {
+            if(dm1.IsMatch(dm2, 0)) {
+              dm1.Print();
+              dm2.Print();
+              cout << endl;
+            }
+          }
+        }
+      }
     }
     //lapCandids.AddCandidSort(dmers[x].Seq(), dmers[y].Seq(), dmers[y].Pos()-dmers[x].Pos());
   }
-  cout << "LOG Sort overlap candidates... " << lapCandids.NumCandids() << endl;
-  lapCandids.SortAll();
+  //cout << "LOG Sort overlap candidates... " << lapCandids.NumCandids() << endl;
+  //lapCandids.SortAll();
 }
 
 /*
-void RestSiteAlignUnit::FinalOverlaps(const OverlapCandids& lapCandids, int tolerance,  OverlapCandids& finalOverlaps) {
+void RestSiteAlignCore::FinalOverlaps(const OverlapCandids& lapCandids, int tolerance,  OverlapCandids& finalOverlaps) {
   cout << "LOG Refine overlap candidates... " << lapCandids.NumCandids() << endl;
   finalOverlaps.ReserveInit(lapCandids.NumCandids()/2); // Rough estimate 
   OverlapCandid currCandid;
@@ -377,3 +344,67 @@ void RestSiteAlignUnit::FinalOverlaps(const OverlapCandids& lapCandids, int tole
   WriteLapCandids(finalOverlaps);
 }
 */
+void RestSiteMapper::GenerateMotifs(int motifLength, int numOfMotifs) {
+  m_motifs.reserve(numOfMotifs);
+  vector<char> alphabet = {'A', 'C', 'G', 'T'}; //Should be in lexographic order
+  vector<vector<char>> tempMotifs; 
+  CartesianPower(alphabet, motifLength, tempMotifs);
+  for(vector<char> sElem:tempMotifs){
+    string motif = "";
+    for(char cElem:sElem) {
+      motif += cElem;
+    }
+    if(motif.length() == motifLength) { 
+      //TODO only add each with RC once
+      if(ValidateMotif(motif)) {
+        m_motifs.push_back(motif); 
+        if(m_motifs.isize() == numOfMotifs) {
+          break;
+        }
+      }
+    } 
+  }
+}
+  
+bool RestSiteMapper::ValidateMotif(const string& motif) const {
+// 1. Simplicity Filter
+  bool simple = true;
+  for(int i=0; i<motif.length()-1; i++) {
+    if(motif[i]!=motif[i+1]) {
+      simple = false; 
+    }
+  }
+  if(simple) { return false; }
+
+// 2. RC Filter
+// 3. 
+  return true;
+}
+
+void RestSiteMapper::CartesianPower(const vector<char>& input, unsigned k, vector<vector<char>>& result) const {
+  if (k == 1) {
+    for (int value: input) {
+      result.push_back( {value} );
+    }
+    return;
+  } else {
+    CartesianPower(input, k - 1, result);
+    vector<vector<char>> smallerPower = result;
+    for (int elem: input) {
+      for (vector<char> sublist: smallerPower) {
+        sublist.push_back(elem);
+        result.push_back(sublist);
+      }
+    }
+    return;
+  }
+} 
+
+void RestSiteMapper::FindMatches(const string& fileName, int readCnt, int motifIndex, OverlapCandids& finalOverlaps) const {
+  FILE_LOG(logDEBUG2) << "Finding sites/maps for motif: " << m_motifs[motifIndex] << endl;
+  RestSiteAlignCore rsaCore(m_motifs[motifIndex]);
+  rsaCore.MakeRSites(fileName, readCnt);
+  OverlapCandids lapCandids;
+  rsaCore.FindLapCandids(m_modelParams.DmerLength(), lapCandids);
+}
+

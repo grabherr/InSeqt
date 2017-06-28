@@ -12,6 +12,7 @@ int main( int argc, char** argv )
   commandArg<string> fileCmmd("-i","input fasta file");
   commandArg<int> readCountCmmd("-c","number of reads in input fasta file");
   commandArg<int> kCmmd("-k","seed size", 6);
+  commandArg<int> motifCmmd("-m","Motif Length", 5);
   commandArg<int>  wCmmd("-w","Wiggle i.e. Error Tolerance in finding overlaps", 5);
   commandArg<int>  coreCmmd("-n","Number of Cores to run with", 2);
   commandArg<string> appLogCmmd("-L","Application logging file","application.log");
@@ -20,6 +21,7 @@ int main( int argc, char** argv )
   P.registerArg(fileCmmd);
   P.registerArg(readCountCmmd);
   P.registerArg(kCmmd);
+  P.registerArg(motifCmmd);
   P.registerArg(wCmmd);
   P.registerArg(coreCmmd);
  
@@ -28,6 +30,7 @@ int main( int argc, char** argv )
   string fileName  = P.GetStringValueFor(fileCmmd);
   int readCnt      = P.GetIntValueFor(readCountCmmd);
   int seedSize     = P.GetIntValueFor(kCmmd);
+  int motifLen     = P.GetIntValueFor(motifCmmd);
   int wiggle       = P.GetIntValueFor(wCmmd);
   int numOfCores   = P.GetIntValueFor(coreCmmd);
     string logFile = P.GetStringValueFor(appLogCmmd);
@@ -35,31 +38,29 @@ int main( int argc, char** argv )
   FILE* pFile               = fopen(logFile.c_str(), "w");
   Output2FILE::Stream()     = pFile;
   FILELog::ReportingLevel() = logINFO; 
-  FILELog::ReportingLevel() = logDEBUG3; 
+  FILELog::ReportingLevel() = logDEBUG4; 
 #if defined(FORCE_DEBUG)
 //    FILELog::ReportingLevel() = logDEBUG4; 
 #endif
 
-  RestSiteAlignUnit rsaUnit; 
+  RestSiteMapper rsMapper;
   clock_t clock1_optiLoad, clock2_overlapCand, clock3_finalOverlaps, clock4_done;
 
   omp_set_num_threads(numOfCores); //The sort functions use OpenMP
 
   // 1a. Populate the motifs 
-  rsaUnit.GenerateMotifs(4, 100);
+  rsMapper.GenerateMotifs(motifLen, 100);
   // 1b. Construct Restriction-site Reads
   clock1_optiLoad = clock();
-  rsaUnit.MakeRSites(fileName, readCnt);
 
   // 2. Build Optimers and find those that share a seed as cadidates for overlap detection 
+  OverlapCandids finalOverlaps;
+  rsMapper.FindMatches(fileName, readCnt, 0, finalOverlaps); 
   clock2_overlapCand = clock();
-  OverlapCandids lapCandids;
-  rsaUnit.FindLapCandids(seedSize, lapCandids);
  
   // 3. Take the overlap candidates and refine to remove false positives
   clock3_finalOverlaps = clock();
-  OverlapCandids finalOverlaps;
-//  rsaUnit.FinalOverlaps(lapCandids, wiggle, finalOverlaps);
+//  rsMapper.FinalOverlaps(lapCandids, wiggle, finalOverlaps);
   clock4_done = clock();
 
 

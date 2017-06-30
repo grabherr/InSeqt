@@ -54,7 +54,7 @@ int main( int argc, char** argv )
   clock1_optiLoad = clock();
 
   // 2. Build Optimers and find those that share a seed as cadidates for overlap detection 
-  OverlapCandids finalOverlaps;
+  MatchCandids finalOverlaps;
   rsMapper.FindMatches(fileName, readCnt, 0, finalOverlaps); 
   clock2_overlapCand = clock();
  

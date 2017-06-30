@@ -124,53 +124,54 @@ private:
   int m_dmerCount;           /// Total number of dmers
 };
 
-class OverlapCandid
+class MatchCandid
 {
 public:
-  OverlapCandid(): m_rIdx1(-1), m_rIdx2(-1), m_offsetDelta(-1) {}
-  OverlapCandid(int idx1, int idx2, int delta): m_rIdx1(idx1), m_rIdx2(idx2), m_offsetDelta(delta) {}
+  MatchCandid(): m_rIdx1(-1), m_rIdx2(-1), m_rPos1(-1), m_rPos2(-1) {}
+  MatchCandid(int idx1, int idx2, int rp1, int rp2): m_rIdx1(idx1), m_rIdx2(idx2), m_rPos1(rp1), m_rPos2(rp2) {}
 
   int GetFirstReadIndex() const  { return m_rIdx1;       }
   int GetSecondReadIndex() const { return m_rIdx2;       }
-  int GetOffsetDelta() const     { return m_offsetDelta; }
+  int GetFirstMatchPos() const   { return m_rPos1;       }
+  int GetSecondMatchPos() const  { return m_rPos2;       }
 
-  inline bool operator < (const OverlapCandid& rhs) const {
-    return(tie(m_rIdx1, m_rIdx2, m_offsetDelta)
-       < tie(rhs.m_rIdx1, rhs.m_rIdx2, rhs.m_offsetDelta)); // keep the same order
+  inline bool operator < (const MatchCandid& rhs) const {
+    return(tie(m_rIdx1, m_rIdx2, m_rPos1)
+       < tie(rhs.m_rIdx1, rhs.m_rIdx2, rhs.m_rPos1)); //keep the same order
   }
 
-  inline bool operator == (const OverlapCandid& rhs) const {
-    return(tie(m_rIdx1, m_rIdx2, m_offsetDelta)
-       == tie(rhs.m_rIdx1, rhs.m_rIdx2, rhs.m_offsetDelta)); // keep the same order
+  inline bool operator == (const MatchCandid& rhs) const {
+    return(tie(m_rIdx1, m_rIdx2, m_rPos1)
+       == tie(rhs.m_rIdx1, rhs.m_rIdx2, rhs.m_rPos2)); //keep the same order
   }
 
 
 private:
   int m_rIdx1;        /// The index of the first read
   int m_rIdx2;        /// The index of the second read 
-  int m_offsetDelta;  /// offset2 - offset1  Where the offsets are where the seed match starts from
+  int m_rPos1;        /// Position of match in first read 
+  int m_rPos2;        /// Position of match in second read 
 };
 
-class OverlapCandids
+class MatchCandids
 {
 public:
-  OverlapCandids(): m_candids() {}
+  MatchCandids(): m_candids() {}
   
-  const OverlapCandid& operator[](int idx) const { return m_candids[idx]; }
+  const MatchCandid& operator[](int idx) const { return m_candids[idx]; }
 
   int NumCandids() const { return m_candids.isize(); }
 
   void ReserveInit(int initialCapacity) { m_candids.reserve(initialCapacity); } 
 
-  void AddCandidSort(int rIdx1, int rIdx2, int offsetDelta);
-  void AddCandid(const OverlapCandid& lapCandid);
+  void AddCandidSort(int rIdx1, int rIdx2, int rPos1, int rPos2);
   
   void SortAll() { 
     __gnu_parallel::sort(m_candids.begin(), m_candids.end());
   }
 
 private:
-  svec<OverlapCandid> m_candids; /// unordered set of overlap candidates (for uniqueness)
+  svec<MatchCandid> m_candids; /// unordered set of overlap candidates (for uniqueness)
 };
 
 class RestSiteDataParams 
@@ -234,11 +235,11 @@ public:
 
   //void LoadReads(const string& fileName, int seedSize)  { m_rReads.LoadReads(fileName, seedSize); }
 
-  void FindLapCandids(int seedSize, OverlapCandids& lapCandids);
+  void FindLapCandids(int seedSize, MatchCandids& lapCandids);
 
-  void FinalOverlaps(const OverlapCandids& lapCandids, int tolerance, OverlapCandids& finalOverlaps);
+  void FinalOverlaps(const MatchCandids& lapCandids, int tolerance, MatchCandids& finalOverlaps);
 
-  void WriteLapCandids(const OverlapCandids& candids);
+  void WriteLapCandids(const MatchCandids& candids);
 
 private:
   string m_motif;          /// Vector of all motifs for which restriction site reads have been generated
@@ -253,7 +254,7 @@ public:
   /* Generate Permutation of the given alphabet to reach number of motifs required */
   void GenerateMotifs(int motifLength, int numOfMotifs);  
   bool ValidateMotif(const string& motif) const; 
-  void FindMatches(const string& fileName, int readCnt, int motifIndex, OverlapCandids& finalOverlaps) const; 
+  void FindMatches(const string& fileName, int readCnt, int motifIndex, MatchCandids& finalOverlaps) const; 
 
 private:
   void CartesianPower(const vector<char>& input, unsigned k, vector<vector<char>>& result) const; 

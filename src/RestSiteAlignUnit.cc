@@ -150,7 +150,7 @@ int Dmers::MapNToOneDim(const svec<int>& nDims) {
   int mapVal = 0;
   int coeff  = pow(m_dimCount, m_dmerLength-1);
   for(int i=0; i<m_dmerLength; i++) {
-    int qVal = nDims[i]/30; //TODO fix exp allocation in separate function
+    int qVal = nDims[i]/m_dimCount; //TODO fix exp allocation in separate function
     if(qVal>m_dimCount-1) { qVal = m_dimCount-1; }
     mapVal += qVal * coeff;
     coeff  /= m_dimCount;
@@ -190,22 +190,21 @@ void Dmers::FindNeighbourCells(int initVal, int depth, svec<int>& result) {
 }
 
 
-void OverlapCandids::AddCandidSort(int rIdx1, int rIdx2, int offsetDelta) {
+void MatchCandids::AddCandidSort(int rIdx1, int rIdx2, int rPos1, int rPos2) {
   // Make sure that rIdx1, rIdx2 are in increasing order (so that sorting will bring all relevant pairs together)
   if(rIdx1>rIdx2) {
     int temp = rIdx1;
     rIdx1 = rIdx2;
     rIdx2 = temp; // Swap rIdx1 & rIdx2
-    offsetDelta *= -1;
+    temp  = rPos1;
+    rPos1 = rPos2;
+    rPos2 = temp;
   }
-  m_candids.push_back(OverlapCandid(rIdx1, rIdx2, offsetDelta));
+  m_candids.push_back(MatchCandid(rIdx1, rIdx2, rPos1, rPos2));
 }
  
-void OverlapCandids::AddCandid(const OverlapCandid& lapCandid) {
-  m_candids.push_back(lapCandid);
-}
 /*
-void RestSiteAlignCore::WriteLapCandids(const OverlapCandids& candids) {
+void RestSiteAlignCore::WriteLapCandids(const MatchCandids& candids) {
   for (int i = 0; i<candids.NumCandids(); i++) {
     cout << m_rReads[candids[i].GetFirstReadIndex()].Name() << " " << m_rReads[candids[i].GetSecondReadIndex()].Name()
          << " " << candids[i].GetOffsetDelta() << endl;
@@ -276,10 +275,10 @@ void RestSiteAlignCore:: CreateRSitesPerString(const string& origString, const s
   mm.clear();
 }
 
-void RestSiteAlignCore::FindLapCandids(int seedSize, OverlapCandids& lapCandids) {
+void RestSiteAlignCore::FindLapCandids(int seedSize, MatchCandids& lapCandids) {
   Dmers  dmers;  // To build dmers from restriction site reads
   int dmerLen   = 6;
-  int dimCount = 30;
+  int dimCount = 10;
   dmers.BuildDmers(m_rReads, seedSize, dmerLen, dimCount); //TODO parameterize
   cout << "Start iterating through dmers..." << endl;
   int counter = 0;
@@ -298,25 +297,22 @@ void RestSiteAlignCore::FindLapCandids(int seedSize, OverlapCandids& lapCandids)
         for (int nCell:neighbourCells) {
           for (Dmer dm2:dmers[nCell]) {
             if(dm1.IsMatch(dm2, 0)) {
-              dm1.Print();
-              dm2.Print();
-              cout << endl;
+              lapCandids.AddCandidSort(dm1.Seq(), dm2.Seq(), dm1.Pos(), dm2.Pos());
             }
           }
         }
       }
     }
-    //lapCandids.AddCandidSort(dmers[x].Seq(), dmers[y].Seq(), dmers[y].Pos()-dmers[x].Pos());
   }
-  //cout << "LOG Sort overlap candidates... " << lapCandids.NumCandids() << endl;
-  //lapCandids.SortAll();
+  cout << "LOG Sort overlap candidates... " << lapCandids.NumCandids() << endl;
+  lapCandids.SortAll();
 }
 
 /*
-void RestSiteAlignCore::FinalOverlaps(const OverlapCandids& lapCandids, int tolerance,  OverlapCandids& finalOverlaps) {
+void RestSiteAlignCore::FinalOverlaps(const MatchCandids& lapCandids, int tolerance,  MatchCandids& finalOverlaps) {
   cout << "LOG Refine overlap candidates... " << lapCandids.NumCandids() << endl;
   finalOverlaps.ReserveInit(lapCandids.NumCandids()/2); // Rough estimate 
-  OverlapCandid currCandid;
+  MatchCandid currCandid;
   int rejectCnt = 0;
   for(int i=0; i<lapCandids.NumCandids(); i++) {
     if(lapCandids[i]==currCandid) { continue; }
@@ -400,11 +396,11 @@ void RestSiteMapper::CartesianPower(const vector<char>& input, unsigned k, vecto
   }
 } 
 
-void RestSiteMapper::FindMatches(const string& fileName, int readCnt, int motifIndex, OverlapCandids& finalOverlaps) const {
+void RestSiteMapper::FindMatches(const string& fileName, int readCnt, int motifIndex, MatchCandids& finalOverlaps) const {
   FILE_LOG(logDEBUG2) << "Finding sites/maps for motif: " << m_motifs[motifIndex] << endl;
   RestSiteAlignCore rsaCore(m_motifs[motifIndex]);
   rsaCore.MakeRSites(fileName, readCnt);
-  OverlapCandids lapCandids;
+  MatchCandids lapCandids;
   rsaCore.FindLapCandids(m_modelParams.DmerLength(), lapCandids);
 }
 

@@ -12,7 +12,7 @@ int main( int argc, char** argv )
   commandArg<string> fileCmmd("-i","input fasta file");
   commandArg<int> readCountCmmd("-c","number of reads in input fasta file");
   commandArg<int> kCmmd("-k","seed size", 6);
-  commandArg<int> motifCmmd("-m","Motif Length", 5);
+  commandArg<int> motifCmmd("-m","Motif Length", 4);
   commandArg<int>  wCmmd("-w","Wiggle i.e. Error Tolerance in finding overlaps", 5);
   commandArg<int>  coreCmmd("-n","Number of Cores to run with", 2);
   commandArg<string> appLogCmmd("-L","Application logging file","application.log");

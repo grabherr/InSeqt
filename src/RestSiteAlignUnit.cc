@@ -122,9 +122,27 @@ void Dmers::BuildDmers(const RSiteReads& rReads , int dmerLength, int motifLengt
   m_dmerLength = dmerLength;
   m_dimCount   = countPerDimension;
   m_mers.resize(pow(m_dimCount, m_dmerLength)); // TODO Check to be within memory limit
+  SetRangeBounds(motifLength);
   cout << "LOG Build mer list..." << endl;
   for (int rIdx=0; rIdx<rReads.NumReads(); rIdx++) {
     AddSingleReadDmers(rReads, rIdx);
+  }
+}
+
+void Dmers::SetRangeBounds(int motifSize) {
+  double p1     = 1.0 / pow(4, motifSize); //for example for a motif size of 4 this will be 1/256
+  double p2     = 1.0 - p1; //for example for a motif size of 4 this will be 255/256
+  double pC     = 0;  //Cumulative probability
+  int rangeLim  = 0;
+
+  for(int dim=0; dim<m_dimCount-1; dim++) {
+    while(pC < (double)(dim+1)/m_dimCount) {
+      double pi = pow(p2, rangeLim+1) * p1;
+      pC += pi;
+      rangeLim++;
+      m_dmerCellMap[rangeLim] = dim;
+    }
+    m_dimRangeBounds.push_back(rangeLim); 
   }
 }
 
@@ -142,7 +160,7 @@ void Dmers::AddSingleReadDmers(const RSiteReads& rReads, int rIdx) {
     m_mers[merLoc].push_back(mm);
     m_dmerCount++;
   }
-  cout<<m_dmerCount<<endl;
+  FILE_LOG(logDEBUG3) << "Read Index: " << rIdx << " total dmers so far: " << m_dmerCount << endl;
 }
 
 int Dmers::MapNToOneDim(const svec<int>& nDims) {
@@ -150,8 +168,8 @@ int Dmers::MapNToOneDim(const svec<int>& nDims) {
   int mapVal = 0;
   int coeff  = pow(m_dimCount, m_dmerLength-1);
   for(int i=0; i<m_dmerLength; i++) {
-    int qVal = nDims[i]/m_dimCount; //TODO fix exp allocation in separate function
-    if(qVal>m_dimCount-1) { qVal = m_dimCount-1; }
+    int qVal = m_dmerLength-1; // First set it to the last cell and then check if it belongs in another cell 
+    if(nDims[i] < m_dimRangeBounds[m_dmerLength-1])  { qVal = m_dmerCellMap[nDims[i]]; }
     mapVal += qVal * coeff;
     coeff  /= m_dimCount;
   }
@@ -275,14 +293,13 @@ void RestSiteAlignCore:: CreateRSitesPerString(const string& origString, const s
   mm.clear();
 }
 
-void RestSiteAlignCore::FindLapCandids(int seedSize, MatchCandids& lapCandids) {
+void RestSiteAlignCore::FindLapCandids(int dmerLength, int motifSize, MatchCandids& lapCandids) {
   Dmers  dmers;  // To build dmers from restriction site reads
-  int dmerLen   = 6;
   int dimCount = 10;
-  dmers.BuildDmers(m_rReads, seedSize, dmerLen, dimCount); //TODO parameterize
+  dmers.BuildDmers(m_rReads, dmerLength, motifSize, dimCount);
   cout << "Start iterating through dmers..." << endl;
   int counter = 0;
-  int loopLim = pow(dimCount, dmerLen);
+  int loopLim = pow(dimCount, dmerLength);
   lapCandids.ReserveInit(dmers.NumMers());
   for (int iterIndex=0; iterIndex<loopLim; iterIndex++) {
     counter++;
@@ -291,7 +308,7 @@ void RestSiteAlignCore::FindLapCandids(int seedSize, MatchCandids& lapCandids) {
     }
     if(!dmers[iterIndex].empty()) {
       svec<int> neighbourCells;
-      neighbourCells.reserve(pow(2, dmerLen));
+      neighbourCells.reserve(pow(2, dmerLength));
       dmers.FindNeighbourCells(iterIndex, neighbourCells); 
       for (Dmer dm1:dmers[iterIndex]) {
         for (int nCell:neighbourCells) {
@@ -353,6 +370,7 @@ void RestSiteMapper::GenerateMotifs(int motifLength, int numOfMotifs) {
     if(motif.length() == motifLength) { 
       //TODO only add each with RC once
       if(ValidateMotif(motif)) {
+        FILE_LOG(logDEBUG3) << "Motif: "  << m_motifs.isize() << " " << motif;
         m_motifs.push_back(motif); 
         if(m_motifs.isize() == numOfMotifs) {
           break;
@@ -401,6 +419,6 @@ void RestSiteMapper::FindMatches(const string& fileName, int readCnt, int motifI
   RestSiteAlignCore rsaCore(m_motifs[motifIndex]);
   rsaCore.MakeRSites(fileName, readCnt);
   MatchCandids lapCandids;
-  rsaCore.FindLapCandids(m_modelParams.DmerLength(), lapCandids);
+  rsaCore.FindLapCandids(m_modelParams.DmerLength(), m_modelParams.MotifLength(), lapCandids);
 }
 

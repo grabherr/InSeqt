@@ -104,7 +104,7 @@ private:
 class Dmers 
 {
 public:
-  Dmers(): m_mers(), m_dimCount(0), m_dmerLength(0), m_dmerCount(0) {}
+  Dmers(): m_mers(), m_dimCount(0), m_dmerLength(0), m_dimRangeBounds(), m_dmerCellMap(), m_dmerCount(0) {}
 
   int NumMers()                            { return m_dmerCount;     }
   svec<Dmer>& operator[](int index)        { return m_mers[index];   }
@@ -113,15 +113,18 @@ public:
   inline void FindNeighbourCells(int initVal, svec<int>& result);
 
 private:
+  void SetRangeBounds(int motifLength);
   void AddSingleReadDmers(const RSiteReads& rReads, int rIdx);
   inline int MapNToOneDim(const svec<int>& nDims);
   inline svec<int> MapOneToNDim(int oneDMappedVal);
   inline void FindNeighbourCells(int initVal, int depth, svec<int>& result);
 
-  svec<svec<Dmer> > m_mers;  /// Multi-dimensional matrix representation of dmers projected on to dimensions
-  int m_dimCount;            /// Number of cells in each dimension (this is dependent on the site values and the reduction coefficient)
-  int m_dmerLength;          /// Number of dimensions in the matrix (i.e. dmer length)
-  int m_dmerCount;           /// Total number of dmers
+  svec<svec<Dmer> > m_mers;    /// Multi-dimensional matrix representation of dmers projected on to dimensions
+  int m_dimCount;              /// Number of cells in each dimension (this is dependent on the site values and the reduction coefficient)
+  int m_dmerLength;            /// Number of dimensions in the matrix (i.e. dmer length)
+  svec<int> m_dimRangeBounds;  /// The range limits for dmer values to be placed in each dimennsion
+  map<int, int> m_dmerCellMap; /// Mapping every dmer value to the relevant cell placement
+  int m_dmerCount;             /// Total number of dmers
 };
 
 class MatchCandid
@@ -201,13 +204,13 @@ private:
 class RestSiteModelParams 
 {
 public:
-  RestSiteModelParams(bool singleStrand=false, int motifSize=4, int numOfMotifs=20, 
+  RestSiteModelParams(bool singleStrand=false, int motifLength=4, int numOfMotifs=20, 
                       int dmerLength=6, float cndfCoef=2.2, string alphabet="ACGT") 
-                     :m_singleStrand(singleStrand), m_motifSize(motifSize), m_numOfMotifs(numOfMotifs),
+                     :m_singleStrand(singleStrand), m_motifLength(motifLength), m_numOfMotifs(numOfMotifs),
                       m_dmerLength(dmerLength), m_cndfCoef(cndfCoef), m_alphabet(alphabet) { }
 
     bool   IsSingleStrand() const    { return m_singleStrand;   }
-    int    MotifSize() const         { return m_motifSize;      }  
+    int    MotifLength() const       { return m_motifLength;    }  
     int    NumOfMotifs() const       { return m_numOfMotifs;    } 
     int    DmerLength() const        { return m_dmerLength;     }
     float  CNDFCoef() const          { return m_cndfCoef;       }
@@ -215,7 +218,7 @@ public:
 
 private: 
   bool    m_singleStrand;   /// Flag specifying whether the reads are single or double strand
-  int     m_motifSize;      /// Length of each motif
+  int     m_motifLength;      /// Length of each motif
   int     m_numOfMotifs;    /// Number of motifs to generate/use
   int     m_dmerLength;     /// The length of distmers to use for seed finding
   float   m_cndfCoef;       /// Cumulative Normal Distribution Function coefficeint used for estimating similarity 
@@ -235,7 +238,7 @@ public:
 
   //void LoadReads(const string& fileName, int seedSize)  { m_rReads.LoadReads(fileName, seedSize); }
 
-  void FindLapCandids(int seedSize, MatchCandids& lapCandids);
+  void FindLapCandids(int dmerLength, int motifLength, MatchCandids& lapCandids);
 
   void FinalOverlaps(const MatchCandids& lapCandids, int tolerance, MatchCandids& finalOverlaps);
 

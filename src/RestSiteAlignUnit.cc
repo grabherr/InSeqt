@@ -112,10 +112,20 @@ bool Dmer::operator == (const Dmer & m) const {
   return true;
 }
 
-void Dmer::Print() const {
+void Dmer::CalcDeviations(svec<int>& deviations, float indelVariance, float deviationCoeff) const {
+  if(deviations.isize() < m_data.isize()) { deviations.resize(m_data.isize()); }
+  for(int i=0; i<m_data.isize(); i++) {
+    int deviation = sqrt(m_data[i]*indelVariance)*deviationCoeff;
+  }
+}
+ 
+
+string Dmer::ToString() const {
+  stringstream ss;
   for (int i=0; i<m_data.isize(); i++)
-    cout << " " << m_data[i];
-  cout << " seq: " << m_seq << " pos: " << m_pos << endl;
+    ss << " " << m_data[i];
+  ss << " seq: " << m_seq << " pos: " << m_pos;
+  return ss.str();
 }
 
 void Dmers::BuildDmers(const RSiteReads& rReads , int dmerLength, int motifLength, int countPerDimension) { 
@@ -124,6 +134,7 @@ void Dmers::BuildDmers(const RSiteReads& rReads , int dmerLength, int motifLengt
   m_mers.resize(pow(m_dimCount, m_dmerLength)); // TODO Check to be within memory limit
   SetRangeBounds(motifLength);
   cout << "LOG Build mer list..." << endl;
+  FILE_LOG(logDEBUG2) << "LOG Build mer list...";
   for (int rIdx=0; rIdx<rReads.NumReads(); rIdx++) {
     AddSingleReadDmers(rReads, rIdx);
   }
@@ -143,6 +154,7 @@ void Dmers::SetRangeBounds(int motifSize) {
       m_dmerCellMap[rangeLim] = dim;
     }
     m_dimRangeBounds.push_back(rangeLim); 
+    FILE_LOG(logDEBUG2) << "Dimension Range: " << dim << "  " << rangeLim; 
   }
 }
 
@@ -187,19 +199,20 @@ svec<int> Dmers::MapOneToNDim(int oneDMappedVal) {
   return nDims;
 }
 
-void Dmers::FindNeighbourCells(int initVal, svec<int>& result) {
-  FindNeighbourCells(initVal, m_dmerLength-1, result);
+void Dmers::FindNeighbourCells(int initVal, const Dmer& dmer, const svec<int>& deviations, svec<int>& result) {
+  FindNeighbourCells(initVal, dmer, deviations, m_dmerLength-1, result);
 }
 
-void Dmers::FindNeighbourCells(int initVal, int depth, svec<int>& result) {
+void Dmers::FindNeighbourCells(int initVal, const Dmer& dmer, const svec<int>& deviations, int depth, svec<int>& result) {
   if(depth == -1) { 
     result.push_back(initVal);
     return;
   }
-  FindNeighbourCells(initVal, depth-1, result);
+  FindNeighbourCells(initVal, dmer, deviations, depth-1, result);
   svec<int> tempResult = result;
   int currDigit = (initVal % (int)pow(m_dimCount, depth+1)) / pow(m_dimCount, depth);
-  if(currDigit < m_dimCount-1) { //only add one to the current digit if it has room to be increased 
+  if((currDigit < m_dimCount-1)  //only add one to the current digit if it has room to be increased 
+    && (dmer[depth]+deviations[depth] > m_dimRangeBounds[currDigit])) { // only try one cell up if the deviation limits don't fall within the same cell
     for(int elem:tempResult) {
       int newElem = elem + pow(m_dimCount, depth);
       result.push_back(newElem);
@@ -207,6 +220,12 @@ void Dmers::FindNeighbourCells(int initVal, int depth, svec<int>& result) {
   }
 }
 
+string MatchCandid::ToString() const {
+  stringstream ss;
+  ss << GetFirstReadIndex() << "\t" <<  GetFirstMatchPos()  << "\t" 
+     << GetSecondReadIndex() << "\t" << GetSecondMatchPos(); 
+  return ss.str();
+}
 
 void MatchCandids::AddCandidSort(int rIdx1, int rIdx2, int rPos1, int rPos2) {
   // Make sure that rIdx1, rIdx2 are in increasing order (so that sorting will bring all relevant pairs together)
@@ -219,6 +238,7 @@ void MatchCandids::AddCandidSort(int rIdx1, int rIdx2, int rPos1, int rPos2) {
     rPos2 = temp;
   }
   m_candids.push_back(MatchCandid(rIdx1, rIdx2, rPos1, rPos2));
+  FILE_LOG(logDEBUG3) << "Adding overlap candidate: " << m_candids.back().ToString();
 }
  
 /*
@@ -293,10 +313,10 @@ void RestSiteAlignCore:: CreateRSitesPerString(const string& origString, const s
   mm.clear();
 }
 
-void RestSiteAlignCore::FindLapCandids(int dmerLength, int motifSize, MatchCandids& lapCandids) {
+void RestSiteAlignCore::FindLapCandids(int dmerLength, int motifLength, float indelVariance, float deviationCoeff, MatchCandids& lapCandids) {
   Dmers  dmers;  // To build dmers from restriction site reads
   int dimCount = 10;
-  dmers.BuildDmers(m_rReads, dmerLength, motifSize, dimCount);
+  dmers.BuildDmers(m_rReads, dmerLength, motifLength, dimCount);
   cout << "Start iterating through dmers..." << endl;
   int counter = 0;
   int loopLim = pow(dimCount, dmerLength);
@@ -309,11 +329,19 @@ void RestSiteAlignCore::FindLapCandids(int dmerLength, int motifSize, MatchCandi
     if(!dmers[iterIndex].empty()) {
       svec<int> neighbourCells;
       neighbourCells.reserve(pow(2, dmerLength));
-      dmers.FindNeighbourCells(iterIndex, neighbourCells); 
+      svec<int> deviations;
+      deviations.resize(dmerLength);
       for (Dmer dm1:dmers[iterIndex]) {
+        neighbourCells.clear();
+        deviations.clear();
+        dm1.CalcDeviations(deviations, indelVariance, deviationCoeff);
+        dmers.FindNeighbourCells(iterIndex, dm1, deviations, neighbourCells); 
         for (int nCell:neighbourCells) {
+          FILE_LOG(logDEBUG3) << "Checking Neighbour cell: " << nCell; 
           for (Dmer dm2:dmers[nCell]) {
-            if(dm1.IsMatch(dm2, 0)) {
+            FILE_LOG(logDEBUG4) << endl << "Checking dmer match: dmer1 - " << dm1.ToString() << " dmer2 - " << dm2.ToString();
+            if(dm1.IsMatch(dm2, deviations)) {
+              FILE_LOG(logDEBUG4) << "Found Dmer Match";
               lapCandids.AddCandidSort(dm1.Seq(), dm2.Seq(), dm1.Pos(), dm2.Pos());
             }
           }
@@ -419,6 +447,6 @@ void RestSiteMapper::FindMatches(const string& fileName, int readCnt, int motifI
   RestSiteAlignCore rsaCore(m_motifs[motifIndex]);
   rsaCore.MakeRSites(fileName, readCnt);
   MatchCandids lapCandids;
-  rsaCore.FindLapCandids(m_modelParams.DmerLength(), m_modelParams.MotifLength(), lapCandids);
+  rsaCore.FindLapCandids(m_modelParams.DmerLength(), m_modelParams.MotifLength(), 0.7, 0.08, lapCandids);
 }
 

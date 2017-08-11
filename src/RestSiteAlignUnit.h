@@ -74,6 +74,8 @@ public:
   bool operator <  (const Dmer & m) const;
   bool operator != (const Dmer & m) const; 
   bool operator == (const Dmer & m) const; 
+  int operator[](int idx) const { return m_data[idx];     }
+  int& operator[](int idx)      { return m_data[idx];     }
 
   int & Seq() {return m_seq;}
   int & Pos() {return m_pos;}
@@ -84,16 +86,16 @@ public:
   svec<int> & Data() {return m_data;}
   const svec<int> & Data() const {return m_data;}
 
-  inline bool IsMatch(const Dmer& otherDmer, float stdCoeff) const {
+  inline bool IsMatch(const Dmer& otherDmer, const svec<int>& deviations) const {
     if(m_seq == otherDmer.m_seq) { return false; } // Same sequence is not a real match
     for(int i=0; i<m_data.isize(); i++) {
-      if (m_data[i] != otherDmer.m_data[i])
+      if (m_data[i] > otherDmer.m_data[i]+deviations[i] || m_data[i] < otherDmer.m_data[i]-deviations[i])
         return false;
     }
     return true;
   }
-
-  void Print() const;
+  void CalcDeviations(svec<int>& deviations, float indelVariance, float deviationCoeff) const; 
+  string ToString() const; 
 
 private:
   svec<int> m_data;
@@ -110,14 +112,14 @@ public:
   svec<Dmer>& operator[](int index)        { return m_mers[index];   }
 
   void BuildDmers(const RSiteReads& rReads, int dmerLength, int motifLength, int countPerDimension); 
-  inline void FindNeighbourCells(int initVal, svec<int>& result);
+  inline void FindNeighbourCells(int initVal, const Dmer& dmer, const svec<int>& deviations, svec<int>& result); 
 
 private:
   void SetRangeBounds(int motifLength);
   void AddSingleReadDmers(const RSiteReads& rReads, int rIdx);
   inline int MapNToOneDim(const svec<int>& nDims);
   inline svec<int> MapOneToNDim(int oneDMappedVal);
-  inline void FindNeighbourCells(int initVal, int depth, svec<int>& result);
+  inline void FindNeighbourCells(int initVal, const Dmer& dmer, const svec<int>& deviations, int depth, svec<int>& result); 
 
   svec<svec<Dmer> > m_mers;    /// Multi-dimensional matrix representation of dmers projected on to dimensions
   int m_dimCount;              /// Number of cells in each dimension (this is dependent on the site values and the reduction coefficient)
@@ -148,6 +150,7 @@ public:
        == tie(rhs.m_rIdx1, rhs.m_rIdx2, rhs.m_rPos2)); //keep the same order
   }
 
+  string ToString() const;
 
 private:
   int m_rIdx1;        /// The index of the first read
@@ -238,7 +241,7 @@ public:
 
   //void LoadReads(const string& fileName, int seedSize)  { m_rReads.LoadReads(fileName, seedSize); }
 
-  void FindLapCandids(int dmerLength, int motifLength, MatchCandids& lapCandids);
+  void FindLapCandids(int dmerLength, int motifLength, float indelVariance, float deviationCoeff, MatchCandids& lapCandids);
 
   void FinalOverlaps(const MatchCandids& lapCandids, int tolerance, MatchCandids& finalOverlaps);
 

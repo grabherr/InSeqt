@@ -176,6 +176,8 @@ public:
     __gnu_parallel::sort(m_candids.begin(), m_candids.end());
   }
 
+  string ToString() const; 
+
 private:
   svec<MatchCandid> m_candids; /// unordered set of overlap candidates (for uniqueness)
 };

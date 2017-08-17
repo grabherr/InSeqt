@@ -154,7 +154,7 @@ void Dmers::SetRangeBounds(int motifSize) {
       m_dmerCellMap[rangeLim] = dim;
     }
     m_dimRangeBounds.push_back(rangeLim); 
-    FILE_LOG(logDEBUG2) << "Dimension Range: " << dim << "  " << rangeLim; 
+    FILE_LOG(logDEBUG1) << "Dimension Range: " << dim << "  " << rangeLim; 
   }
 }
 
@@ -180,8 +180,8 @@ int Dmers::MapNToOneDim(const svec<int>& nDims) {
   int mapVal = 0;
   int coeff  = pow(m_dimCount, m_dmerLength-1);
   for(int i=0; i<m_dmerLength; i++) {
-    int qVal = m_dmerLength-1; // First set it to the last cell and then check if it belongs in another cell 
-    if(nDims[i] < m_dimRangeBounds[m_dmerLength-1])  { qVal = m_dmerCellMap[nDims[i]]; }
+    int qVal = m_dimCount - 1; // First set it to the last cell and then check if it belongs in another cell 
+    if(nDims[i] < m_dimRangeBounds[m_dimCount-1])  { qVal = m_dmerCellMap[nDims[i]]; }
     mapVal += qVal * coeff;
     coeff  /= m_dimCount;
   }
@@ -241,6 +241,14 @@ void MatchCandids::AddCandidSort(int rIdx1, int rIdx2, int rPos1, int rPos2) {
   FILE_LOG(logDEBUG3) << "Adding overlap candidate: " << m_candids.back().ToString();
 }
  
+string MatchCandids::ToString() const {
+  stringstream ss;
+  for(MatchCandid mc:m_candids) {
+    ss << mc.ToString() << endl;
+  }
+  return ss.str();
+}
+
 /*
 void RestSiteAlignCore::WriteLapCandids(const MatchCandids& candids) {
   for (int i = 0; i<candids.NumCandids(); i++) {
@@ -306,31 +314,35 @@ void RestSiteAlignCore:: CreateRSitesPerString(const string& origString, const s
     }
   } 
   rr.Dist() = mm;
-  m_rReads.AddRead(rr);
+  int readIdx = m_rReads.AddRead(rr);
+  FILE_LOG(logDEBUG3) << "Adding Read: " << readIdx << "  " << rr.Name();
+  
   rr.Flip();
   rr.Name() += "_RC";
-  m_rReads.AddRead(rr);
+  readIdx = m_rReads.AddRead(rr);
+  FILE_LOG(logDEBUG3) << "Adding Read: " << readIdx << "  " << rr.Name();
   mm.clear();
 }
 
 void RestSiteAlignCore::FindLapCandids(int dmerLength, int motifLength, float indelVariance, float deviationCoeff, MatchCandids& lapCandids) {
-  Dmers  dmers;  // To build dmers from restriction site reads
-  int dimCount = 10;
+  Dmers  dmers;       // To build dmers from restriction site reads
+  int dimCount = 30;  // Number of bins per dimension
   dmers.BuildDmers(m_rReads, dmerLength, motifLength, dimCount);
-  cout << "Start iterating through dmers..." << endl;
+  cout << "Start iterating through " << dmers.NumMers() <<  "  dmers..." << endl;
   int counter = 0;
   int loopLim = pow(dimCount, dmerLength);
   lapCandids.ReserveInit(dmers.NumMers());
+  svec<int> neighbourCells;
+  neighbourCells.reserve(pow(2, dmerLength));
+  svec<int> deviations;
+  deviations.resize(dmerLength);
   for (int iterIndex=0; iterIndex<loopLim; iterIndex++) {
     counter++;
-    if (counter % 1000000 == 0) {
-//      cout << "\rLOG Progress: " << 100*(double)iterIndex/(double)loopLim << "%" << flush;
+    if (counter % 100000 == 0) {
+      cout << "\rLOG Progress: " << 100*(double)iterIndex/(double)loopLim << "%" << flush;
     }
     if(!dmers[iterIndex].empty()) {
-      svec<int> neighbourCells;
-      neighbourCells.reserve(pow(2, dmerLength));
-      svec<int> deviations;
-      deviations.resize(dmerLength);
+      FILE_LOG(logDEBUG2) << "Number of dmers in cell " << iterIndex << " " << dmers[iterIndex].isize(); 
       for (Dmer dm1:dmers[iterIndex]) {
         neighbourCells.clear();
         deviations.clear();
@@ -385,6 +397,7 @@ void RestSiteAlignCore::FinalOverlaps(const MatchCandids& lapCandids, int tolera
   WriteLapCandids(finalOverlaps);
 }
 */
+
 void RestSiteMapper::GenerateMotifs(int motifLength, int numOfMotifs) {
   m_motifs.reserve(numOfMotifs);
   vector<char> alphabet = {'A', 'C', 'G', 'T'}; //Should be in lexographic order
@@ -447,6 +460,5 @@ void RestSiteMapper::FindMatches(const string& fileName, int readCnt, int motifI
   RestSiteAlignCore rsaCore(m_motifs[motifIndex]);
   rsaCore.MakeRSites(fileName, readCnt);
   MatchCandids lapCandids;
-  rsaCore.FindLapCandids(m_modelParams.DmerLength(), m_modelParams.MotifLength(), 0.7, 0.08, lapCandids);
+  rsaCore.FindLapCandids(m_modelParams.DmerLength(), m_modelParams.MotifLength(), 0.2, 0.08, lapCandids);
 }
-

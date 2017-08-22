@@ -164,22 +164,23 @@ class MatchCandids
 public:
   MatchCandids(): m_candids() {}
   
-  const MatchCandid& operator[](int idx) const { return m_candids[idx]; }
+  //const MatchCandid& operator[](int idx) const { return m_candids[idx]; }
 
-  int NumCandids() const { return m_candids.isize(); }
+  //int NumCandids() const { return m_candids.isize(); }
 
-  void ReserveInit(int initialCapacity) { m_candids.reserve(initialCapacity); } 
+  //void ReserveInit(int initialCapacity) { m_candids.reserve(initialCapacity); } 
 
   void AddCandidSort(int rIdx1, int rIdx2, int rPos1, int rPos2);
   
-  void SortAll() { 
-    __gnu_parallel::sort(m_candids.begin(), m_candids.end());
-  }
+  //void SortAll() { 
+  //  __gnu_parallel::sort(m_candids.begin(), m_candids.end());
+  //}
 
   string ToString() const; 
 
 private:
-  svec<MatchCandid> m_candids; /// unordered set of overlap candidates (for uniqueness)
+  //svec<MatchCandid> m_candids; /// unordered set of overlap candidates (for uniqueness)
+  map<int, map<int, int> > m_candids;
 };
 
 class RestSiteDataParams 
@@ -234,9 +235,11 @@ class RestSiteAlignCore
 {
 public:
   //Default Ctor
-  RestSiteAlignCore(): m_motif(), m_rReads() {}
+  RestSiteAlignCore(): m_motif(), m_totalSiteCnt(0), m_rReads() {}
   //Ctor 1
   RestSiteAlignCore(string motif): m_motif(motif), m_rReads() {}
+
+  int  TotalSiteCount() { return m_totalSiteCnt; }
 
   void MakeRSites(const string& fileName, int numOfReads); 
   void CreateRSitesPerString(const string& origString, const string& origName); 
@@ -250,8 +253,9 @@ public:
   void WriteLapCandids(const MatchCandids& candids);
 
 private:
-  string m_motif;          /// Vector of all motifs for which restriction site reads have been generated
-  RSiteReads m_rReads;     /// Restriction Site reads per motif
+  string m_motif;            /// Vector of all motifs for which restriction site reads have been generated
+  double  m_totalSiteCnt;    /// The total of restriction site count over all reads
+  RSiteReads m_rReads;       /// Restriction Site reads per motif
 };
 
 class RestSiteMapper 

@@ -116,6 +116,7 @@ void Dmer::CalcDeviations(svec<int>& deviations, float indelVariance, float devi
   if(deviations.isize() < m_data.isize()) { deviations.resize(m_data.isize()); }
   for(int i=0; i<m_data.isize(); i++) {
     int deviation = sqrt(m_data[i]*indelVariance)*deviationCoeff;
+    deviations[i] = deviation;
   }
 }
  
@@ -154,7 +155,7 @@ void Dmers::SetRangeBounds(int motifSize) {
       m_dmerCellMap[rangeLim] = dim;
     }
     m_dimRangeBounds.push_back(rangeLim); 
-    FILE_LOG(logDEBUG1) << "Dimension Range: " << dim << "  " << rangeLim; 
+    FILE_LOG(logDEBUG1) << "Dimension Range: " << m_dimRangeBounds.isize()-1 << "  " << rangeLim; 
   }
 }
 
@@ -180,8 +181,8 @@ int Dmers::MapNToOneDim(const svec<int>& nDims) {
   int mapVal = 0;
   int coeff  = pow(m_dimCount, m_dmerLength-1);
   for(int i=0; i<m_dmerLength; i++) {
-    int qVal = m_dimCount - 1; // First set it to the last cell and then check if it belongs in another cell 
-    if(nDims[i] < m_dimRangeBounds[m_dimCount-1])  { qVal = m_dmerCellMap[nDims[i]]; }
+    int qVal = m_dimCount - 1; // First set it to the highest possible digit and then check if it belongs in another cell 
+    if(nDims[i] < m_dimRangeBounds[m_dimCount-2])  { qVal = m_dmerCellMap[nDims[i]]; } // the last digit range bound is in m_dimCount-2
     mapVal += qVal * coeff;
     coeff  /= m_dimCount;
   }
@@ -210,11 +211,12 @@ void Dmers::FindNeighbourCells(int initVal, const Dmer& dmer, const svec<int>& d
   }
   FindNeighbourCells(initVal, dmer, deviations, depth-1, result);
   svec<int> tempResult = result;
-  int currDigit = (initVal % (int)pow(m_dimCount, depth+1)) / pow(m_dimCount, depth);
+  int currDigit = m_dimCount - 1; // First set it to the highest possible digit and then check if it belongs in another cell 
+  if(dmer[depth] < m_dimRangeBounds[m_dimCount-2])  { currDigit = m_dmerCellMap[dmer[depth]]; } // the last digit range bound is in m_dimCount-2
   if((currDigit < m_dimCount-1)  //only add one to the current digit if it has room to be increased 
     && (dmer[depth]+deviations[depth] > m_dimRangeBounds[currDigit])) { // only try one cell up if the deviation limits don't fall within the same cell
     for(int elem:tempResult) {
-      int newElem = elem + pow(m_dimCount, depth);
+      int newElem = elem + pow(m_dimCount, (m_dmerLength-1-depth));
       result.push_back(newElem);
     }
   }
@@ -228,6 +230,7 @@ string MatchCandid::ToString() const {
 }
 
 void MatchCandids::AddCandidSort(int rIdx1, int rIdx2, int rPos1, int rPos2) {
+/*
   // Make sure that rIdx1, rIdx2 are in increasing order (so that sorting will bring all relevant pairs together)
   if(rIdx1>rIdx2) {
     int temp = rIdx1;
@@ -238,14 +241,18 @@ void MatchCandids::AddCandidSort(int rIdx1, int rIdx2, int rPos1, int rPos2) {
     rPos2 = temp;
   }
   m_candids.push_back(MatchCandid(rIdx1, rIdx2, rPos1, rPos2));
-  FILE_LOG(logDEBUG3) << "Adding overlap candidate: " << m_candids.back().ToString();
+*/
+  m_candids[rIdx1][rIdx2]++;
+  FILE_LOG(logDEBUG3) << "Adding overlap candidate: " << MatchCandid(rIdx1, rIdx2, rPos1, rPos2).ToString();
 }
  
 string MatchCandids::ToString() const {
   stringstream ss;
+/*
   for(MatchCandid mc:m_candids) {
     ss << mc.ToString() << endl;
   }
+*/
   return ss.str();
 }
 
@@ -315,23 +322,31 @@ void RestSiteAlignCore:: CreateRSitesPerString(const string& origString, const s
   } 
   rr.Dist() = mm;
   int readIdx = m_rReads.AddRead(rr);
+  m_totalSiteCnt += mm.isize();
   FILE_LOG(logDEBUG3) << "Adding Read: " << readIdx << "  " << rr.Name();
   
   rr.Flip();
   rr.Name() += "_RC";
   readIdx = m_rReads.AddRead(rr);
+  m_totalSiteCnt += mm.isize();
   FILE_LOG(logDEBUG3) << "Adding Read: " << readIdx << "  " << rr.Name();
   mm.clear();
 }
 
 void RestSiteAlignCore::FindLapCandids(int dmerLength, int motifLength, float indelVariance, float deviationCoeff, MatchCandids& lapCandids) {
   Dmers  dmers;       // To build dmers from restriction site reads
-  int dimCount = 30;  // Number of bins per dimension
+  int dimCount = pow(TotalSiteCount()*3, 1.0/dmerLength);   // Number of bins per dimension
+  if(dimCount>35) { 
+    FILE_LOG(logWARNING) << "WARN: Input data size is too large ";
+    dimCount = 35; 
+  }
+  FILE_LOG(logINFO) << "Estimate number of Dmers and dimension size for dmer storage: " << TotalSiteCount() << "  " << dimCount; 
   dmers.BuildDmers(m_rReads, dmerLength, motifLength, dimCount);
   cout << "Start iterating through " << dmers.NumMers() <<  "  dmers..." << endl;
-  int counter = 0;
+  int counter    = 0;
+  int matchCount = 0;
   int loopLim = pow(dimCount, dmerLength);
-  lapCandids.ReserveInit(dmers.NumMers());
+//  lapCandids.ReserveInit(dmers.NumMers());
   svec<int> neighbourCells;
   neighbourCells.reserve(pow(2, dmerLength));
   svec<int> deviations;
@@ -341,12 +356,11 @@ void RestSiteAlignCore::FindLapCandids(int dmerLength, int motifLength, float in
     if (counter % 100000 == 0) {
       cout << "\rLOG Progress: " << 100*(double)iterIndex/(double)loopLim << "%" << flush;
     }
-    if(!dmers[iterIndex].empty()) {
+    if(!dmers[iterIndex].empty() && iterIndex>19000000) {
       FILE_LOG(logDEBUG2) << "Number of dmers in cell " << iterIndex << " " << dmers[iterIndex].isize(); 
       for (Dmer dm1:dmers[iterIndex]) {
         neighbourCells.clear();
-        deviations.clear();
-        dm1.CalcDeviations(deviations, indelVariance, deviationCoeff);
+        dm1.CalcDeviations(deviations, indelVariance, deviationCoeff); //TODO this does not need to be redone every time!
         dmers.FindNeighbourCells(iterIndex, dm1, deviations, neighbourCells); 
         for (int nCell:neighbourCells) {
           FILE_LOG(logDEBUG3) << "Checking Neighbour cell: " << nCell; 
@@ -354,15 +368,17 @@ void RestSiteAlignCore::FindLapCandids(int dmerLength, int motifLength, float in
             FILE_LOG(logDEBUG4) << endl << "Checking dmer match: dmer1 - " << dm1.ToString() << " dmer2 - " << dm2.ToString();
             if(dm1.IsMatch(dm2, deviations)) {
               FILE_LOG(logDEBUG4) << "Found Dmer Match";
-              lapCandids.AddCandidSort(dm1.Seq(), dm2.Seq(), dm1.Pos(), dm2.Pos());
+                matchCount++;
+//              lapCandids.AddCandidSort(dm1.Seq(), dm2.Seq(), dm1.Pos(), dm2.Pos());
             }
           }
         }
       }
     }
   }
-  cout << "LOG Sort overlap candidates... " << lapCandids.NumCandids() << endl;
-  lapCandids.SortAll();
+//  cout << "LOG Sort overlap candidates... " << lapCandids.NumCandids() << endl;
+//  lapCandids.SortAll();
+cout << "Total number of matches recorded: " << matchCount << endl;
 }
 
 /*
@@ -460,5 +476,5 @@ void RestSiteMapper::FindMatches(const string& fileName, int readCnt, int motifI
   RestSiteAlignCore rsaCore(m_motifs[motifIndex]);
   rsaCore.MakeRSites(fileName, readCnt);
   MatchCandids lapCandids;
-  rsaCore.FindLapCandids(m_modelParams.DmerLength(), m_modelParams.MotifLength(), 0.2, 0.08, lapCandids);
+  rsaCore.FindLapCandids(m_modelParams.DmerLength(), m_modelParams.MotifLength(), 0.08, 1, lapCandids);
 }

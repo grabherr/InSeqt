@@ -356,7 +356,7 @@ void RestSiteAlignCore::FindLapCandids(int dmerLength, int motifLength, float in
     if (counter % 100000 == 0) {
       cout << "\rLOG Progress: " << 100*(double)iterIndex/(double)loopLim << "%" << flush;
     }
-    if(!dmers[iterIndex].empty() && iterIndex>19000000) {
+    if(!dmers[iterIndex].empty()) {
       FILE_LOG(logDEBUG2) << "Number of dmers in cell " << iterIndex << " " << dmers[iterIndex].isize(); 
       for (Dmer dm1:dmers[iterIndex]) {
         neighbourCells.clear();

@@ -210,25 +210,25 @@ private:
 class RestSiteModelParams 
 {
 public:
-  RestSiteModelParams(bool singleStrand=false, int motifLength=4, int numOfMotifs=20, 
-                      int dmerLength=6, float cndfCoef=2.2, string alphabet="ACGT") 
+  RestSiteModelParams(bool singleStrand=false, int motifLength=4, int numOfMotifs=1, 
+                      int dmerLength=6, float cndfCoef=1.0, const vector<char>& alphabet= {'A', 'C', 'G', 'T' }) 
                      :m_singleStrand(singleStrand), m_motifLength(motifLength), m_numOfMotifs(numOfMotifs),
                       m_dmerLength(dmerLength), m_cndfCoef(cndfCoef), m_alphabet(alphabet) { }
 
-    bool   IsSingleStrand() const    { return m_singleStrand;   }
-    int    MotifLength() const       { return m_motifLength;    }  
-    int    NumOfMotifs() const       { return m_numOfMotifs;    } 
-    int    DmerLength() const        { return m_dmerLength;     }
-    float  CNDFCoef() const          { return m_cndfCoef;       }
-    string Alphabet() const          { return m_alphabet;       }
+  bool   IsSingleStrand() const        { return m_singleStrand;   }
+  int    MotifLength() const           { return m_motifLength;    }  
+  int    NumOfMotifs() const           { return m_numOfMotifs;    } 
+  int    DmerLength() const            { return m_dmerLength;     }
+  float  CNDFCoef() const              { return m_cndfCoef;       }
+  const vector<char>& Alphabet() const { return m_alphabet;       }
 
 private: 
   bool    m_singleStrand;   /// Flag specifying whether the reads are single or double strand
-  int     m_motifLength;      /// Length of each motif
+  int     m_motifLength;    /// Length of each motif
   int     m_numOfMotifs;    /// Number of motifs to generate/use
   int     m_dmerLength;     /// The length of distmers to use for seed finding
   float   m_cndfCoef;       /// Cumulative Normal Distribution Function coefficeint used for estimating similarity 
-  string  m_alphabet;       /// Alphabet containing base letters used in the reads/motifs 
+  vector<char>  m_alphabet; /// Alphabet containing base letters used in the reads/motifs in lexographic order 
 };
 
 class RestSiteAlignCore 
@@ -261,11 +261,12 @@ private:
 class RestSiteMapper 
 {
 public:
-  RestSiteMapper(): m_motifs() {}
+  RestSiteMapper(): m_motifs(), m_modelParams(), m_dataParams() {}
+  RestSiteMapper(const RestSiteModelParams& mParams): m_motifs(), m_modelParams(mParams), m_dataParams() {}
 
   /* Generate Permutation of the given alphabet to reach number of motifs required */
-  void GenerateMotifs(int motifLength, int numOfMotifs);  
-  bool ValidateMotif(const string& motif) const; 
+  void GenerateMotifs();  
+  bool ValidateMotif(const string& motif, const vector<char>& alphabet) const; 
   void FindMatches(const string& fileName, int readCnt, int motifIndex, MatchCandids& finalOverlaps) const; 
 
 private:

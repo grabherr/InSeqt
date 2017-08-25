@@ -11,44 +11,51 @@ int main( int argc, char** argv )
 
   commandArg<string> fileCmmd("-i","input fasta file");
   commandArg<int> readCountCmmd("-c","number of reads in input fasta file");
-  commandArg<int> kCmmd("-k","seed size", 6);
-  commandArg<int> motifCmmd("-m","Motif Length", 4);
-  commandArg<int>  wCmmd("-w","Wiggle i.e. Error Tolerance in finding overlaps", 5);
+  commandArg<int> dmerCmmd("-d","dmer length", 6);
+  commandArg<int> motifLenCmmd("-ml","Motif Length", 4);
+  commandArg<int> motifCntCmmd("-mc","Number of motifs to use", 1);
+  commandArg<bool> singleStrCmmd("-s", "1: if single strand or 0: if reverse complements should also be included", 0);
+  commandArg<double> ndfcCmmd("-nc", "Coefficient to determine how much room to allow for differences in dmers", 1.0);
   commandArg<int>  coreCmmd("-n","Number of Cores to run with", 2);
   commandArg<string> appLogCmmd("-L","Application logging file","application.log");
   commandLineParser P(argc,argv);
   P.SetDescription("Find overlaps in restriction maps.");
   P.registerArg(fileCmmd);
   P.registerArg(readCountCmmd);
-  P.registerArg(kCmmd);
-  P.registerArg(motifCmmd);
-  P.registerArg(wCmmd);
+  P.registerArg(dmerCmmd);
+  P.registerArg(motifLenCmmd);
+  P.registerArg(motifCntCmmd);
+  P.registerArg(singleStrCmmd);
+  P.registerArg(ndfcCmmd);
   P.registerArg(coreCmmd);
  
   P.parse();
   
-  string fileName  = P.GetStringValueFor(fileCmmd);
-  int readCnt      = P.GetIntValueFor(readCountCmmd);
-  int seedSize     = P.GetIntValueFor(kCmmd);
-  int motifLen     = P.GetIntValueFor(motifCmmd);
-  int wiggle       = P.GetIntValueFor(wCmmd);
-  int numOfCores   = P.GetIntValueFor(coreCmmd);
-    string logFile = P.GetStringValueFor(appLogCmmd);
+  string fileName   = P.GetStringValueFor(fileCmmd);
+  int readCnt       = P.GetIntValueFor(readCountCmmd);
+  int dmerLen       = P.GetIntValueFor(dmerCmmd);
+  int motifLen      = P.GetIntValueFor(motifLenCmmd);
+  int motifCnt      = P.GetIntValueFor(motifCntCmmd);
+  bool singleStrand = P.GetBoolValueFor(singleStrCmmd);
+  double ndfCoef    = P.GetDoubleValueFor(ndfcCmmd);
+  int numOfCores    = P.GetIntValueFor(coreCmmd);
+    string logFile  = P.GetStringValueFor(appLogCmmd);
 
   FILE* pFile               = fopen(logFile.c_str(), "w");
   Output2FILE::Stream()     = pFile;
-  FILELog::ReportingLevel() = logINFO; 
+  FILELog::ReportingLevel() = logINFO;
 #if defined(FORCE_DEBUG)
 //    FILELog::ReportingLevel() = logDEBUG4; 
 #endif
 
-  RestSiteMapper rsMapper;
-  clock_t clock1_optiLoad, clock2_overlapCand, clock3_finalOverlaps, clock4_done;
-
   omp_set_num_threads(numOfCores); //The sort functions use OpenMP
 
+  RestSiteModelParams mParams(singleStrand, motifLen, motifCnt, dmerLen, ndfCoef); 
+  RestSiteMapper rsMapper(mParams);
+
+  clock_t clock1_optiLoad, clock2_overlapCand, clock3_finalOverlaps, clock4_done;
   // 1a. Populate the motifs 
-  rsMapper.GenerateMotifs(motifLen, 100);
+  rsMapper.GenerateMotifs();
   // 1b. Construct Restriction-site Reads
   clock1_optiLoad = clock();
 
@@ -59,7 +66,6 @@ int main( int argc, char** argv )
  
   // 3. Take the overlap candidates and refine to remove false positives
   clock3_finalOverlaps = clock();
-//  rsMapper.FinalOverlaps(lapCandids, wiggle, finalOverlaps);
   clock4_done = clock();
 
 

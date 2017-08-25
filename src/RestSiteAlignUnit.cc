@@ -142,9 +142,9 @@ void Dmers::BuildDmers(const RSiteReads& rReads , int dmerLength, int motifLengt
 }
 
 void Dmers::SetRangeBounds(int motifSize) {
-  double p1     = 1.0 / pow(4, motifSize); //for example for a motif size of 4 this will be 1/256
-  double p2     = 1.0 - p1; //for example for a motif size of 4 this will be 255/256
-  double pC     = 0;  //Cumulative probability
+  double p1     = 1.0 / pow(4, motifSize); // for example for a motif size of 4 this will be 1/256
+  double p2     = 1.0 - p1;                // for example for a motif size of 4 this will be 255/256
+  double pC     = 0;                       // Cumulative probability
   int rangeLim  = 0;
 
   for(int dim=0; dim<m_dimCount-1; dim++) {
@@ -248,11 +248,11 @@ void MatchCandids::AddCandidSort(int rIdx1, int rIdx2, int rPos1, int rPos2) {
  
 string MatchCandids::ToString() const {
   stringstream ss;
-/*
-  for(MatchCandid mc:m_candids) {
-    ss << mc.ToString() << endl;
+  for(auto const &ent1 : m_candids) {
+    for(auto const &ent2 : ent1.second) {
+      ss << ent1.first << " " << ent2.first << " " <<  ent2.second << endl;
+    }
   }
-*/
   return ss.str();
 }
 
@@ -295,15 +295,17 @@ void RestSiteAlignCore:: CreateRSitesPerString(const string& origString, const s
   svec<int> mm;
   RSiteRead rr;
   rr.Name() = origName;
+  int motifLen = m_motif.length();
+  int origLen  = origString.length();
   bool wrotePrefix = false;
   int n = -1;
-  for (int i=0; i<(int)origString.length()-(int)m_motif.length(); i++) {
+  for (int i=0; i<origLen-motifLen ; i++) {
     int j = 0;
-    for (j=0; j<m_motif.length(); j++) {
+    for (j=0; j<motifLen; j++) {
       if (m_motif[j] != toupper(origString[i+j]))
         break;
     }
-    if (j == m_motif.length()) {
+    if (j == motifLen) {
       if (n >= 0) {
         // Obtain the pre/post & dmer values
         if (!wrotePrefix) {
@@ -336,17 +338,16 @@ void RestSiteAlignCore:: CreateRSitesPerString(const string& origString, const s
 void RestSiteAlignCore::FindLapCandids(int dmerLength, int motifLength, float indelVariance, float deviationCoeff, MatchCandids& lapCandids) {
   Dmers  dmers;       // To build dmers from restriction site reads
   int dimCount = pow(TotalSiteCount()*3, 1.0/dmerLength);   // Number of bins per dimension
-  if(dimCount>35) { 
-    FILE_LOG(logWARNING) << "WARN: Input data size is too large ";
-    dimCount = 35; 
+  if(pow(dimCount, dmerLength) > 1900000000) { //TODO parameterise
+    FILE_LOG(logWARNING) << "Input data size is too large";
+    dimCount = pow(1838265625, 1.0/dmerLength); 
   }
   FILE_LOG(logINFO) << "Estimate number of Dmers and dimension size for dmer storage: " << TotalSiteCount() << "  " << dimCount; 
   dmers.BuildDmers(m_rReads, dmerLength, motifLength, dimCount);
   cout << "Start iterating through " << dmers.NumMers() <<  "  dmers..." << endl;
   int counter    = 0;
-  int matchCount = 0;
+  double matchCount = 0;
   int loopLim = pow(dimCount, dmerLength);
-//  lapCandids.ReserveInit(dmers.NumMers());
   svec<int> neighbourCells;
   neighbourCells.reserve(pow(2, dmerLength));
   svec<int> deviations;
@@ -368,17 +369,16 @@ void RestSiteAlignCore::FindLapCandids(int dmerLength, int motifLength, float in
             FILE_LOG(logDEBUG4) << endl << "Checking dmer match: dmer1 - " << dm1.ToString() << " dmer2 - " << dm2.ToString();
             if(dm1.IsMatch(dm2, deviations)) {
               FILE_LOG(logDEBUG4) << "Found Dmer Match";
-                matchCount++;
-//              lapCandids.AddCandidSort(dm1.Seq(), dm2.Seq(), dm1.Pos(), dm2.Pos());
+              matchCount++;
+              lapCandids.AddCandidSort(dm1.Seq(), dm2.Seq(), dm1.Pos(), dm2.Pos());
             }
           }
         }
       }
     }
   }
-//  cout << "LOG Sort overlap candidates... " << lapCandids.NumCandids() << endl;
-//  lapCandids.SortAll();
-cout << "Total number of matches recorded: " << matchCount << endl;
+  cout << "Total number of matches recorded: " << matchCount << endl;
+  FILE_LOG(logINFO) << lapCandids.ToString();
 }
 
 /*
@@ -414,22 +414,22 @@ void RestSiteAlignCore::FinalOverlaps(const MatchCandids& lapCandids, int tolera
 }
 */
 
-void RestSiteMapper::GenerateMotifs(int motifLength, int numOfMotifs) {
-  m_motifs.reserve(numOfMotifs);
+void RestSiteMapper::GenerateMotifs() {
+  m_motifs.reserve(m_modelParams.NumOfMotifs());
   vector<char> alphabet = {'A', 'C', 'G', 'T'}; //Should be in lexographic order
   vector<vector<char>> tempMotifs; 
-  CartesianPower(alphabet, motifLength, tempMotifs);
+  CartesianPower(alphabet, m_modelParams.MotifLength(), tempMotifs);
   for(vector<char> sElem:tempMotifs){
     string motif = "";
     for(char cElem:sElem) {
       motif += cElem;
     }
-    if(motif.length() == motifLength) { 
+    if(motif.length() == m_modelParams.MotifLength()) { 
       //TODO only add each with RC once
-      if(ValidateMotif(motif)) {
+      if(ValidateMotif(motif, alphabet)) {
         FILE_LOG(logDEBUG3) << "Motif: "  << m_motifs.isize() << " " << motif;
         m_motifs.push_back(motif); 
-        if(m_motifs.isize() == numOfMotifs) {
+        if(m_motifs.isize() == m_modelParams.NumOfMotifs()) {
           break;
         }
       }
@@ -437,12 +437,16 @@ void RestSiteMapper::GenerateMotifs(int motifLength, int numOfMotifs) {
   }
 }
   
-bool RestSiteMapper::ValidateMotif(const string& motif) const {
+bool RestSiteMapper::ValidateMotif(const string& motif, const vector<char>& alphabet) const {
 // 1. Simplicity Filter
-  bool simple = true;
+  map<char, int> alphabetCnt;
+  bool simple = false;
   for(int i=0; i<motif.length()-1; i++) {
-    if(motif[i]!=motif[i+1]) {
-      simple = false; 
+    alphabetCnt[motif[i]]++;
+    if(alphabetCnt[motif[i]]>=motif.length()/2 ||
+      (i<motif.length()-1 && motif[i]==motif[i+1])) {
+      simple = true; 
+      break;
     }
   }
   if(simple) { return false; }
@@ -476,5 +480,5 @@ void RestSiteMapper::FindMatches(const string& fileName, int readCnt, int motifI
   RestSiteAlignCore rsaCore(m_motifs[motifIndex]);
   rsaCore.MakeRSites(fileName, readCnt);
   MatchCandids lapCandids;
-  rsaCore.FindLapCandids(m_modelParams.DmerLength(), m_modelParams.MotifLength(), 0.08, 1, lapCandids);
+  rsaCore.FindLapCandids(m_modelParams.DmerLength(), m_modelParams.MotifLength(), 0.08, m_modelParams.CNDFCoef(), lapCandids);
 }

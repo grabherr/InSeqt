@@ -42,10 +42,6 @@ class RSiteReads
 public:
   // Default Ctor
   RSiteReads(): m_readCount(0), m_rReads() {}
-  // Ctor 1
-  RSiteReads(int numOfReads): m_readCount(0), m_rReads() {
-    Resize(numOfReads);   
-  }
 
   void Resize(int size)                      { m_rReads.resize(size);    }
 

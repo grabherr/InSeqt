@@ -3,6 +3,7 @@
 #endif
 
 #include <cmath>
+#include <algorithm>
 #include <sstream>
 #include "RestSiteAlignUnit.h"
 
@@ -269,6 +270,7 @@ void RestSiteAlignCore::MakeRSites(const string& fileName, int numOfReads) {
   FlatFileParser parser;
   parser.Open(fileName);
   string l;
+  l.reserve(500000000);
   string name;
   //Initialize memory for reads
   m_rReads.Resize(numOfReads*2); //Twice the number of reads to allow for recording reverse complements
@@ -276,16 +278,18 @@ void RestSiteAlignCore::MakeRSites(const string& fileName, int numOfReads) {
     if (parser.GetItemCount() == 0)
       continue;
     if (parser.Line()[0] == '>') {
+      transform(l.begin(), l.end(), l.begin(), ::toupper);
       CreateRSitesPerString(l, name);
-      l = "";
+      l.clear();
       name = parser.Line();
     }
     l += parser.Line();
   }
   if( l != "") {
+    transform(l.begin(), l.end(), l.begin(), ::toupper);
     CreateRSitesPerString(l, name);
+    FILE_LOG(logDEBUG4) << m_rReads.ToString();
   }
-  FILE_LOG(logDEBUG3) << m_rReads.ToString();
 }
 
 void RestSiteAlignCore:: CreateRSitesPerString(const string& origString, const string& origName) {
@@ -297,12 +301,13 @@ void RestSiteAlignCore:: CreateRSitesPerString(const string& origString, const s
   rr.Name() = origName;
   int motifLen = m_motif.length();
   int origLen  = origString.length();
+  mm.reserve(origLen/motifLen);
   bool wrotePrefix = false;
   int n = -1;
   for (int i=0; i<origLen-motifLen ; i++) {
     int j = 0;
     for (j=0; j<motifLen; j++) {
-      if (m_motif[j] != toupper(origString[i+j]))
+      if (m_motif[j] != origString[i+j])
         break;
     }
     if (j == motifLen) {
@@ -318,7 +323,7 @@ void RestSiteAlignCore:: CreateRSitesPerString(const string& origString, const s
     }
     if (origString != "") {
       if(wrotePrefix) { 
-        rr.PostDist() = origString.length() - n - 1; // postfix (number of leading bits after last motif location, last item in dmer sequence)
+        rr.PostDist() = origLen - n - 1; // postfix (number of leading bits after last motif location, last item in dmer sequence)
       } 
     }
   } 
@@ -332,7 +337,6 @@ void RestSiteAlignCore:: CreateRSitesPerString(const string& origString, const s
   readIdx = m_rReads.AddRead(rr);
   m_totalSiteCnt += mm.isize();
   FILE_LOG(logDEBUG3) << "Adding Read: " << readIdx << "  " << rr.Name();
-  mm.clear();
 }
 
 void RestSiteAlignCore::FindLapCandids(int dmerLength, int motifLength, float indelVariance, float deviationCoeff, MatchCandids& lapCandids) {

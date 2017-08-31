@@ -105,6 +105,7 @@ public:
   Dmers(): m_mers(), m_dimCount(0), m_dmerLength(0), m_dimRangeBounds(), m_dmerCellMap(), m_dmerCount(0) {}
 
   int NumMers()                            { return m_dmerCount;     }
+  int NumCells()                           { return m_mers.isize();  }
   svec<Dmer>& operator[](int index)        { return m_mers[index];   }
 
   void BuildDmers(const RSiteReads& rReads, int dmerLength, int motifLength, int countPerDimension); 
@@ -231,27 +232,27 @@ class RestSiteAlignCore
 {
 public:
   //Default Ctor
-  RestSiteAlignCore(): m_motif(), m_totalSiteCnt(0), m_rReads() {}
+  RestSiteAlignCore(): m_motif(), m_totalSiteCnt(0), m_rReads(), m_dmers() {}
   //Ctor 1
-  RestSiteAlignCore(string motif): m_motif(motif), m_rReads() {}
+  RestSiteAlignCore(string motif, const RestSiteModelParams& mp, const RestSiteDataParams& dp)
+                   : m_motif(motif), m_modelParams(mp), m_dataParams(dp), m_rReads(), m_dmers() {}
 
   int  TotalSiteCount() { return m_totalSiteCnt; }
-
   void MakeRSites(const string& fileName, int numOfReads); 
   void CreateRSitesPerString(const string& origString, const string& origName); 
-
   //void LoadReads(const string& fileName, int seedSize)  { m_rReads.LoadReads(fileName, seedSize); }
-
-  void FindLapCandids(int dmerLength, int motifLength, float indelVariance, float deviationCoeff, MatchCandids& lapCandids);
-
+  void BuildDmers(); 
+  void FindLapCandids(float indelVariance, MatchCandids& lapCandids);
   void FinalOverlaps(const MatchCandids& lapCandids, int tolerance, MatchCandids& finalOverlaps);
-
   void WriteLapCandids(const MatchCandids& candids);
 
 private:
-  string m_motif;            /// Vector of all motifs for which restriction site reads have been generated
-  double  m_totalSiteCnt;    /// The total of restriction site count over all reads
-  RSiteReads m_rReads;       /// Restriction Site reads per motif
+  string m_motif;                    /// Vector of all motifs for which restriction site reads have been generated
+  RestSiteModelParams m_modelParams; /// Model Parameters
+  RestSiteDataParams m_dataParams;   /// Model Parameters
+  double  m_totalSiteCnt;            /// The total of restriction site count over all reads
+  RSiteReads m_rReads;               /// Restriction Site reads per motif
+  Dmers  m_dmers;                    /// To build dmers from restriction site reads
 };
 
 class RestSiteMapper 

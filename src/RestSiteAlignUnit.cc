@@ -339,37 +339,42 @@ void RestSiteAlignCore:: CreateRSitesPerString(const string& origString, const s
   FILE_LOG(logDEBUG3) << "Adding Read: " << readIdx << "  " << rr.Name();
 }
 
-void RestSiteAlignCore::FindLapCandids(int dmerLength, int motifLength, float indelVariance, float deviationCoeff, MatchCandids& lapCandids) {
-  Dmers  dmers;       // To build dmers from restriction site reads
-  int dimCount = pow(TotalSiteCount()*3, 1.0/dmerLength);   // Number of bins per dimension
-  if(pow(dimCount, dmerLength) > 1900000000) { //TODO parameterise
+void RestSiteAlignCore::BuildDmers() { 
+  cout << "LOG Build mer list..." << endl;
+  FILE_LOG(logDEBUG2) << "LOG Build mer list...";
+  int dimCount = pow(TotalSiteCount()*3, 1.0/m_modelParams.DmerLength());   // Number of bins per dimension
+  if(pow(dimCount, m_modelParams.DmerLength()) > 1900000000) { //TODO parameterise
     FILE_LOG(logWARNING) << "Input data size is too large";
-    dimCount = pow(1838265625, 1.0/dmerLength); 
+    dimCount = pow(1900000000, 1.0/m_modelParams.DmerLength()); 
   }
   FILE_LOG(logINFO) << "Estimate number of Dmers and dimension size for dmer storage: " << TotalSiteCount() << "  " << dimCount; 
-  dmers.BuildDmers(m_rReads, dmerLength, motifLength, dimCount);
-  cout << "Start iterating through " << dmers.NumMers() <<  "  dmers..." << endl;
-  int counter    = 0;
+  m_dmers.BuildDmers(m_rReads , m_modelParams.DmerLength(), m_modelParams.MotifLength(), dimCount); 
+}
+
+void RestSiteAlignCore::FindLapCandids(float indelVariance, MatchCandids& lapCandids) {
+  cout << "Start iterating through " << m_dmers.NumMers() <<  "  dmers..." << endl;
+  int counter       = 0;
   double matchCount = 0;
-  int loopLim = pow(dimCount, dmerLength);
+  int loopLim       = m_dmers.NumCells();
+
   svec<int> neighbourCells;
-  neighbourCells.reserve(pow(2, dmerLength));
+  neighbourCells.reserve(pow(2, m_modelParams.DmerLength()));
   svec<int> deviations;
-  deviations.resize(dmerLength);
+  deviations.resize(m_modelParams.DmerLength());
   for (int iterIndex=0; iterIndex<loopLim; iterIndex++) {
     counter++;
     if (counter % 100000 == 0) {
       cout << "\rLOG Progress: " << 100*(double)iterIndex/(double)loopLim << "%" << flush;
     }
-    if(!dmers[iterIndex].empty()) {
-      FILE_LOG(logDEBUG2) << "Number of dmers in cell " << iterIndex << " " << dmers[iterIndex].isize(); 
-      for (Dmer dm1:dmers[iterIndex]) {
+    if(!m_dmers[iterIndex].empty()) {
+      FILE_LOG(logDEBUG2) << "Number of dmers in cell " << iterIndex << " " << m_dmers[iterIndex].isize(); 
+      for (Dmer dm1:m_dmers[iterIndex]) {
         neighbourCells.clear();
-        dm1.CalcDeviations(deviations, indelVariance, deviationCoeff); //TODO this does not need to be redone every time!
-        dmers.FindNeighbourCells(iterIndex, dm1, deviations, neighbourCells); 
+        dm1.CalcDeviations(deviations, indelVariance, m_modelParams.CNDFCoef()); //TODO this does not need to be redone every time!
+        m_dmers.FindNeighbourCells(iterIndex, dm1, deviations, neighbourCells); 
         for (int nCell:neighbourCells) {
           FILE_LOG(logDEBUG3) << "Checking Neighbour cell: " << nCell; 
-          for (Dmer dm2:dmers[nCell]) {
+          for (Dmer dm2:m_dmers[nCell]) {
             FILE_LOG(logDEBUG4) << endl << "Checking dmer match: dmer1 - " << dm1.ToString() << " dmer2 - " << dm2.ToString();
             if(dm1.IsMatch(dm2, deviations)) {
               FILE_LOG(logDEBUG4) << "Found Dmer Match";
@@ -481,8 +486,9 @@ void RestSiteMapper::CartesianPower(const vector<char>& input, unsigned k, vecto
 
 void RestSiteMapper::FindMatches(const string& fileName, int readCnt, int motifIndex, MatchCandids& finalOverlaps) const {
   FILE_LOG(logDEBUG2) << "Finding sites/maps for motif: " << m_motifs[motifIndex] << endl;
-  RestSiteAlignCore rsaCore(m_motifs[motifIndex]);
-  rsaCore.MakeRSites(fileName, readCnt);
+  RestSiteAlignCore rsaCore(m_motifs[motifIndex], m_modelParams, m_dataParams);
+  rsaCore.MakeRSites(fileName, readCnt); //TODO save reads in fasta first if more than one motif is going to be used
+  rsaCore.BuildDmers();
   MatchCandids lapCandids;
-  rsaCore.FindLapCandids(m_modelParams.DmerLength(), m_modelParams.MotifLength(), 0.08, m_modelParams.CNDFCoef(), lapCandids);
+  rsaCore.FindLapCandids(0.08, lapCandids); //TODO parameterise data params
 }

@@ -138,7 +138,7 @@ void Dmers::BuildDmers(const RSiteReads& rReads , int dmerLength, int motifLengt
   cout << "LOG Build mer list..." << endl;
   FILE_LOG(logDEBUG2) << "LOG Build mer list...";
   for (int rIdx=0; rIdx<rReads.NumReads(); rIdx++) {
-    AddSingleReadDmers(rReads, rIdx);
+    AddSingleReadDmers(rReads[rIdx], rIdx);
   }
 }
 
@@ -160,37 +160,45 @@ void Dmers::SetRangeBounds(int motifSize) {
   }
 }
 
-void Dmers::AddSingleReadDmers(const RSiteReads& rReads, int rIdx) {
-  Dmer mm;
-  mm.Seq() = rIdx;
-  mm.Data().resize(m_dmerLength);
-  for (int i=0; i<=rReads[rIdx].Dist().isize()-m_dmerLength; i++) {
-    mm.Pos() = i;
-    for (int j=0; j<m_dmerLength; j++) {
-      mm.Data()[j] = rReads[rIdx].Dist()[i+j];
-    }
-    //Find where this dmer should be placed in m_mers
-    int merLoc = MapNToOneDim(mm.Data());
-    m_mers[merLoc].push_back(mm);
+void Dmers::AddSingleReadDmers(const RSiteRead& rRead, int rIdx) {
+  svec<Dmer> dmers;
+  GetDmers(rRead, rIdx, dmers);
+  for (Dmer dm:dmers) {
+    int merLoc = MapNToOneDim(dm.Data());
+    m_mers[merLoc].push_back(dm);
     m_dmerCount++;
   }
   FILE_LOG(logDEBUG3) << "Read Index: " << rIdx << " total dmers so far: " << m_dmerCount << endl;
 }
 
-int Dmers::MapNToOneDim(const svec<int>& nDims) {
+void Dmers::GetDmers(const RSiteRead& rRead, int rIdx, svec<Dmer>& dmers) const {
+  Dmer mm;
+  mm.Seq() = rIdx;
+  mm.Data().resize(m_dmerLength);
+  int loopLim = rRead.Dist().isize() - m_dmerLength;
+  for (int i=0; i<=loopLim; i++) {
+    mm.Pos() = i;
+    for (int j=0; j<m_dmerLength; j++) {
+      mm.Data()[j] = rRead.Dist()[i+j];
+    }
+    dmers.push_back(mm);
+  }
+}
+
+int Dmers::MapNToOneDim(const svec<int>& nDims) const {
   // This function does not do bound checking and assumes that nDims size is m_dmerLength and values are between 0 and m_dimCount
   int mapVal = 0;
   int coeff  = pow(m_dimCount, m_dmerLength-1);
   for(int i=0; i<m_dmerLength; i++) {
     int qVal = m_dimCount - 1; // First set it to the highest possible digit and then check if it belongs in another cell 
-    if(nDims[i] < m_dimRangeBounds[m_dimCount-2])  { qVal = m_dmerCellMap[nDims[i]]; } // the last digit range bound is in m_dimCount-2
+    if(nDims[i] < m_dimRangeBounds[m_dimCount-2])  { qVal = m_dmerCellMap.at(nDims[i]); } // the last digit range bound is in m_dimCount-2
     mapVal += qVal * coeff;
     coeff  /= m_dimCount;
   }
   return mapVal;
 }
 
-svec<int> Dmers::MapOneToNDim(int oneDMappedVal) {
+svec<int> Dmers::MapOneToNDim(int oneDMappedVal) const {
   svec<int> nDims;
   nDims.resize(m_dmerLength);
   int coeff  = m_dimCount;
@@ -201,11 +209,11 @@ svec<int> Dmers::MapOneToNDim(int oneDMappedVal) {
   return nDims;
 }
 
-void Dmers::FindNeighbourCells(int initVal, const Dmer& dmer, const svec<int>& deviations, svec<int>& result) {
+void Dmers::FindNeighbourCells(int initVal, const Dmer& dmer, const svec<int>& deviations, svec<int>& result) const {
   FindNeighbourCells(initVal, dmer, deviations, m_dmerLength-1, result);
 }
 
-void Dmers::FindNeighbourCells(int initVal, const Dmer& dmer, const svec<int>& deviations, int depth, svec<int>& result) {
+void Dmers::FindNeighbourCells(int initVal, const Dmer& dmer, const svec<int>& deviations, int depth, svec<int>& result) const {
   if(depth == -1) { 
     result.push_back(initVal);
     return;
@@ -213,7 +221,7 @@ void Dmers::FindNeighbourCells(int initVal, const Dmer& dmer, const svec<int>& d
   FindNeighbourCells(initVal, dmer, deviations, depth-1, result);
   svec<int> tempResult = result;
   int currDigit = m_dimCount - 1; // First set it to the highest possible digit and then check if it belongs in another cell 
-  if(dmer[depth] < m_dimRangeBounds[m_dimCount-2])  { currDigit = m_dmerCellMap[dmer[depth]]; } // the last digit range bound is in m_dimCount-2
+  if(dmer[depth] < m_dimRangeBounds[m_dimCount-2])  { currDigit = m_dmerCellMap.at(dmer[depth]); } // the last digit range bound is in m_dimCount-2
   if((currDigit < m_dimCount-1)  //only add one to the current digit if it has room to be increased 
     && (dmer[depth]+deviations[depth] > m_dimRangeBounds[currDigit])) { // only try one cell up if the deviation limits don't fall within the same cell
     for(int elem:tempResult) {
@@ -265,21 +273,26 @@ void RestSiteAlignCore::WriteLapCandids(const MatchCandids& candids) {
   }
 }
 */
+void RestSiteAlignCore::SetRSites(const string& fileName, int numOfReads, bool addRC) {
+  m_totalSiteCnt = MakeRSites(fileName, numOfReads, m_rReads, addRC);
+}
 
-void RestSiteAlignCore::MakeRSites(const string& fileName, int numOfReads) {
+
+int RestSiteAlignCore::MakeRSites(const string& fileName, int numOfReads, RSiteReads& reads, bool addRC) const {
+  int totSiteCnt = 0;
   FlatFileParser parser;
   parser.Open(fileName);
   string l;
   l.reserve(500000000);
   string name;
   //Initialize memory for reads
-  m_rReads.Resize(numOfReads*2); //Twice the number of reads to allow for recording reverse complements
+  reads.Resize(numOfReads*2); //Twice the number of reads to allow for recording reverse complements
   while (parser.ParseLine()) {
     if (parser.GetItemCount() == 0)
       continue;
     if (parser.Line()[0] == '>') {
       transform(l.begin(), l.end(), l.begin(), ::toupper);
-      CreateRSitesPerString(l, name);
+      totSiteCnt += CreateRSitesPerString(l, name, reads, addRC);
       l.clear();
       name = parser.Line();
     }
@@ -287,14 +300,14 @@ void RestSiteAlignCore::MakeRSites(const string& fileName, int numOfReads) {
   }
   if( l != "") {
     transform(l.begin(), l.end(), l.begin(), ::toupper);
-    CreateRSitesPerString(l, name);
-    FILE_LOG(logDEBUG4) << m_rReads.ToString();
+    totSiteCnt += CreateRSitesPerString(l, name, reads, addRC);
+    FILE_LOG(logDEBUG4) << reads.ToString();
   }
 }
 
-void RestSiteAlignCore:: CreateRSitesPerString(const string& origString, const string& origName) {
+int RestSiteAlignCore:: CreateRSitesPerString(const string& origString, const string& origName, RSiteReads& reads, bool addRC) const {
   if (origString == "" && origName == "") {
-    return;
+    return 0;
   }
   svec<int> mm;
   RSiteRead rr;
@@ -328,22 +341,23 @@ void RestSiteAlignCore:: CreateRSitesPerString(const string& origString, const s
     }
   } 
   rr.Dist() = mm;
-  int readIdx = m_rReads.AddRead(rr);
-  m_totalSiteCnt += mm.isize();
+  int readIdx = reads.AddRead(rr);
   FILE_LOG(logDEBUG3) << "Adding Read: " << readIdx << "  " << rr.Name();
-  
-  rr.Flip();
-  rr.Name() += "_RC";
-  readIdx = m_rReads.AddRead(rr);
-  m_totalSiteCnt += mm.isize();
-  FILE_LOG(logDEBUG3) << "Adding Read: " << readIdx << "  " << rr.Name();
+  if(addRC) {  
+    rr.Flip();
+    rr.Name() += "_RC";
+    readIdx = reads.AddRead(rr);
+    FILE_LOG(logDEBUG3) << "Adding Read: " << readIdx << "  " << rr.Name();
+    return 2*mm.isize(); // Return the total number of sites that have been added
+  }
+  return mm.isize(); // Return the total number of sites that have been added
 }
 
 void RestSiteAlignCore::BuildDmers() { 
   cout << "LOG Build mer list..." << endl;
   FILE_LOG(logDEBUG2) << "LOG Build mer list...";
   int dimCount = pow(TotalSiteCount()*3, 1.0/m_modelParams.DmerLength());   // Number of bins per dimension
-  if(pow(dimCount, m_modelParams.DmerLength()) > 1900000000) { //TODO parameterise
+  if(pow(dimCount, m_modelParams.DmerLength()) > 1900000000) {              //TODO parameterise
     FILE_LOG(logWARNING) << "Input data size is too large";
     dimCount = pow(1900000000, 1.0/m_modelParams.DmerLength()); 
   }
@@ -351,7 +365,7 @@ void RestSiteAlignCore::BuildDmers() {
   m_dmers.BuildDmers(m_rReads , m_modelParams.DmerLength(), m_modelParams.MotifLength(), dimCount); 
 }
 
-void RestSiteAlignCore::FindLapCandids(float indelVariance, MatchCandids& lapCandids) {
+void RestSiteAlignCore::FindLapCandids(float indelVariance, MatchCandids& lapCandids) const {
   cout << "Start iterating through " << m_dmers.NumMers() <<  "  dmers..." << endl;
   int counter       = 0;
   double matchCount = 0;
@@ -390,10 +404,31 @@ void RestSiteAlignCore::FindLapCandids(float indelVariance, MatchCandids& lapCan
   FILE_LOG(logINFO) << lapCandids.ToString();
 }
 
+void RestSiteAlignCore::FindSingleReadMatchCandids(const RSiteRead& read, int rIdx, float indelVariance, MatchCandids& matchCandids) const {
+  svec<int> neighbourCells;
+  neighbourCells.reserve(pow(2, m_modelParams.DmerLength()));
+  svec<int> deviations;
+  deviations.resize(m_modelParams.DmerLength());
+  svec<Dmer> dmers;
+  m_dmers.GetDmers(read, rIdx, dmers);
+  for(Dmer dm1:dmers) {
+    dm1.CalcDeviations(deviations, indelVariance, m_modelParams.CNDFCoef()); //TODO this does not need to be redone every time!
+    int merLoc = m_dmers.MapNToOneDim(dm1.Data());
+    m_dmers.FindNeighbourCells(merLoc, dm1, deviations, neighbourCells); 
+    for (int nCell:neighbourCells) {
+      for (auto dm2:m_dmers[nCell]) {
+        if(dm1.IsMatch(dm2, deviations)) {
+          matchCandids.AddCandidSort(dm1.Seq(), dm2.Seq(), dm1.Pos(), dm2.Pos());
+        }
+      }
+    } 
+  }
+}
+
 /*
-void RestSiteAlignCore::FinalOverlaps(const MatchCandids& lapCandids, int tolerance,  MatchCandids& finalOverlaps) {
+void RestSiteAlignCore::FinalOverlaps(const MatchCandids& lapCandids, int tolerance,  MatchCandids& finalMatches) {
   cout << "LOG Refine overlap candidates... " << lapCandids.NumCandids() << endl;
-  finalOverlaps.ReserveInit(lapCandids.NumCandids()/2); // Rough estimate 
+  finalMatches.ReserveInit(lapCandids.NumCandids()/2); // Rough estimate 
   MatchCandid currCandid;
   int rejectCnt = 0;
   for(int i=0; i<lapCandids.NumCandids(); i++) {
@@ -415,15 +450,15 @@ void RestSiteAlignCore::FinalOverlaps(const MatchCandids& lapCandids, int tolera
         break;
       }
     }
-    if(overlaps) { finalOverlaps.AddCandid(currCandid); }
+    if(overlaps) { finalMatches.AddCandid(currCandid); }
   }
   cout << "LOG Total number of overlap candidates rejected: " << rejectCnt << endl;
-  cout << "LOG Final number of overlaps: " << finalOverlaps.NumCandids() << endl;
-  WriteLapCandids(finalOverlaps);
+  cout << "LOG Final number of overlaps: " << finalMatches.NumCandids() << endl;
+  WriteLapCandids(finalMatches);
 }
 */
 
-void RestSiteMapper::GenerateMotifs() {
+void RestSiteGeneral::GenerateMotifs() {
   m_motifs.reserve(m_modelParams.NumOfMotifs());
   vector<char> alphabet = {'A', 'C', 'G', 'T'}; //Should be in lexographic order
   vector<vector<char>> tempMotifs; 
@@ -446,7 +481,7 @@ void RestSiteMapper::GenerateMotifs() {
   }
 }
   
-bool RestSiteMapper::ValidateMotif(const string& motif, const vector<char>& alphabet) const {
+bool RestSiteGeneral::ValidateMotif(const string& motif, const vector<char>& alphabet) const {
 // 1. Simplicity Filter
   map<char, int> alphabetCnt;
   bool simple = false;
@@ -465,7 +500,7 @@ bool RestSiteMapper::ValidateMotif(const string& motif, const vector<char>& alph
   return true;
 }
 
-void RestSiteMapper::CartesianPower(const vector<char>& input, unsigned k, vector<vector<char>>& result) const {
+void RestSiteGeneral::CartesianPower(const vector<char>& input, unsigned k, vector<vector<char>>& result) const {
   if (k == 1) {
     for (int value: input) {
       result.push_back( {value} );
@@ -483,11 +518,20 @@ void RestSiteMapper::CartesianPower(const vector<char>& input, unsigned k, vecto
     return;
   }
 } 
-
-void RestSiteMapper::FindMatches(const string& fileName, int readCnt, int motifIndex, MatchCandids& finalOverlaps) const {
+/*
+void RestSiteGeneral::FindMatches(const string& fileName, int readCnt, int motifIndex, MatchCandids& finalMatches) const {
   FILE_LOG(logDEBUG2) << "Finding sites/maps for motif: " << m_motifs[motifIndex] << endl;
   RestSiteAlignCore rsaCore(m_motifs[motifIndex], m_modelParams, m_dataParams);
-  rsaCore.MakeRSites(fileName, readCnt); //TODO save reads in fasta first if more than one motif is going to be used
+  rsaCore.SetRSites(fileName, readCnt, true); //TODO save reads in fasta first if more than one motif is going to be used
+  rsaCore.BuildDmers();
+  MatchCandids lapCandids;
+  rsaCore.FindLapCandids(0.08, lapCandids); //TODO parameterise data params
+}
+*/
+void RestSiteAligner::FindMatches(const string& fileNameQuery, const string& fileNameTarget, int targetReadCnt, int motifIndex, MatchCandids& finalMatches) const {
+  FILE_LOG(logDEBUG2) << "Finding sites/maps for motif: " << m_motifs[motifIndex] << endl;
+  RestSiteAlignCore rsaCore(m_motifs[motifIndex], m_modelParams, m_dataParams);
+  rsaCore.SetRSites(fileNameTarget, targetReadCnt, true); //TODO save reads in fasta first if more than one motif is going to be used
   rsaCore.BuildDmers();
   MatchCandids lapCandids;
   rsaCore.FindLapCandids(0.08, lapCandids); //TODO parameterise data params

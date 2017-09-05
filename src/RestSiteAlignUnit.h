@@ -104,20 +104,22 @@ class Dmers
 public:
   Dmers(): m_mers(), m_dimCount(0), m_dmerLength(0), m_dimRangeBounds(), m_dmerCellMap(), m_dmerCount(0) {}
 
-  int NumMers()                            { return m_dmerCount;     }
-  int NumCells()                           { return m_mers.isize();  }
+  int NumMers() const                      { return m_dmerCount;     }
+  int NumCells() const                     { return m_mers.isize();  }
+  svec<Dmer> operator[](int index) const   { return m_mers[index];   }
   svec<Dmer>& operator[](int index)        { return m_mers[index];   }
 
   void BuildDmers(const RSiteReads& rReads, int dmerLength, int motifLength, int countPerDimension); 
-  inline void FindNeighbourCells(int initVal, const Dmer& dmer, const svec<int>& deviations, svec<int>& result); 
+  inline void FindNeighbourCells(int initVal, const Dmer& dmer, const svec<int>& deviations, svec<int>& result) const; 
+
+  void SetRangeBounds(int motifLength);
+  void AddSingleReadDmers(const RSiteRead& rRead, int rIdx);
+  void GetDmers(const RSiteRead& rRead, int rIdx, svec<Dmer>& dmers) const;
+  inline int MapNToOneDim(const svec<int>& nDims) const;
+  inline svec<int> MapOneToNDim(int oneDMappedVal) const;
+  inline void FindNeighbourCells(int initVal, const Dmer& dmer, const svec<int>& deviations, int depth, svec<int>& result) const; 
 
 private:
-  void SetRangeBounds(int motifLength);
-  void AddSingleReadDmers(const RSiteReads& rReads, int rIdx);
-  inline int MapNToOneDim(const svec<int>& nDims);
-  inline svec<int> MapOneToNDim(int oneDMappedVal);
-  inline void FindNeighbourCells(int initVal, const Dmer& dmer, const svec<int>& deviations, int depth, svec<int>& result); 
-
   svec<svec<Dmer> > m_mers;    /// Multi-dimensional matrix representation of dmers projected on to dimensions
   int m_dimCount;              /// Number of cells in each dimension (this is dependent on the site values and the reduction coefficient)
   int m_dmerLength;            /// Number of dimensions in the matrix (i.e. dmer length)
@@ -237,14 +239,18 @@ public:
   RestSiteAlignCore(string motif, const RestSiteModelParams& mp, const RestSiteDataParams& dp)
                    : m_motif(motif), m_modelParams(mp), m_dataParams(dp), m_rReads(), m_dmers() {}
 
-  int  TotalSiteCount() { return m_totalSiteCnt; }
-  void MakeRSites(const string& fileName, int numOfReads); 
-  void CreateRSitesPerString(const string& origString, const string& origName); 
+  int  TotalSiteCount() const { return m_totalSiteCnt; }
+  void SetRSites(const string& fileName, int numOfReads, bool addRC);
+  int  MakeRSites(const string& fileName, int numOfReads, RSiteReads& reads, bool addRC) const; 
   //void LoadReads(const string& fileName, int seedSize)  { m_rReads.LoadReads(fileName, seedSize); }
   void BuildDmers(); 
-  void FindLapCandids(float indelVariance, MatchCandids& lapCandids);
-  void FinalOverlaps(const MatchCandids& lapCandids, int tolerance, MatchCandids& finalOverlaps);
-  void WriteLapCandids(const MatchCandids& candids);
+  void FindLapCandids(float indelVariance, MatchCandids& lapCandids) const;
+  void FindSingleReadMatchCandids(const RSiteRead& reads, int rIdx, float indelVariance, MatchCandids& matchCandids) const; 
+  void FinalOverlaps(const MatchCandids& lapCandids, int tolerance, MatchCandids& finalMatches) const;
+  void WriteLapCandids(const MatchCandids& candids) const;
+
+private:
+  int  CreateRSitesPerString(const string& origString, const string& origName, RSiteReads& reads, bool addRC) const; 
 
 private:
   string m_motif;                    /// Vector of all motifs for which restriction site reads have been generated
@@ -255,23 +261,47 @@ private:
   Dmers  m_dmers;                    /// To build dmers from restriction site reads
 };
 
-class RestSiteMapper 
+class RestSiteGeneral 
 {
 public:
-  RestSiteMapper(): m_motifs(), m_modelParams(), m_dataParams() {}
-  RestSiteMapper(const RestSiteModelParams& mParams): m_motifs(), m_modelParams(mParams), m_dataParams() {}
+  RestSiteGeneral(): m_motifs(), m_modelParams(), m_dataParams() {}
+  RestSiteGeneral(const RestSiteModelParams& mParams): m_motifs(), m_modelParams(mParams), m_dataParams() {}
 
   /* Generate Permutation of the given alphabet to reach number of motifs required */
   void GenerateMotifs();  
   bool ValidateMotif(const string& motif, const vector<char>& alphabet) const; 
-  void FindMatches(const string& fileName, int readCnt, int motifIndex, MatchCandids& finalOverlaps) const; 
+  virtual void FindMatches(const string& fileNameQuery, const string& fileNameTarget, int targetReadCnt, int motifIndex, MatchCandids& finalMatches) const = 0; 
 
-private:
+protected:
   void CartesianPower(const vector<char>& input, unsigned k, vector<vector<char>>& result) const; 
 
   svec<string> m_motifs;             /// Vector of all motifs for which restriction site reads have been generated
   RestSiteModelParams m_modelParams; /// Model Parameters
   RestSiteDataParams m_dataParams;   /// Model Parameters
 };
+
+class RestSiteAligner : public RestSiteGeneral 
+{
+public:
+  RestSiteAligner() {} 
+  RestSiteAligner(const RestSiteModelParams& mParams): RestSiteGeneral(mParams) {}
+
+  virtual void FindMatches(const string& fileNameQuery, const string& fileNameTarget, int targetReadCnt, int motifIndex, MatchCandids& finalMatches) const; 
+
+private:
+};
+
+class RestSiteDBAligner : public RestSiteGeneral 
+{
+public:
+  RestSiteDBAligner() {} 
+  RestSiteDBAligner(const RestSiteModelParams& mParams): RestSiteGeneral(mParams) {}
+
+  virtual void FindMatches(const string& fileNameQuery, const string& fileNameTarget, int targetReadCnt, int motifIndex, MatchCandids& finalMatches) const; 
+
+private:
+};
+
+
 
 #endif //OPTIMAPALIGNUNIT_H

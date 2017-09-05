@@ -51,17 +51,17 @@ int main( int argc, char** argv )
   omp_set_num_threads(numOfCores); //The sort functions use OpenMP
 
   RestSiteModelParams mParams(singleStrand, motifLen, motifCnt, dmerLen, ndfCoef); 
-  RestSiteMapper rsMapper(mParams);
+  RestSiteAligner rsAligner(mParams);
 
   clock_t clock1_optiLoad, clock2_overlapCand, clock3_finalOverlaps, clock4_done;
   // 1a. Populate the motifs 
-  rsMapper.GenerateMotifs();
+  rsAligner.GenerateMotifs();
   // 1b. Construct Restriction-site Reads
   clock1_optiLoad = clock();
 
   // 2. Build Optimers and find those that share a seed as cadidates for overlap detection 
   MatchCandids finalOverlaps;
-  rsMapper.FindMatches(fileName, readCnt, 0, finalOverlaps); 
+  rsAligner.FindMatches("", fileName, readCnt, 0, finalOverlaps); 
   clock2_overlapCand = clock();
  
   // 3. Take the overlap candidates and refine to remove false positives

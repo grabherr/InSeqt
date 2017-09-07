@@ -303,6 +303,7 @@ int RestSiteAlignCore::MakeRSites(const string& fileName, int numOfReads, RSiteR
     totSiteCnt += CreateRSitesPerString(l, name, reads, addRC);
     FILE_LOG(logDEBUG4) << reads.ToString();
   }
+  return totSiteCnt;
 }
 
 int RestSiteAlignCore:: CreateRSitesPerString(const string& origString, const string& origName, RSiteReads& reads, bool addRC) const {
@@ -361,7 +362,7 @@ void RestSiteAlignCore::BuildDmers() {
     FILE_LOG(logWARNING) << "Input data size is too large";
     dimCount = pow(1900000000, 1.0/m_modelParams.DmerLength()); 
   }
-  FILE_LOG(logINFO) << "Estimate number of Dmers and dimension size for dmer storage: " << TotalSiteCount() << "  " << dimCount; 
+  FILE_LOG(logINFO) << "Estimated number of Dmers and dimension size for dmer storage: " << TotalSiteCount() << "  " << dimCount; 
   m_dmers.BuildDmers(m_rReads , m_modelParams.DmerLength(), m_modelParams.MotifLength(), dimCount); 
 }
 

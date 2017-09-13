@@ -135,11 +135,13 @@ void Dmers::BuildDmers(const RSiteReads& rReads , int dmerLength, int motifLengt
   m_dimCount   = countPerDimension;
   m_mers.resize(pow(m_dimCount, m_dmerLength)); // TODO Check to be within memory limit
   SetRangeBounds(motifLength);
-  cout << "LOG Build mer list..." << endl;
-  FILE_LOG(logDEBUG2) << "LOG Build mer list...";
+  cout << "Building dmers ..." << endl;
+  FILE_LOG(logINFO) << "LOG Build mer list...";
   for (int rIdx=0; rIdx<rReads.NumReads(); rIdx++) {
     AddSingleReadDmers(rReads[rIdx], rIdx);
   }
+  cout << "Total number of dmers: " << NumMers() << endl;
+  FILE_LOG(logINFO) << "Total number of dmers: " << NumMers();
 }
 
 void Dmers::SetRangeBounds(int motifSize) {
@@ -222,7 +224,7 @@ void Dmers::FindNeighbourCells(int initVal, const Dmer& dmer, const svec<int>& d
   svec<int> tempResult = result;
   int currDigit = m_dimCount - 1; // First set it to the highest possible digit and then check if it belongs in another cell 
   if(dmer[depth] < m_dimRangeBounds[m_dimCount-2])  { currDigit = m_dmerCellMap.at(dmer[depth]); } // the last digit range bound is in m_dimCount-2
-  if((currDigit < m_dimCount-1)  //only add one to the current digit if it has room to be increased 
+  if((currDigit < m_dimCount-2)  //only add one to the current digit if it has room to be increased 
     && (dmer[depth]+deviations[depth] > m_dimRangeBounds[currDigit])) { // only try one cell up if the deviation limits don't fall within the same cell
     for(int elem:tempResult) {
       int newElem = elem + pow(m_dimCount, (m_dmerLength-1-depth));
@@ -359,8 +361,6 @@ int RestSiteAlignCore:: CreateRSitesPerString(const string& origString, const st
 }
 
 void RestSiteAlignCore::BuildDmers() { 
-  cout << "LOG Build mer list..." << endl;
-  FILE_LOG(logDEBUG2) << "LOG Build mer list...";
   int dimCount = pow(TotalSiteCount()*3, 1.0/m_modelParams.DmerLength());   // Number of bins per dimension
   if(pow(dimCount, m_modelParams.DmerLength()) > 1900000000) {              //TODO parameterise
     FILE_LOG(logWARNING) << "Input data size is too large";
@@ -371,7 +371,6 @@ void RestSiteAlignCore::BuildDmers() {
 }
 
 void RestSiteAlignCore::FindLapCandids(float indelVariance, MatchCandids& lapCandids) const {
-  cout << "Start iterating through " << m_dmers.NumMers() <<  "  dmers..." << endl;
   int counter       = 0;
   double matchCount = 0;
   int loopLim       = m_dmers.NumCells();
@@ -418,6 +417,7 @@ void RestSiteAlignCore::FindSingleReadMatchCandids(const RSiteRead& read, int rI
   for(Dmer dm1:dmers) {
     dm1.CalcDeviations(deviations, indelVariance, m_modelParams.CNDFCoef()); //TODO this does not need to be redone every time!
     int merLoc = m_dmers.MapNToOneDim(dm1.Data());
+    neighbourCells.clear();
     m_dmers.FindNeighbourCells(merLoc, dm1, deviations, neighbourCells); 
     for (int nCell:neighbourCells) {
       for (auto dm2:m_dmers[nCell]) {

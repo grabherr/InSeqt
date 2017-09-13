@@ -43,7 +43,7 @@ public:
   // Default Ctor
   RSiteReads(): m_readCount(0), m_rReads() {}
 
-  void Resize(int size)                      { m_rReads.resize(size);    }
+  void Reserve(int size)                     { m_rReads.reserve(size);   }
 
   const RSiteRead& operator[](int idx) const { return m_rReads[idx];     }
   RSiteRead& operator[](int idx)             { return m_rReads[idx];     }
@@ -82,8 +82,8 @@ public:
   svec<int> & Data() {return m_data;}
   const svec<int> & Data() const {return m_data;}
 
-  inline bool IsMatch(const Dmer& otherDmer, const svec<int>& deviations) const {
-    if(m_seq == otherDmer.m_seq) { return false; } // Same sequence is not a real match
+  inline bool IsMatch(const Dmer& otherDmer, const svec<int>& deviations, bool allowSame) const {
+    if(!allowSame && m_seq == otherDmer.m_seq) { return false; } // Same sequence is not a real match
     for(int i=0; i<m_data.isize(); i++) {
       if (m_data[i] > otherDmer.m_data[i]+deviations[i] || m_data[i] < otherDmer.m_data[i]-deviations[i])
         return false;
@@ -241,7 +241,7 @@ public:
 
   int  TotalSiteCount() const { return m_totalSiteCnt; }
   void SetRSites(const string& fileName, int numOfReads, bool addRC);
-  int  MakeRSites(const string& fileName, int numOfReads, RSiteReads& reads, bool addRC) const; 
+  int  MakeRSites(const string& fileName, RSiteReads& reads, bool addRC) const; 
   //void LoadReads(const string& fileName, int seedSize)  { m_rReads.LoadReads(fileName, seedSize); }
   void BuildDmers(); 
   void FindLapCandids(float indelVariance, MatchCandids& lapCandids) const;
@@ -264,17 +264,19 @@ private:
 class RestSiteGeneral 
 {
 public:
-  RestSiteGeneral(): m_motifs(), m_modelParams(), m_dataParams() {}
+  RestSiteGeneral(): m_rsaCore(), m_motifs(), m_modelParams(), m_dataParams() {}
   RestSiteGeneral(const RestSiteModelParams& mParams): m_motifs(), m_modelParams(mParams), m_dataParams() {}
 
   /* Generate Permutation of the given alphabet to reach number of motifs required */
   void GenerateMotifs();  
   bool ValidateMotif(const string& motif, const vector<char>& alphabet) const; 
-  virtual void FindMatches(const string& fileNameQuery, const string& fileNameTarget, int targetReadCnt, int motifIndex, MatchCandids& finalMatches) const = 0; 
+  void SetSites(const string& fileName, int readCnt, int motifIndex); 
+
+  virtual void FindMatches(const string& fileNameQuery, const string& fileNameTarget, int targetReadCnt, int motifIndex, MatchCandids& finalMatches) = 0; 
 
 protected:
   void CartesianPower(const vector<char>& input, unsigned k, vector<vector<char>>& result) const; 
-
+  RestSiteAlignCore m_rsaCore;       /// Alignment engine (core data and functionality)
   svec<string> m_motifs;             /// Vector of all motifs for which restriction site reads have been generated
   RestSiteModelParams m_modelParams; /// Model Parameters
   RestSiteDataParams m_dataParams;   /// Model Parameters
@@ -286,7 +288,7 @@ public:
   RestSiteAligner() {} 
   RestSiteAligner(const RestSiteModelParams& mParams): RestSiteGeneral(mParams) {}
 
-  virtual void FindMatches(const string& fileNameQuery, const string& fileNameTarget, int targetReadCnt, int motifIndex, MatchCandids& finalMatches) const; 
+  virtual void FindMatches(const string& fileNameQuery, const string& fileNameTarget, int targetReadCnt, int motifIndex, MatchCandids& finalMatches); 
 
 private:
 };
@@ -297,7 +299,7 @@ public:
   RestSiteDBAligner() {} 
   RestSiteDBAligner(const RestSiteModelParams& mParams): RestSiteGeneral(mParams) {}
 
-  virtual void FindMatches(const string& fileNameQuery, const string& fileNameTarget, int targetReadCnt, int motifIndex, MatchCandids& finalMatches) const; 
+  virtual void FindMatches(const string& fileNameQuery, const string& fileNameTarget, int targetReadCnt, int motifIndex, MatchCandids& finalMatches); 
 
 private:
 };

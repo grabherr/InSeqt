@@ -34,7 +34,7 @@ void RSiteRead::Flip() {
 }
 
 int RSiteReads::AddRead(const RSiteRead& rr) {
-  m_rReads[m_readCount] = rr;
+  m_rReads.push_back(rr);
   m_readCount++;
   return m_readCount-1;
 }
@@ -274,19 +274,23 @@ void RestSiteAlignCore::WriteLapCandids(const MatchCandids& candids) {
 }
 */
 void RestSiteAlignCore::SetRSites(const string& fileName, int numOfReads, bool addRC) {
-  m_totalSiteCnt = MakeRSites(fileName, numOfReads, m_rReads, addRC);
+  //Initialize memory for reads
+  if(addRC) {
+    m_rReads.Reserve(numOfReads*2); //Twice the number of reads to allow for recording reverse complements
+  } else {
+    m_rReads.Reserve(numOfReads); 
+  }
+  m_totalSiteCnt = MakeRSites(fileName, m_rReads, addRC);
 }
 
 
-int RestSiteAlignCore::MakeRSites(const string& fileName, int numOfReads, RSiteReads& reads, bool addRC) const {
+int RestSiteAlignCore::MakeRSites(const string& fileName, RSiteReads& reads, bool addRC) const {
   int totSiteCnt = 0;
   FlatFileParser parser;
   parser.Open(fileName);
   string l;
   l.reserve(500000000);
   string name;
-  //Initialize memory for reads
-  reads.Resize(numOfReads*2); //Twice the number of reads to allow for recording reverse complements
   while (parser.ParseLine()) {
     if (parser.GetItemCount() == 0)
       continue;
@@ -391,7 +395,7 @@ void RestSiteAlignCore::FindLapCandids(float indelVariance, MatchCandids& lapCan
           FILE_LOG(logDEBUG3) << "Checking Neighbour cell: " << nCell; 
           for (Dmer dm2:m_dmers[nCell]) {
             FILE_LOG(logDEBUG4) << endl << "Checking dmer match: dmer1 - " << dm1.ToString() << " dmer2 - " << dm2.ToString();
-            if(dm1.IsMatch(dm2, deviations)) {
+            if(dm1.IsMatch(dm2, deviations, false)) {
               FILE_LOG(logDEBUG4) << "Found Dmer Match";
               matchCount++;
               lapCandids.AddCandidSort(dm1.Seq(), dm2.Seq(), dm1.Pos(), dm2.Pos());
@@ -402,7 +406,6 @@ void RestSiteAlignCore::FindLapCandids(float indelVariance, MatchCandids& lapCan
     }
   }
   cout << "Total number of matches recorded: " << matchCount << endl;
-  FILE_LOG(logINFO) << lapCandids.ToString();
 }
 
 void RestSiteAlignCore::FindSingleReadMatchCandids(const RSiteRead& read, int rIdx, float indelVariance, MatchCandids& matchCandids) const {
@@ -418,7 +421,7 @@ void RestSiteAlignCore::FindSingleReadMatchCandids(const RSiteRead& read, int rI
     m_dmers.FindNeighbourCells(merLoc, dm1, deviations, neighbourCells); 
     for (int nCell:neighbourCells) {
       for (auto dm2:m_dmers[nCell]) {
-        if(dm1.IsMatch(dm2, deviations)) {
+        if(dm1.IsMatch(dm2, deviations, true)) {
           matchCandids.AddCandidSort(dm1.Seq(), dm2.Seq(), dm1.Pos(), dm2.Pos());
         }
       }
@@ -503,7 +506,7 @@ bool RestSiteGeneral::ValidateMotif(const string& motif, const vector<char>& alp
 
 void RestSiteGeneral::CartesianPower(const vector<char>& input, unsigned k, vector<vector<char>>& result) const {
   if (k == 1) {
-    for (int value: input) {
+    for (char value: input) {
       result.push_back( {value} );
     }
     return;
@@ -519,21 +522,30 @@ void RestSiteGeneral::CartesianPower(const vector<char>& input, unsigned k, vect
     return;
   }
 } 
-/*
-void RestSiteGeneral::FindMatches(const string& fileName, int readCnt, int motifIndex, MatchCandids& finalMatches) const {
+
+void RestSiteGeneral::SetSites(const string& fileName, int readCnt, int motifIndex) {
   FILE_LOG(logDEBUG2) << "Finding sites/maps for motif: " << m_motifs[motifIndex] << endl;
-  RestSiteAlignCore rsaCore(m_motifs[motifIndex], m_modelParams, m_dataParams);
-  rsaCore.SetRSites(fileName, readCnt, true); //TODO save reads in fasta first if more than one motif is going to be used
-  rsaCore.BuildDmers();
-  MatchCandids lapCandids;
-  rsaCore.FindLapCandids(0.08, lapCandids); //TODO parameterise data params
+  m_rsaCore = RestSiteAlignCore(m_motifs[motifIndex], m_modelParams, m_dataParams);
+  m_rsaCore.SetRSites(fileName, readCnt, true); //TODO save reads in fasta first if more than one motif is going to be used
+  m_rsaCore.BuildDmers();
 }
-*/
-void RestSiteAligner::FindMatches(const string& fileNameQuery, const string& fileNameTarget, int targetReadCnt, int motifIndex, MatchCandids& finalMatches) const {
-  FILE_LOG(logDEBUG2) << "Finding sites/maps for motif: " << m_motifs[motifIndex] << endl;
-  RestSiteAlignCore rsaCore(m_motifs[motifIndex], m_modelParams, m_dataParams);
-  rsaCore.SetRSites(fileNameTarget, targetReadCnt, true); //TODO save reads in fasta first if more than one motif is going to be used
-  rsaCore.BuildDmers();
+
+void RestSiteAligner::FindMatches(const string& fileNameQuery, const string& fileNameTarget, int targetReadCnt, int motifIndex, MatchCandids& finalMatches) {
+  SetSites(fileNameTarget, targetReadCnt, motifIndex);
   MatchCandids lapCandids;
-  rsaCore.FindLapCandids(0.08, lapCandids); //TODO parameterise data params
+  m_rsaCore.FindLapCandids(0.08, lapCandids); //TODO parameterise data params
+  FILE_LOG(logINFO) << lapCandids.ToString();
+}
+
+void RestSiteDBAligner::FindMatches(const string& fileNameQuery, const string& fileNameTarget, int targetReadCnt, int motifIndex, MatchCandids& finalMatches) {
+  SetSites(fileNameTarget, targetReadCnt, motifIndex);
+  RSiteReads queryReads;  /// List of site reads
+  int totalSiteCnt = m_rsaCore.MakeRSites(fileNameQuery, queryReads, false);
+  MatchCandids lapCandids;
+  int readCnt = queryReads.NumReads();
+  for(int rIdx=0; rIdx<readCnt; rIdx++) {
+    FILE_LOG(logDEBUG3) << "Finding alignments for read: " << rIdx; 
+    m_rsaCore.FindSingleReadMatchCandids(queryReads[rIdx], rIdx, 0.08, lapCandids);
+  }
+  FILE_LOG(logINFO) << lapCandids.ToString();
 }

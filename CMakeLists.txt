@@ -46,6 +46,9 @@ set(SOURCE_FILES_SCOREKMERS ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/F
 
 set(SOURCE_FILES_SIMULATEREADDATA ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/FileParser.cc ryggrad/src/base/StringUtil.cc ryggrad/src/util/mutil.cc ryggrad/src/general/DNAVector.cc ryggrad/src/aligns/KmerAlignCore.cc src/SimulateReadData.cc)
 
+set(SOURCE_FILES_BUILDKMERPROFILE ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/FileParser.cc ryggrad/src/base/StringUtil.cc ryggrad/src/util/mutil.cc ryggrad/src/general/DNAVector.cc ryggrad/src/aligns/KmerAlignCore.cc src/BuildKmerProfile.cc)
+set(SOURCE_FILES_TESTKMERPROFILE ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/FileParser.cc ryggrad/src/base/StringUtil.cc ryggrad/src/util/mutil.cc ryggrad/src/general/DNAVector.cc ryggrad/src/aligns/KmerAlignCore.cc src/TestKmerProfile.cc)
+
 
 add_executable(BasicStats           ${SOURCE_FILES_BASICSTATS})
 add_executable(BasicStats2HTML      ${SOURCE_FILES_BASICSTATS2HTML})
@@ -68,6 +71,8 @@ add_executable(PoolBySites          ${SOURCE_FILES_POOLBYSITES})
 add_executable(SiteLaps             ${SOURCE_FILES_SITELAPS}) 
 add_executable(RSAlign              ${SOURCE_FILES_RSALIGN}) 
 add_executable(SimulateReadData     ${SOURCE_FILES_SIMULATEREADDATA})
+add_executable(BuildKmerProfile     ${SOURCE_FILES_BUILDKMERPROFILE})
+add_executable(TestKmerProfile      ${SOURCE_FILES_TESTKMERPROFILE})
 
 
 SET_TARGET_PROPERTIES(SiteLaps PROPERTIES COMPILE_FLAGS "-fopenmp" LINK_FLAGS "-fopenmp")

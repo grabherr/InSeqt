@@ -52,8 +52,6 @@ public:
   int AddRead(const RSiteRead& rr); 
   string ToString() const;
 
-  //void LoadReads(const string& fileName, int seedSize);
-
 private:
   int m_readCount;
   svec<RSiteRead> m_rReads;  /// List of site reads
@@ -163,36 +161,28 @@ class MatchCandids
 public:
   MatchCandids(): m_candids() {}
   
-  //const MatchCandid& operator[](int idx) const { return m_candids[idx]; }
-
   //int NumCandids() const { return m_candids.isize(); }
-
-  //void ReserveInit(int initialCapacity) { m_candids.reserve(initialCapacity); } 
 
   void AddCandidSort(int rIdx1, int rIdx2, int rPos1, int rPos2);
   
-  //void SortAll() { 
-  //  __gnu_parallel::sort(m_candids.begin(), m_candids.end());
-  //}
-
   string ToString() const; 
 
+  const map<int, map<int, int > >& GetAllCandids() const { return m_candids; }
 private:
-  //svec<MatchCandid> m_candids; /// unordered set of overlap candidates (for uniqueness)
   map<int, map<int, int> > m_candids;
 };
 
 class RestSiteDataParams 
 {
 public:
-  RestSiteDataParams( int totalNumReads=10000000, int meanReadLength=10000, int minAlignLength=4000, 
+  RestSiteDataParams( int totalNumReads=10000000, int meanReadLength=10000, int minMapLength=4000, 
                       float deletionErr=0.03, float insertionErr=0.03, float substitutionErr=0.03)
-                     :m_totalNumReads(totalNumReads), m_meanReadLength(meanReadLength), m_minAlignLength(minAlignLength),
+                     :m_totalNumReads(totalNumReads), m_meanReadLength(meanReadLength), m_minMapLength(minMapLength),
                       m_deletionErr(deletionErr), m_insertionErr(insertionErr), m_substitutionErr(substitutionErr) { }
 
     bool   TotalNumReads() const     { return m_totalNumReads;   }
     int    MeanReadLength() const    { return m_meanReadLength;  }  
-    int    MeanAlignLength() const   { return m_minAlignLength;  } 
+    int    MeanMapLength() const     { return m_minMapLength;    } 
     float  DeletionErr() const       { return m_deletionErr;     }
     float  InsertionErr() const      { return m_insertionErr;    }
     float  SubstitutionErr() const   { return m_substitutionErr; }
@@ -200,7 +190,7 @@ public:
 private: 
   bool    m_totalNumReads;    /// Flag specifying whether the reads are single or double strand
   int     m_meanReadLength;   /// Length of each motif
-  int     m_minAlignLength;   /// Number of motifs to generate/use
+  int     m_minMapLength;   /// Number of motifs to generate/use
   float   m_deletionErr;      /// The length of distmers to use for seed finding
   float   m_insertionErr;     /// The length of distmers to use for seed finding
   float   m_substitutionErr;  /// The length of distmers to use for seed finding
@@ -230,27 +220,35 @@ private:
   vector<char>  m_alphabet; /// Alphabet containing base letters used in the reads/motifs in lexographic order 
 };
 
-class RestSiteAlignCore 
+//Forward Declaration
+class RestSiteGeneral;
+
+class RestSiteMapCore 
 {
+  friend RestSiteGeneral;
+
 public:
   //Default Ctor
-  RestSiteAlignCore(): m_motif(), m_totalSiteCnt(0), m_rReads(), m_dmers() {}
+  RestSiteMapCore(): m_motif(), m_totalSiteCnt(0), m_rReads(), m_dmers() {}
+
   //Ctor 1
-  RestSiteAlignCore(string motif, const RestSiteModelParams& mp, const RestSiteDataParams& dp)
+  RestSiteMapCore(string motif, const RestSiteModelParams& mp, const RestSiteDataParams& dp)
                    : m_motif(motif), m_modelParams(mp), m_dataParams(dp), m_rReads(), m_dmers() {}
 
-  int  TotalSiteCount() const { return m_totalSiteCnt; }
-  void SetRSites(const string& fileName, int numOfReads, bool addRC);
-  int  MakeRSites(const string& fileName, RSiteReads& reads, bool addRC) const; 
-  //void LoadReads(const string& fileName, int seedSize)  { m_rReads.LoadReads(fileName, seedSize); }
-  void BuildDmers(); 
-  void FindLapCandids(float indelVariance, MatchCandids& lapCandids) const;
-  void FindSingleReadMatchCandids(const RSiteRead& reads, int rIdx, float indelVariance, MatchCandids& matchCandids) const; 
-  void FinalOverlaps(const MatchCandids& lapCandids, int tolerance, MatchCandids& finalMatches) const;
-  void WriteLapCandids(const MatchCandids& candids) const;
+  int  TotalSiteCount() const              { return m_totalSiteCnt; }
+  void IncTotalSiteCount(int cnt)          { m_totalSiteCnt += cnt; }
+  const RSiteRead& GetRead(int rIdx) const { return m_rReads[rIdx]; }
 
-private:
   int  CreateRSitesPerString(const string& origString, const string& origName, RSiteReads& reads, bool addRC) const; 
+
+  void BuildDmers(); 
+  void FindLapCandids(float indelVariance, MatchCandids& matchCandids) const;
+  void FindSingleReadMatchCandids(const RSiteRead& reads, int rIdx, float indelVariance, MatchCandids& matchCandids) const; 
+  void FinalOverlaps(const MatchCandids& matchCandids, int tolerance, MatchCandids& finalMatches) const;
+
+protected:
+  RSiteReads& Reads()             { return m_rReads; }
+  const RSiteReads& Reads() const { return m_rReads; }
 
 private:
   string m_motif;                    /// Vector of all motifs for which restriction site reads have been generated
@@ -264,46 +262,51 @@ private:
 class RestSiteGeneral 
 {
 public:
-  RestSiteGeneral(): m_rsaCore(), m_motifs(), m_modelParams(), m_dataParams() {}
+  RestSiteGeneral(): m_rsaCores(), m_motifs(), m_modelParams(), m_dataParams() {}
   RestSiteGeneral(const RestSiteModelParams& mParams): m_motifs(), m_modelParams(mParams), m_dataParams() {}
 
   /* Generate Permutation of the given alphabet to reach number of motifs required */
   void GenerateMotifs();  
-  bool ValidateMotif(const string& motif, const vector<char>& alphabet) const; 
-  void SetSites(const string& fileName, int readCnt, int motifIndex); 
+  bool ValidateMotif(const string& motif, const vector<char>& alphabet, const map<char, char>& RCs) const; 
+  void SetTargetSites(const string& fileName, int numOfMotifs, bool addRC); 
+  string GetTargetName(int readIdx) const;
 
-  virtual void FindMatches(const string& fileNameQuery, const string& fileNameTarget, int targetReadCnt, int motifIndex, MatchCandids& finalMatches) = 0; 
+
+  virtual void WriteMatchCandids(const map<int, map<int, int> >& candids) const; 
+  virtual void FindMatches(const string& fileNameQuery, const string& fileNameTarget, int numOfMotifs, MatchCandids& finalMatches) = 0; 
 
 protected:
   void CartesianPower(const vector<char>& input, unsigned k, vector<vector<char>>& result) const; 
-  RestSiteAlignCore m_rsaCore;       /// Alignment engine (core data and functionality)
-  svec<string> m_motifs;             /// Vector of all motifs for which restriction site reads have been generated
-  RestSiteModelParams m_modelParams; /// Model Parameters
-  RestSiteDataParams m_dataParams;   /// Model Parameters
+  map<string, RestSiteMapCore> m_rsaCores;   /// Mapping engine (core data and functionality) per motif
+  svec<string> m_motifs;                     /// Vector of all motifs for which restriction site reads have been generated
+  RestSiteModelParams m_modelParams;         /// Model Parameters
+  RestSiteDataParams m_dataParams;           /// Model Parameters
 };
 
-class RestSiteAligner : public RestSiteGeneral 
+class RestSiteMapper : public RestSiteGeneral 
 {
 public:
-  RestSiteAligner() {} 
-  RestSiteAligner(const RestSiteModelParams& mParams): RestSiteGeneral(mParams) {}
+  RestSiteMapper() {} 
+  RestSiteMapper(const RestSiteModelParams& mParams): RestSiteGeneral(mParams) {}
 
-  virtual void FindMatches(const string& fileNameQuery, const string& fileNameTarget, int targetReadCnt, int motifIndex, MatchCandids& finalMatches); 
+  virtual void FindMatches(const string& fileNameQuery, const string& fileNameTarget, int numOfMotifs, MatchCandids& finalMatches); 
 
 private:
 };
 
-class RestSiteDBAligner : public RestSiteGeneral 
+class RestSiteDBMapper : public RestSiteGeneral 
 {
 public:
-  RestSiteDBAligner() {} 
-  RestSiteDBAligner(const RestSiteModelParams& mParams): RestSiteGeneral(mParams) {}
+  RestSiteDBMapper() {} 
+  RestSiteDBMapper(const RestSiteModelParams& mParams): RestSiteGeneral(mParams) {}
 
-  virtual void FindMatches(const string& fileNameQuery, const string& fileNameTarget, int targetReadCnt, int motifIndex, MatchCandids& finalMatches); 
+  virtual void FindMatches(const string& fileNameQuery, const string& fileNameTarget, int numOfMotifs, MatchCandids& finalMatches); 
+  void SetQuerySites(const string& fileName, int numOfMotifs); 
+  string GetQueryName(int readIdx) const; 
+  void WriteMatchCandids(const map<int, map<int, int> >& candids) const; 
 
 private:
+  map<string, RSiteReads> m_queryReads;          /// Query Restriction Site reads per motif 
 };
-
-
 
 #endif //OPTIMAPALIGNUNIT_H

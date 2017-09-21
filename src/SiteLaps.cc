@@ -10,7 +10,6 @@ int main( int argc, char** argv )
 {
 
   commandArg<string> fileCmmd("-i","input fasta file");
-  commandArg<int> readCountCmmd("-c","number of reads in input fasta file");
   commandArg<int> dmerCmmd("-d","dmer length", 6);
   commandArg<int> motifLenCmmd("-ml","Motif Length", 4);
   commandArg<int> motifCntCmmd("-mc","Number of motifs to use", 1);
@@ -21,7 +20,6 @@ int main( int argc, char** argv )
   commandLineParser P(argc,argv);
   P.SetDescription("Find overlaps in restriction maps.");
   P.registerArg(fileCmmd);
-  P.registerArg(readCountCmmd);
   P.registerArg(dmerCmmd);
   P.registerArg(motifLenCmmd);
   P.registerArg(motifCntCmmd);
@@ -32,7 +30,6 @@ int main( int argc, char** argv )
   P.parse();
   
   string fileName   = P.GetStringValueFor(fileCmmd);
-  int readCnt       = P.GetIntValueFor(readCountCmmd);
   int dmerLen       = P.GetIntValueFor(dmerCmmd);
   int motifLen      = P.GetIntValueFor(motifLenCmmd);
   int motifCnt      = P.GetIntValueFor(motifCntCmmd);
@@ -43,7 +40,7 @@ int main( int argc, char** argv )
 
   FILE* pFile               = fopen(logFile.c_str(), "w");
   Output2FILE::Stream()     = pFile;
-  FILELog::ReportingLevel() = logDEBUG2;
+  FILELog::ReportingLevel() = logDEBUG1;
 #if defined(FORCE_DEBUG)
 //    FILELog::ReportingLevel() = logDEBUG4; 
 #endif
@@ -51,17 +48,17 @@ int main( int argc, char** argv )
   omp_set_num_threads(numOfCores); //The sort functions use OpenMP
 
   RestSiteModelParams mParams(singleStrand, motifLen, motifCnt, dmerLen, ndfCoef); 
-  RestSiteAligner rsAligner(mParams);
+  RestSiteMapper rsMapper(mParams);
 
   clock_t clock1_optiLoad, clock2_overlapCand, clock3_finalOverlaps, clock4_done;
   // 1a. Populate the motifs 
-  rsAligner.GenerateMotifs();
+  rsMapper.GenerateMotifs();
   // 1b. Construct Restriction-site Reads
   clock1_optiLoad = clock();
 
   // 2. Build Optimers and find those that share a seed as cadidates for overlap detection 
   MatchCandids finalOverlaps;
-  rsAligner.FindMatches("", fileName, readCnt, 0, finalOverlaps); 
+  rsMapper.FindMatches("", fileName, 1, finalOverlaps); 
   clock2_overlapCand = clock();
  
   // 3. Take the overlap candidates and refine to remove false positives
@@ -74,10 +71,10 @@ int main( int argc, char** argv )
        << ((double) (clock2_overlapCand-clock1_optiLoad) / CLOCKS_PER_SEC)
        << endl;
   cout << " Finding Overlap Candidates: " 
-       << ((double) (clock3_finalOverlaps-clock2_overlapCand) / CLOCKS_PER_SEC)
+       << ((double) (clock2_overlapCand-clock1_optiLoad) / CLOCKS_PER_SEC)
        << endl;
   cout << " Refining and finalizing overlaps: " 
-       << ((double) (clock4_done - clock3_finalOverlaps) / CLOCKS_PER_SEC)
+       << ((double) (clock3_finalOverlaps-clock2_overlapCand) / CLOCKS_PER_SEC)
        << endl;
 
   return 0;

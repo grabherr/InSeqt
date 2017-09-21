@@ -10,7 +10,6 @@ int main( int argc, char** argv )
 {
   commandArg<string> tFileCmmd("-t","Target input fasta file");
   commandArg<string> qFileCmmd("-q","Target input fasta file");
-  commandArg<int> readCountCmmd("-c","number of reads in input fasta file");
   commandArg<int> dmerCmmd("-d","dmer length", 6);
   commandArg<int> motifLenCmmd("-ml","Motif Length", 4);
   commandArg<int> motifCntCmmd("-mc","Number of motifs to use", 1);
@@ -22,7 +21,6 @@ int main( int argc, char** argv )
   P.SetDescription("Find overlaps in restriction maps.");
   P.registerArg(tFileCmmd);
   P.registerArg(qFileCmmd);
-  P.registerArg(readCountCmmd);
   P.registerArg(dmerCmmd);
   P.registerArg(motifLenCmmd);
   P.registerArg(motifCntCmmd);
@@ -34,7 +32,6 @@ int main( int argc, char** argv )
   
   string tFileName  = P.GetStringValueFor(tFileCmmd);
   string qFileName  = P.GetStringValueFor(qFileCmmd);
-  int readCnt       = P.GetIntValueFor(readCountCmmd);
   int dmerLen       = P.GetIntValueFor(dmerCmmd);
   int motifLen      = P.GetIntValueFor(motifLenCmmd);
   int motifCnt      = P.GetIntValueFor(motifCntCmmd);
@@ -53,17 +50,17 @@ int main( int argc, char** argv )
   omp_set_num_threads(numOfCores); //The sort functions use OpenMP
 
   RestSiteModelParams mParams(singleStrand, motifLen, motifCnt, dmerLen, ndfCoef); 
-  RestSiteDBAligner rsDBAligner(mParams);
+  RestSiteDBMapper rsDBMapper(mParams);
 
   clock_t clock1_optiLoad, clock2_overlapCand, clock3_finalOverlaps, clock4_done;
   // 1a. Populate the motifs 
-  rsDBAligner.GenerateMotifs();
+  rsDBMapper.GenerateMotifs();
   // 1b. Construct Restriction-site Reads
   clock1_optiLoad = clock();
 
   // 2. Build Optimers and find those that share a seed as cadidates for overlap detection 
   MatchCandids finalOverlaps;
-  rsDBAligner.FindMatches(qFileName, tFileName, readCnt, 0, finalOverlaps); 
+  rsDBMapper.FindMatches(qFileName, tFileName, 2, finalOverlaps); 
   clock2_overlapCand = clock();
  
   // 3. Take the overlap candidates and refine to remove false positives

@@ -48,47 +48,6 @@ string RSiteReads::ToString() const {
   return strOut;
 }
 
-/*
-void RSiteReads::LoadReads(const string& fileName, int seedSize) {
-  FlatFileParser parser;
-  parser.Open(fileName);
-
-  string l;
-  int i, j;
-
-  svec<int> mm;
-  string name;
-
-  cout << "LOG Read data..." << endl;
-
-  while (parser.ParseLine()) {
-    if (parser.GetItemCount() == 0)
-      continue;
-    if (parser.Line()[0] == '>') {
-      name = parser.Line();
-      RSiteRead rr;
-      rr.Name() = name;
-
-      // Obtain the pre/post values and  distmer values
-      parser.ParseLine();
-      rr.PreDist()  = parser.AsFloat(0);
-      for (i=1; i< parser.GetItemCount()-1; i++) // index starts at 1 and ends at length-1 since pre/postDist are loaded separately
-        mm.push_back(parser.AsFloat(i));
-      rr.PostDist() = parser.AsFloat(i); // Load postDist (last item in distmer sequence)
-      rr.Dist() = mm;
-
-      if (mm.isize() >= seedSize) {
-        m_rReads.push_back(rr);
-        rr.Flip();
-        rr.Name() += "_RC";
-        m_rReads.push_back(rr);
-      }  
-      mm.clear();
-    }
-  }
-}  
-*/
-
 bool Dmer::operator < (const Dmer & m) const {
   for (int i=0; i<m_data.isize(); i++) {
     if (m_data[i] != m.m_data[i])
@@ -267,52 +226,7 @@ string MatchCandids::ToString() const {
   return ss.str();
 }
 
-/*
-void RestSiteAlignCore::WriteLapCandids(const MatchCandids& candids) {
-  for (int i = 0; i<candids.NumCandids(); i++) {
-    cout << m_rReads[candids[i].GetFirstReadIndex()].Name() << " " << m_rReads[candids[i].GetSecondReadIndex()].Name()
-         << " " << candids[i].GetOffsetDelta() << endl;
-  }
-}
-*/
-void RestSiteAlignCore::SetRSites(const string& fileName, int numOfReads, bool addRC) {
-  //Initialize memory for reads
-  if(addRC) {
-    m_rReads.Reserve(numOfReads*2); //Twice the number of reads to allow for recording reverse complements
-  } else {
-    m_rReads.Reserve(numOfReads); 
-  }
-  m_totalSiteCnt = MakeRSites(fileName, m_rReads, addRC);
-}
-
-
-int RestSiteAlignCore::MakeRSites(const string& fileName, RSiteReads& reads, bool addRC) const {
-  int totSiteCnt = 0;
-  FlatFileParser parser;
-  parser.Open(fileName);
-  string l;
-  l.reserve(500000000);
-  string name;
-  while (parser.ParseLine()) {
-    if (parser.GetItemCount() == 0)
-      continue;
-    if (parser.Line()[0] == '>') {
-      transform(l.begin(), l.end(), l.begin(), ::toupper);
-      totSiteCnt += CreateRSitesPerString(l, name, reads, addRC);
-      l.clear();
-      name = parser.Line();
-    }
-    l += parser.Line();
-  }
-  if( l != "") {
-    transform(l.begin(), l.end(), l.begin(), ::toupper);
-    totSiteCnt += CreateRSitesPerString(l, name, reads, addRC);
-    FILE_LOG(logDEBUG4) << reads.ToString();
-  }
-  return totSiteCnt;
-}
-
-int RestSiteAlignCore:: CreateRSitesPerString(const string& origString, const string& origName, RSiteReads& reads, bool addRC) const {
+int RestSiteMapCore:: CreateRSitesPerString(const string& origString, const string& origName, RSiteReads& reads, bool addRC) const {
   if (origString == "" && origName == "") {
     return 0;
   }
@@ -360,7 +274,7 @@ int RestSiteAlignCore:: CreateRSitesPerString(const string& origString, const st
   return mm.isize(); // Return the total number of sites that have been added
 }
 
-void RestSiteAlignCore::BuildDmers() { 
+void RestSiteMapCore::BuildDmers() { 
   int dimCount = pow(TotalSiteCount()*3, 1.0/m_modelParams.DmerLength());   // Number of bins per dimension
   if(pow(dimCount, m_modelParams.DmerLength()) > 1900000000) {              //TODO parameterise
     FILE_LOG(logWARNING) << "Input data size is too large";
@@ -370,7 +284,7 @@ void RestSiteAlignCore::BuildDmers() {
   m_dmers.BuildDmers(m_rReads , m_modelParams.DmerLength(), m_modelParams.MotifLength(), dimCount); 
 }
 
-void RestSiteAlignCore::FindLapCandids(float indelVariance, MatchCandids& lapCandids) const {
+void RestSiteMapCore::FindLapCandids(float indelVariance, MatchCandids& matchCandids) const {
   int counter       = 0;
   double matchCount = 0;
   int loopLim       = m_dmers.NumCells();
@@ -397,7 +311,7 @@ void RestSiteAlignCore::FindLapCandids(float indelVariance, MatchCandids& lapCan
             if(dm1.IsMatch(dm2, deviations, false)) {
               FILE_LOG(logDEBUG4) << "Found Dmer Match";
               matchCount++;
-              lapCandids.AddCandidSort(dm1.Seq(), dm2.Seq(), dm1.Pos(), dm2.Pos());
+              matchCandids.AddCandidSort(dm1.Seq(), dm2.Seq(), dm1.Pos(), dm2.Pos());
             }
           }
         }
@@ -407,7 +321,7 @@ void RestSiteAlignCore::FindLapCandids(float indelVariance, MatchCandids& lapCan
   cout << "Total number of matches recorded: " << matchCount << endl;
 }
 
-void RestSiteAlignCore::FindSingleReadMatchCandids(const RSiteRead& read, int rIdx, float indelVariance, MatchCandids& matchCandids) const {
+void RestSiteMapCore::FindSingleReadMatchCandids(const RSiteRead& read, int rIdx, float indelVariance, MatchCandids& matchCandids) const {
   svec<int> neighbourCells;
   neighbourCells.reserve(pow(2, m_modelParams.DmerLength()));
   svec<int> deviations;
@@ -421,6 +335,7 @@ void RestSiteAlignCore::FindSingleReadMatchCandids(const RSiteRead& read, int rI
     m_dmers.FindNeighbourCells(merLoc, dm1, deviations, neighbourCells); 
     for (int nCell:neighbourCells) {
       for (auto dm2:m_dmers[nCell]) {
+        FILE_LOG(logDEBUG4) << endl << "Checking dmer match: dmer1 - " << dm1.ToString() << " dmer2 - " << dm2.ToString();
         if(dm1.IsMatch(dm2, deviations, true)) {
           matchCandids.AddCandidSort(dm1.Seq(), dm2.Seq(), dm1.Pos(), dm2.Pos());
         }
@@ -430,14 +345,14 @@ void RestSiteAlignCore::FindSingleReadMatchCandids(const RSiteRead& read, int rI
 }
 
 /*
-void RestSiteAlignCore::FinalOverlaps(const MatchCandids& lapCandids, int tolerance,  MatchCandids& finalMatches) {
-  cout << "LOG Refine overlap candidates... " << lapCandids.NumCandids() << endl;
-  finalMatches.ReserveInit(lapCandids.NumCandids()/2); // Rough estimate 
+void RestSiteMapCore::FinalOverlaps(const MatchCandids& matchCandids, int tolerance,  MatchCandids& finalMatches) {
+  cout << "LOG Refine overlap candidates... " << matchCandids.NumCandids() << endl;
+  finalMatches.ReserveInit(matchCandids.NumCandids()/2); // Rough estimate 
   MatchCandid currCandid;
   int rejectCnt = 0;
-  for(int i=0; i<lapCandids.NumCandids(); i++) {
-    if(lapCandids[i]==currCandid) { continue; }
-    currCandid = lapCandids[i];  
+  for(int i=0; i<matchCandids.NumCandids(); i++) {
+    if(matchCandids[i]==currCandid) { continue; }
+    currCandid = matchCandids[i];  
     const RSiteRead& read1    = m_rReads[currCandid.GetFirstReadIndex()]; 
     const RSiteRead& read2    = m_rReads[currCandid.GetSecondReadIndex()]; 
     int delta     = currCandid.GetOffsetDelta();
@@ -465,6 +380,7 @@ void RestSiteAlignCore::FinalOverlaps(const MatchCandids& lapCandids, int tolera
 void RestSiteGeneral::GenerateMotifs() {
   m_motifs.reserve(m_modelParams.NumOfMotifs());
   vector<char> alphabet = {'A', 'C', 'G', 'T'}; //Should be in lexographic order
+  map<char, char> RCs = {{'A', 'T'}, {'C', 'G'}, {'G', 'C'}, {'T', 'A'}}; 
   vector<vector<char>> tempMotifs; 
   CartesianPower(alphabet, m_modelParams.MotifLength(), tempMotifs);
   for(vector<char> sElem:tempMotifs){
@@ -474,7 +390,7 @@ void RestSiteGeneral::GenerateMotifs() {
     }
     if(motif.length() == m_modelParams.MotifLength()) { 
       //TODO only add each with RC once
-      if(ValidateMotif(motif, alphabet)) {
+      if(ValidateMotif(motif, alphabet, RCs)) {
         FILE_LOG(logDEBUG3) << "Motif: "  << m_motifs.isize() << " " << motif;
         m_motifs.push_back(motif); 
         if(m_motifs.isize() == m_modelParams.NumOfMotifs()) {
@@ -485,22 +401,27 @@ void RestSiteGeneral::GenerateMotifs() {
   }
 }
   
-bool RestSiteGeneral::ValidateMotif(const string& motif, const vector<char>& alphabet) const {
-// 1. Simplicity Filter
+bool RestSiteGeneral::ValidateMotif(const string& motif, const vector<char>& alphabet, const map<char, char>& RCs) const {
+  int motifLen = motif.length();
+  // 1. Simplicity Filter
   map<char, int> alphabetCnt;
   bool simple = false;
-  for(int i=0; i<motif.length()-1; i++) {
+  for(int i=0; i<motifLen-1; i++) {
     alphabetCnt[motif[i]]++;
-    if(alphabetCnt[motif[i]]>=motif.length()/2 ||
-      (i<motif.length()-1 && motif[i]==motif[i+1])) {
+    if(alphabetCnt[motif[i]]>=motifLen/2 ||
+      (i<motifLen-1 && motif[i]==motif[i+1])) {
       simple = true; 
       break;
     }
   }
   if(simple) { return false; }
 
-// 2. RC Filter
-// 3. 
+  // 2. RC Filter (Palindrome)
+  for(int ii=0; ii<motifLen/2; ii++) {
+    if(RCs.at(motif[ii]) != motif[motifLen-ii-1]) { return false; } 
+  }
+
+  // 3. 
   return true;
 }
 
@@ -523,29 +444,136 @@ void RestSiteGeneral::CartesianPower(const vector<char>& input, unsigned k, vect
   }
 } 
 
-void RestSiteGeneral::SetSites(const string& fileName, int readCnt, int motifIndex) {
-  FILE_LOG(logDEBUG2) << "Finding sites/maps for motif: " << m_motifs[motifIndex] << endl;
-  m_rsaCore = RestSiteAlignCore(m_motifs[motifIndex], m_modelParams, m_dataParams);
-  m_rsaCore.SetRSites(fileName, readCnt, true); //TODO save reads in fasta first if more than one motif is going to be used
-  m_rsaCore.BuildDmers();
-}
-
-void RestSiteAligner::FindMatches(const string& fileNameQuery, const string& fileNameTarget, int targetReadCnt, int motifIndex, MatchCandids& finalMatches) {
-  SetSites(fileNameTarget, targetReadCnt, motifIndex);
-  MatchCandids lapCandids;
-  m_rsaCore.FindLapCandids(0.08, lapCandids); //TODO parameterise data params
-  FILE_LOG(logINFO) << lapCandids.ToString();
-}
-
-void RestSiteDBAligner::FindMatches(const string& fileNameQuery, const string& fileNameTarget, int targetReadCnt, int motifIndex, MatchCandids& finalMatches) {
-  SetSites(fileNameTarget, targetReadCnt, motifIndex);
-  RSiteReads queryReads;  /// List of site reads
-  int totalSiteCnt = m_rsaCore.MakeRSites(fileNameQuery, queryReads, false);
-  MatchCandids lapCandids;
-  int readCnt = queryReads.NumReads();
-  for(int rIdx=0; rIdx<readCnt; rIdx++) {
-    FILE_LOG(logDEBUG3) << "Finding alignments for read: " << rIdx; 
-    m_rsaCore.FindSingleReadMatchCandids(queryReads[rIdx], rIdx, 0.08, lapCandids);
+void RestSiteGeneral::WriteMatchCandids(const map<int, map<int, int> >& candids) const {
+  for(auto const &ent1 : candids) {
+    for(auto const &ent2 : ent1.second) {
+      cout << ent1.first << " " << ent2.first << " " <<  ent2.second << endl;
+    }
   }
-  FILE_LOG(logINFO) << lapCandids.ToString();
 }
+
+string RestSiteGeneral::GetTargetName(int readIdx) const {
+  if(m_rsaCores.empty())  { return ""; }
+  else { return m_rsaCores.begin()->second.Reads()[readIdx].Name(); }
+}
+
+void RestSiteMapper::FindMatches(const string& fileNameQuery, const string& fileNameTarget, int numOfMotifs, MatchCandids& finalMatches) {
+  SetTargetSites(fileNameTarget, numOfMotifs, true);
+  MatchCandids matchCandids;
+  for(int motifIdx=0; motifIdx<numOfMotifs; motifIdx++) {
+    string motif = m_motifs[motifIdx];
+    m_rsaCores[m_motifs[motifIdx]].FindLapCandids(0.08, matchCandids); //TODO parameterise data params
+  }
+  FILE_LOG(logINFO) << "Match candidates: "<< endl << matchCandids.ToString();
+}
+
+void RestSiteGeneral::SetTargetSites(const string& fileName, int numOfMotifs, bool addRC) {
+  FILE_LOG(logDEBUG2) << "Finding sites/maps for motif: " << m_motifs[numOfMotifs] << endl;
+  for(int motifIdx=0; motifIdx<numOfMotifs; motifIdx++) {
+    string motif = m_motifs[motifIdx];
+    m_rsaCores[motif] = RestSiteMapCore(motif, m_modelParams, m_dataParams);
+  }
+ 
+  FlatFileParser parser;
+  parser.Open(fileName);
+  string l;
+  string name;
+  while (parser.ParseLine()) {
+    if (parser.GetItemCount() == 0)
+      continue;
+    if (parser.Line()[0] == '>') {
+      transform(l.begin(), l.end(), l.begin(), ::toupper);
+      for(int motifIdx=0; motifIdx<numOfMotifs; motifIdx++) {
+        string motif = m_motifs[motifIdx];
+        int totSiteCnt = m_rsaCores[motif].CreateRSitesPerString(l, name, m_rsaCores[motif].Reads(), addRC);
+        m_rsaCores[motif].IncTotalSiteCount(totSiteCnt);
+      }
+      l.clear();
+      name = parser.Line();
+    }
+    l += parser.Line();
+  }
+  if( l != "") {
+    transform(l.begin(), l.end(), l.begin(), ::toupper);
+    for(int motifIdx=0; motifIdx<numOfMotifs; motifIdx++) {
+      string motif = m_motifs[motifIdx];
+      int totSiteCnt = m_rsaCores[motif].CreateRSitesPerString(l, name, m_rsaCores[motif].Reads(), addRC);
+      m_rsaCores[motif].IncTotalSiteCount(totSiteCnt);
+    }
+  }
+  for(int motifIdx=0; motifIdx<numOfMotifs; motifIdx++) {
+    string motif = m_motifs[motifIdx];
+    m_rsaCores[m_motifs[motifIdx]].BuildDmers();
+  }
+}
+
+void RestSiteDBMapper::SetQuerySites(const string& fileName, int numOfMotifs) {
+  int totSiteCnt = 0;
+  FlatFileParser parser;
+  parser.Open(fileName);
+  string l;
+  string name;
+  while (parser.ParseLine()) {
+    if (parser.GetItemCount() == 0)
+      continue;
+    if (parser.Line()[0] == '>') {
+      transform(l.begin(), l.end(), l.begin(), ::toupper);
+      for(int motifIdx=0; motifIdx<numOfMotifs; motifIdx++) {
+        string motif = m_motifs[motifIdx];
+        totSiteCnt += m_rsaCores[motif].CreateRSitesPerString(l, name, m_queryReads[motif], false);
+      }
+      l.clear();
+      name = parser.Line();
+    }
+    l += parser.Line();
+  }
+  if( l != "") {
+    transform(l.begin(), l.end(), l.begin(), ::toupper);
+    for(int motifIdx=0; motifIdx<numOfMotifs; motifIdx++) {
+      string motif = m_motifs[motifIdx];
+      totSiteCnt += m_rsaCores[motif].CreateRSitesPerString(l, name, m_queryReads[motif], false);
+    }
+  }
+}
+
+void RestSiteDBMapper::FindMatches(const string& fileNameQuery, const string& fileNameTarget, int numOfMotifs, MatchCandids& finalMatches) {
+  SetTargetSites(fileNameTarget, numOfMotifs, true);
+  SetQuerySites(fileNameQuery, numOfMotifs);  
+  MatchCandids matchCandids;
+  for(int motifIdx=0; motifIdx<numOfMotifs; motifIdx++) {
+    string motif = m_motifs[motifIdx];
+    int readCnt   = m_queryReads[motif].NumReads();
+    int reportCnt = readCnt/1000;
+    if(reportCnt == 0) { reportCnt = 1; }
+    for(int rIdx=0; rIdx<readCnt; rIdx++) {
+      FILE_LOG(logDEBUG3) << "Finding dmer match candidates for read: " << rIdx; 
+      m_rsaCores[motif].FindSingleReadMatchCandids(m_queryReads[motif][rIdx], rIdx, 0.08, matchCandids);
+      if (rIdx % reportCnt== 0) {
+        cout << "\rLOG Progress: " << 100*(double)rIdx/(double)readCnt << "%" << flush;
+      }
+    }
+  }
+  cout << endl;
+  WriteMatchCandids(matchCandids.GetAllCandids());
+}
+
+string RestSiteDBMapper::GetQueryName(int readIdx) const {
+  if(m_queryReads.empty())  { return ""; }
+  else { return m_queryReads.begin()->second[readIdx].Name(); }
+}
+
+
+void RestSiteDBMapper::WriteMatchCandids(const map<int, map<int, int> >& candids) const {
+  for(auto const &ent1 : candids) {
+    int savedMaxScore = 0;
+    int savedIdx      = 0;
+    for(auto const &ent2 : ent1.second) {
+      if(ent2.second > savedMaxScore) { 
+        savedMaxScore = ent2.second;
+        savedIdx      = ent2.first;
+      }
+    }
+    cout << GetQueryName(ent1.first) << " " << GetTargetName(savedIdx) << " " <<  savedMaxScore << endl;
+  }
+}
+

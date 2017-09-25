@@ -398,6 +398,10 @@ void RestSiteGeneral::GenerateMotifs() {
       }
     } 
   }
+  if(m_motifs.isize() < m_modelParams.NumOfMotifs()) {
+    FILE_LOG(logWARNING) << "Could not generate the number of requested motifs - maximum " << m_motifs.isize() << " being used";
+    m_modelParams.ChangeNumOfMotifs(m_motifs.isize());
+  }
 }
   
 bool RestSiteGeneral::ValidateMotif(const string& motif, const vector<char>& alphabet, const map<char, char>& RCs) const {

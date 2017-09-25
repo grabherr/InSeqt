@@ -211,6 +211,7 @@ public:
   float  CNDFCoef() const              { return m_cndfCoef;       }
   const vector<char>& Alphabet() const { return m_alphabet;       }
 
+  void ChangeNumOfMotifs(int motifCnt) { m_numOfMotifs = motifCnt; }
 private: 
   bool    m_singleStrand;   /// Flag specifying whether the reads are single or double strand
   int     m_motifLength;    /// Length of each motif

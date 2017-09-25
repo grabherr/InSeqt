@@ -268,12 +268,12 @@ public:
   /* Generate Permutation of the given alphabet to reach number of motifs required */
   void GenerateMotifs();  
   bool ValidateMotif(const string& motif, const vector<char>& alphabet, const map<char, char>& RCs) const; 
-  void SetTargetSites(const string& fileName, int numOfMotifs, bool addRC); 
+  void SetTargetSites(const string& fileName, bool addRC); 
   string GetTargetName(int readIdx) const;
 
 
   virtual void WriteMatchCandids(const map<int, map<int, int> >& candids) const; 
-  virtual void FindMatches(const string& fileNameQuery, const string& fileNameTarget, int numOfMotifs, MatchCandids& finalMatches) = 0; 
+  virtual void FindMatches(const string& fileNameQuery, const string& fileNameTarget, MatchCandids& finalMatches) = 0; 
 
 protected:
   void CartesianPower(const vector<char>& input, unsigned k, vector<vector<char>>& result) const; 
@@ -289,7 +289,7 @@ public:
   RestSiteMapper() {} 
   RestSiteMapper(const RestSiteModelParams& mParams): RestSiteGeneral(mParams) {}
 
-  virtual void FindMatches(const string& fileNameQuery, const string& fileNameTarget, int numOfMotifs, MatchCandids& finalMatches); 
+  virtual void FindMatches(const string& fileNameQuery, const string& fileNameTarget, MatchCandids& finalMatches); 
 
 private:
 };
@@ -300,8 +300,8 @@ public:
   RestSiteDBMapper() {} 
   RestSiteDBMapper(const RestSiteModelParams& mParams): RestSiteGeneral(mParams) {}
 
-  virtual void FindMatches(const string& fileNameQuery, const string& fileNameTarget, int numOfMotifs, MatchCandids& finalMatches); 
-  void SetQuerySites(const string& fileName, int numOfMotifs); 
+  virtual void FindMatches(const string& fileNameQuery, const string& fileNameTarget, MatchCandids& finalMatches); 
+  void SetQuerySites(const string& fileName); 
   string GetQueryName(int readIdx) const; 
   void WriteMatchCandids(const map<int, map<int, int> >& candids) const; 
 

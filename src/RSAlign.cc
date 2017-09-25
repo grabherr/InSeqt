@@ -54,13 +54,12 @@ int main( int argc, char** argv )
 
   clock_t clock1_optiLoad, clock2_overlapCand, clock3_finalOverlaps, clock4_done;
   // 1a. Populate the motifs 
-  rsDBMapper.GenerateMotifs();
   // 1b. Construct Restriction-site Reads
   clock1_optiLoad = clock();
 
   // 2. Build Optimers and find those that share a seed as cadidates for overlap detection 
   MatchCandids finalOverlaps;
-  rsDBMapper.FindMatches(qFileName, tFileName, 2, finalOverlaps); 
+  rsDBMapper.FindMatches(qFileName, tFileName, finalOverlaps); 
   clock2_overlapCand = clock();
  
   // 3. Take the overlap candidates and refine to remove false positives

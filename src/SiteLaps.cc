@@ -40,7 +40,7 @@ int main( int argc, char** argv )
 
   FILE* pFile               = fopen(logFile.c_str(), "w");
   Output2FILE::Stream()     = pFile;
-  FILELog::ReportingLevel() = logDEBUG1;
+  FILELog::ReportingLevel() = logDEBUG2;
 #if defined(FORCE_DEBUG)
 //    FILELog::ReportingLevel() = logDEBUG4; 
 #endif
@@ -52,13 +52,12 @@ int main( int argc, char** argv )
 
   clock_t clock1_optiLoad, clock2_overlapCand, clock3_finalOverlaps, clock4_done;
   // 1a. Populate the motifs 
-  rsMapper.GenerateMotifs();
   // 1b. Construct Restriction-site Reads
   clock1_optiLoad = clock();
 
   // 2. Build Optimers and find those that share a seed as cadidates for overlap detection 
   MatchCandids finalOverlaps;
-  rsMapper.FindMatches("", fileName, 1, finalOverlaps); 
+  rsMapper.FindMatches("", fileName, finalOverlaps); 
   clock2_overlapCand = clock();
  
   // 3. Take the overlap candidates and refine to remove false positives

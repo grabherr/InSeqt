@@ -389,9 +389,8 @@ void RestSiteGeneral::GenerateMotifs() {
       motif += cElem;
     }
     if(motif.length() == m_modelParams.MotifLength()) { 
-      //TODO only add each with RC once
       if(ValidateMotif(motif, alphabet, RCs)) {
-        FILE_LOG(logDEBUG3) << "Motif: "  << m_motifs.isize() << " " << motif;
+        FILE_LOG(logDEBUG1) << "Motif: "  << m_motifs.isize() << " " << motif;
         m_motifs.push_back(motif); 
         if(m_motifs.isize() == m_modelParams.NumOfMotifs()) {
           break;
@@ -403,6 +402,7 @@ void RestSiteGeneral::GenerateMotifs() {
   
 bool RestSiteGeneral::ValidateMotif(const string& motif, const vector<char>& alphabet, const map<char, char>& RCs) const {
   int motifLen = motif.length();
+
   // 1. Simplicity Filter
   map<char, int> alphabetCnt;
   bool simple = false;
@@ -421,7 +421,6 @@ bool RestSiteGeneral::ValidateMotif(const string& motif, const vector<char>& alp
     if(RCs.at(motif[ii]) != motif[motifLen-ii-1]) { return false; } 
   }
 
-  // 3. 
   return true;
 }
 
@@ -457,19 +456,8 @@ string RestSiteGeneral::GetTargetName(int readIdx) const {
   else { return m_rsaCores.begin()->second.Reads()[readIdx].Name(); }
 }
 
-void RestSiteMapper::FindMatches(const string& fileNameQuery, const string& fileNameTarget, int numOfMotifs, MatchCandids& finalMatches) {
-  SetTargetSites(fileNameTarget, numOfMotifs, true);
-  MatchCandids matchCandids;
-  for(int motifIdx=0; motifIdx<numOfMotifs; motifIdx++) {
-    string motif = m_motifs[motifIdx];
-    m_rsaCores[m_motifs[motifIdx]].FindLapCandids(0.08, matchCandids); //TODO parameterise data params
-  }
-  FILE_LOG(logINFO) << "Match candidates: "<< endl << matchCandids.ToString();
-}
-
-void RestSiteGeneral::SetTargetSites(const string& fileName, int numOfMotifs, bool addRC) {
-  FILE_LOG(logDEBUG2) << "Finding sites/maps for motif: " << m_motifs[numOfMotifs] << endl;
-  for(int motifIdx=0; motifIdx<numOfMotifs; motifIdx++) {
+void RestSiteGeneral::SetTargetSites(const string& fileName, bool addRC) {
+  for(int motifIdx=0; motifIdx<m_modelParams.NumOfMotifs(); motifIdx++) {
     string motif = m_motifs[motifIdx];
     m_rsaCores[motif] = RestSiteMapCore(motif, m_modelParams, m_dataParams);
   }
@@ -483,7 +471,7 @@ void RestSiteGeneral::SetTargetSites(const string& fileName, int numOfMotifs, bo
       continue;
     if (parser.Line()[0] == '>') {
       transform(l.begin(), l.end(), l.begin(), ::toupper);
-      for(int motifIdx=0; motifIdx<numOfMotifs; motifIdx++) {
+      for(int motifIdx=0; motifIdx<m_modelParams.NumOfMotifs(); motifIdx++) {
         string motif = m_motifs[motifIdx];
         int totSiteCnt = m_rsaCores[motif].CreateRSitesPerString(l, name, m_rsaCores[motif].Reads(), addRC);
         m_rsaCores[motif].IncTotalSiteCount(totSiteCnt);
@@ -495,19 +483,30 @@ void RestSiteGeneral::SetTargetSites(const string& fileName, int numOfMotifs, bo
   }
   if( l != "") {
     transform(l.begin(), l.end(), l.begin(), ::toupper);
-    for(int motifIdx=0; motifIdx<numOfMotifs; motifIdx++) {
+    for(int motifIdx=0; motifIdx<m_modelParams.NumOfMotifs(); motifIdx++) {
       string motif = m_motifs[motifIdx];
       int totSiteCnt = m_rsaCores[motif].CreateRSitesPerString(l, name, m_rsaCores[motif].Reads(), addRC);
       m_rsaCores[motif].IncTotalSiteCount(totSiteCnt);
     }
   }
-  for(int motifIdx=0; motifIdx<numOfMotifs; motifIdx++) {
+  for(int motifIdx=0; motifIdx<m_modelParams.NumOfMotifs(); motifIdx++) {
     string motif = m_motifs[motifIdx];
     m_rsaCores[m_motifs[motifIdx]].BuildDmers();
   }
 }
 
-void RestSiteDBMapper::SetQuerySites(const string& fileName, int numOfMotifs) {
+void RestSiteMapper::FindMatches(const string& fileNameQuery, const string& fileNameTarget, MatchCandids& finalMatches) {
+  GenerateMotifs(); 
+  SetTargetSites(fileNameTarget, true);
+  MatchCandids matchCandids;
+  for(int motifIdx=0; motifIdx<m_modelParams.NumOfMotifs(); motifIdx++) {
+    string motif = m_motifs[motifIdx];
+    FILE_LOG(logDEBUG1) << "Finding matches based on motif: " << motif;
+    m_rsaCores[motif].FindLapCandids(0.08, matchCandids); //TODO parameterise data params
+  }
+}
+
+void RestSiteDBMapper::SetQuerySites(const string& fileName) {
   int totSiteCnt = 0;
   FlatFileParser parser;
   parser.Open(fileName);
@@ -518,7 +517,7 @@ void RestSiteDBMapper::SetQuerySites(const string& fileName, int numOfMotifs) {
       continue;
     if (parser.Line()[0] == '>') {
       transform(l.begin(), l.end(), l.begin(), ::toupper);
-      for(int motifIdx=0; motifIdx<numOfMotifs; motifIdx++) {
+      for(int motifIdx=0; motifIdx<m_modelParams.NumOfMotifs(); motifIdx++) {
         string motif = m_motifs[motifIdx];
         totSiteCnt += m_rsaCores[motif].CreateRSitesPerString(l, name, m_queryReads[motif], false);
       }
@@ -529,18 +528,19 @@ void RestSiteDBMapper::SetQuerySites(const string& fileName, int numOfMotifs) {
   }
   if( l != "") {
     transform(l.begin(), l.end(), l.begin(), ::toupper);
-    for(int motifIdx=0; motifIdx<numOfMotifs; motifIdx++) {
+    for(int motifIdx=0; motifIdx<m_modelParams.NumOfMotifs(); motifIdx++) {
       string motif = m_motifs[motifIdx];
       totSiteCnt += m_rsaCores[motif].CreateRSitesPerString(l, name, m_queryReads[motif], false);
     }
   }
 }
 
-void RestSiteDBMapper::FindMatches(const string& fileNameQuery, const string& fileNameTarget, int numOfMotifs, MatchCandids& finalMatches) {
-  SetTargetSites(fileNameTarget, numOfMotifs, true);
-  SetQuerySites(fileNameQuery, numOfMotifs);  
+void RestSiteDBMapper::FindMatches(const string& fileNameQuery, const string& fileNameTarget, MatchCandids& finalMatches) {
+  GenerateMotifs(); 
+  SetTargetSites(fileNameTarget, true);
+  SetQuerySites(fileNameQuery);  
   MatchCandids matchCandids;
-  for(int motifIdx=0; motifIdx<numOfMotifs; motifIdx++) {
+  for(int motifIdx=0; motifIdx<m_modelParams.NumOfMotifs(); motifIdx++) {
     string motif = m_motifs[motifIdx];
     int readCnt   = m_queryReads[motif].NumReads();
     int reportCnt = readCnt/1000;

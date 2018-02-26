@@ -46,7 +46,7 @@ int main( int argc, char** argv )
 	if (j == site.length()) {
 	  if (n >= 0) {
             if (!wrotePrefix) {
-              cout << n; // Output prefix (number of trailing bits before the first motif location)
+              cout << n + site.length()/2; // Output prefix (number of trailing bits before the first motif location)
               wrotePrefix = true; 
             }
 	    cout << " " << i-n;
@@ -56,7 +56,7 @@ int main( int argc, char** argv )
       }
       if (l != "") {
         if(wrotePrefix) { 
-	  cout << " " << l.length() - n << endl; // Output postfix (number of leading bits after last motif location)
+	  cout << " " << l.length() - n - site.length()/2 << endl; // Output postfix (number of leading bits after last motif location)
         } else {
 	  cout << endl;
         }

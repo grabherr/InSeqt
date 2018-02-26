@@ -45,6 +45,7 @@ set(SOURCE_FILES_SIMULATEREADDATA ryggrad/src/base/ErrorHandling.cc ryggrad/src/
 
 set(SOURCE_FILES_BUILDKMERPROFILE ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/FileParser.cc ryggrad/src/base/StringUtil.cc ryggrad/src/util/mutil.cc ryggrad/src/general/DNAVector.cc ryggrad/src/aligns/KmerAlignCore.cc src/BuildKmerProfile.cc)
 set(SOURCE_FILES_TESTKMERPROFILE ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/FileParser.cc ryggrad/src/base/StringUtil.cc ryggrad/src/util/mutil.cc ryggrad/src/general/DNAVector.cc ryggrad/src/aligns/KmerAlignCore.cc src/TestKmerProfile.cc)
+set(SOURCE_FILES_ASSEMBLESITELAPS ryggrad/src/base/ErrorHandling.cc ryggrad/src/base/FileParser.cc  ryggrad/src/base/StringUtil.cc ryggrad/src/general/DNAVector.cc ryggrad/src/util/mutil.cc src/AssembleSiteLaps.cc) 
 
 
 add_executable(BasicStats           ${SOURCE_FILES_BASICSTATS})
@@ -68,4 +69,5 @@ add_executable(PoolBySites          ${SOURCE_FILES_POOLBYSITES})
 add_executable(SimulateReadData     ${SOURCE_FILES_SIMULATEREADDATA})
 add_executable(BuildKmerProfile     ${SOURCE_FILES_BUILDKMERPROFILE})
 add_executable(TestKmerProfile      ${SOURCE_FILES_TESTKMERPROFILE})
+add_executable(AssembleSiteLaps     ${SOURCE_FILES_ASSEMBLESITELAPS})
 

@@ -71,6 +71,15 @@ void Merge(DNAVector & a, DNAVector & b, const LongestLap & l)
   
 }
 
+bool Equal(int a, int b)
+{
+  int c = a-b;
+  if (c<0)
+    c = -c;
+  if (c < 100)
+    return true;
+  return false;
+}
 
 int main( int argc, char** argv )
 {
@@ -146,18 +155,18 @@ int main( int argc, char** argv )
     const LongestLap & g = laps[index];
     //cout << "Longest " << l.aN << " " << l.bN << " <- " << g.aN << " " << g.bN << endl;
 
-    if (l.startA == l.preA && l.stopA == a.isize()-l.postA) {
+    if (Equal(l.startA, l.preA) && Equal(l.stopA, a.isize()-l.postA)) {
       cout << "Erasing " << l.aN << " " << l.startA << " " << l.preA << " <-> " << l.stopA << " " << a.isize()-l.postA << endl;
       a.resize(0);
       continue;
     }
-    if (l.startB == l.preB && l.stopB == b.isize()-l.postB) {
+    if (Equal(l.startB, l.preB) && Equal(l.stopB, b.isize()-l.postB)) {
       cout << "Erasing " << l.bN << endl;
       b.resize(0);
       continue;
     }
 
-    if (g.bN == l.aN) {
+    if (g.bN == l.aN || g.sites == l.sites) {
       cout << "Found maximal mutal pair, merging " << l.aN << " " << l.bN << endl;
       Merge(a, b, l);
       string name = l.aN + l.bN;

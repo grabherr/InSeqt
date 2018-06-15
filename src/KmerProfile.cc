@@ -5,7 +5,7 @@
 #include "ryggrad/src/base/FileParser.h"
 #include "ryggrad/src/general/DNAVector.h"
 #include "ryggrad/src/aligns/KmerAlignCore.h"
-
+#include <math.h>
 
 int main( int argc, char** argv )
 {
